@@ -2,41 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MLM Platform Design System - Professional Financial Theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    /* Core Colors - Professional Blue/Purple Theme */
+    --background: 220 25% 97%;
+    --foreground: 224 71% 4%;
+    
+    /* Card System */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 224 71% 4%;
+    
+    /* Interactive Elements */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --popover-foreground: 224 71% 4%;
+    
+    /* Primary Brand Colors - Professional Blue */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 55%;
+    
+    /* Secondary - Purple Accent */
+    --secondary: 262 83% 58%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 262 83% 53%;
+    
+    /* Success/Financial Green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 90%;
+    
+    /* Warning/Pending Orange */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 95%;
+    
+    /* Neutral Tones */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 15%;
+    
+    /* System Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+    
+    /* Financial Dashboard Colors */
+    --profit: 142 76% 36%;
+    --loss: 0 84% 60%;
+    --pending: 38 92% 50%;
+    --frozen: 220 9% 46%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 58%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 25% 99%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 58%));
+    
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-financial: 0 4px 6px -1px rgb(217 91% 60% / 0.1), 0 2px 4px -2px rgb(217 91% 60% / 0.1);
+    
+    /* Spacing & Layout */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +135,53 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  /* Financial Dashboard Components */
+  .financial-card {
+    @apply bg-card border border-border rounded-lg shadow-[var(--shadow-card)] p-6;
+    background: var(--gradient-card);
+  }
+  
+  .profit-indicator {
+    @apply text-[hsl(var(--profit))] bg-[hsl(var(--success-light))] px-2 py-1 rounded-md text-sm font-medium;
+  }
+  
+  .loss-indicator {
+    @apply text-[hsl(var(--loss))] bg-red-50 px-2 py-1 rounded-md text-sm font-medium;
+  }
+  
+  .pending-indicator {
+    @apply text-[hsl(var(--pending))] bg-[hsl(var(--warning-light))] px-2 py-1 rounded-md text-sm font-medium;
+  }
+  
+  .frozen-indicator {
+    @apply text-[hsl(var(--frozen))] bg-gray-100 px-2 py-1 rounded-md text-sm font-medium;
+  }
+  
+  /* Network Tree Styles */
+  .network-node {
+    @apply bg-card border-2 border-border rounded-lg p-3 shadow-[var(--shadow-card)] 
+           transition-all duration-200 hover:shadow-[var(--shadow-elevated)] hover:border-primary/50;
+  }
+  
+  .network-node.active {
+    @apply border-[hsl(var(--success))] bg-[hsl(var(--success-light))];
+  }
+  
+  .network-node.frozen {
+    @apply border-[hsl(var(--frozen))] bg-gray-50;
+  }
+  
+  /* Gradient Backgrounds */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+  
+  .card-gradient {
+    background: var(--gradient-card);
   }
 }
