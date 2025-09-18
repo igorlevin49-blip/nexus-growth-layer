@@ -7,6 +7,10 @@ import { AppLayout } from "@/components/Layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Shop from "./pages/Shop";
+import Network from "./pages/Network";
+import Finances from "./pages/Finances";
+import Settings from "./pages/Settings";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,13 +23,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="shop" element={<Shop />} />
-            <Route path="network" element={<Dashboard />} />
-            <Route path="finances" element={<Dashboard />} />
-            <Route path="settings" element={<Dashboard />} />
+            <Route path="network" element={<Network />} />
+            <Route path="finances" element={<Finances />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

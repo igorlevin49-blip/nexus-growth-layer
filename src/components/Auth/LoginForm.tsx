@@ -112,9 +112,9 @@ export function LoginForm() {
                 </Button>
                 <div className="text-sm text-muted-foreground">
                   Нет аккаунта?{" "}
-                  <Button variant="link" size="sm" className="p-0 h-auto font-normal text-primary">
+                  <a href="/register" className="text-primary hover:underline font-medium">
                     Зарегистрироваться
-                  </Button>
+                  </a>
                 </div>
               </div>
             </Tabs>
