@@ -5,10 +5,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState("phone");
+  const [loginType, setLoginType] = useState("email");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if already logged in
+  if (user) {
+    navigate('/');
+    return null;
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешный вход",
+        description: "Вы успешно вошли в систему",
+      });
+
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Ошибка входа",
+        description: error.message || "Неверный email или пароль",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -54,15 +98,50 @@ export function LoginForm() {
               </TabsContent>
 
               <TabsContent value="email" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="example@domain.com"
-                    className="text-base"
-                  />
-                </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="example@domain.com"
+                      className="text-base"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Пароль</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Введите пароль"
+                        className="text-base pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full hero-gradient border-0" size="lg" disabled={loading}>
+                    {loading ? "Вход..." : "Войти"}
+                  </Button>
+                </form>
               </TabsContent>
 
               <TabsContent value="telegram" className="space-y-4">
@@ -77,34 +156,6 @@ export function LoginForm() {
                 </div>
               </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Пароль</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Введите пароль"
-                    className="text-base pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Button className="w-full hero-gradient border-0" size="lg">
-                Войти
-              </Button>
 
               <div className="text-center space-y-2">
                 <Button variant="link" size="sm" className="text-muted-foreground">

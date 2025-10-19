@@ -6,9 +6,72 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if already logged in
+  if (user) {
+    navigate('/');
+    return null;
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // Update profile with phone
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase
+          .from('profiles')
+          .update({ phone })
+          .eq('id', newUser.id);
+      }
+
+      toast({
+        title: "Регистрация успешна",
+        description: "Добро пожаловать в систему!",
+      });
+
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Ошибка регистрации",
+        description: error.message || "Не удалось зарегистрироваться",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationType, setRegistrationType] = useState("phone");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -92,6 +155,8 @@ export function RegisterForm() {
                       id="email"
                       type="email"
                       placeholder="example@domain.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                     <p className="text-xs text-muted-foreground">
@@ -126,8 +191,11 @@ export function RegisterForm() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Минимум 8 символов"
+                      placeholder="Минимум 6 символов"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
+                      minLength={6}
                     />
                     <Button
                       type="button"
@@ -228,13 +296,16 @@ export function RegisterForm() {
             </div>
 
             {/* Submit Button */}
-            <Button 
-              className="w-full hero-gradient border-0" 
-              size="lg"
-              disabled={!acceptTerms}
-            >
-              Создать аккаунт
-            </Button>
+            <form onSubmit={handleRegister}>
+              <Button 
+                type="submit"
+                className="w-full hero-gradient border-0" 
+                size="lg"
+                disabled={!acceptTerms || loading}
+              >
+                {loading ? "Регистрация..." : "Создать аккаунт"}
+              </Button>
+            </form>
 
             {/* Login Link */}
             <div className="text-center">

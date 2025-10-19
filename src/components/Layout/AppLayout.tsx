@@ -9,10 +9,12 @@ import {
   LogOut,
   Menu,
   X,
-  Globe
+  Globe,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   { name: "Панель управления", href: "/dashboard", icon: Home },
@@ -32,8 +34,15 @@ export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState("ru");
   const location = useLocation();
+  const { userRole, signOut, user } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const adminNavigation = [
+    { name: "Пользователи", href: "/admin/users", icon: Users },
+    { name: "Товары", href: "/admin/products", icon: ShoppingCart },
+    { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +79,7 @@ export function AppLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-3 py-4">
+          <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -89,6 +98,33 @@ export function AppLayout() {
                 </NavLink>
               );
             })}
+
+            {(userRole === 'admin' || userRole === 'superadmin') && (
+              <div className="pt-4 mt-4 border-t border-border">
+                <div className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Shield className="h-3 w-3" />
+                  <span>Админ панель</span>
+                </div>
+                {adminNavigation.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.href}
+                      className={cn(
+                        "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            )}
           </nav>
 
           {/* Language Selector */}
@@ -124,7 +160,12 @@ export function AppLayout() {
                 <p className="text-xs text-muted-foreground">Партнёр</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full justify-start text-muted-foreground"
+              onClick={signOut}
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Выйти
             </Button>
