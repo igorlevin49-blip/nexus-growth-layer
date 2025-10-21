@@ -44,7 +44,85 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_balances"
+            referencedColumns: ["user_id"]
+          },
         ]
+      }
+      auto_withdraw_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean | null
+          method_id: string | null
+          min_amount_cents: number
+          schedule: Database["public"]["Enums"]["auto_withdraw_schedule"]
+          threshold_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean | null
+          method_id?: string | null
+          min_amount_cents?: number
+          schedule?: Database["public"]["Enums"]["auto_withdraw_schedule"]
+          threshold_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean | null
+          method_id?: string | null
+          min_amount_cents?: number
+          schedule?: Database["public"]["Enums"]["auto_withdraw_schedule"]
+          threshold_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_withdraw_rules_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_plan_levels: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          level: number
+          percent: number
+          plan_id: string
+          structure_type: Database["public"]["Enums"]["structure_type"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level: number
+          percent: number
+          plan_id?: string
+          structure_type?: Database["public"]["Enums"]["structure_type"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: number
+          percent?: number
+          plan_id?: string
+          structure_type?: Database["public"]["Enums"]["structure_type"]
+        }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -121,6 +199,39 @@ export type Database = {
           total_usd?: number
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          masked: string
+          meta: Json | null
+          type: Database["public"]["Enums"]["payment_method_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          masked: string
+          meta?: Json | null
+          type: Database["public"]["Enums"]["payment_method_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          masked?: string
+          meta?: Json | null
+          type?: Database["public"]["Enums"]["payment_method_type"]
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -235,6 +346,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "user_balances"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       shop_settings: {
@@ -258,6 +376,57 @@ export type Database = {
           monthly_activation_required_usd?: number | null
           rate_usd_kzt?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          frozen_until: string | null
+          id: string
+          level: number | null
+          payload: Json | null
+          source_id: string | null
+          source_ref: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          structure_type: Database["public"]["Enums"]["structure_type"] | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          frozen_until?: string | null
+          id?: string
+          level?: number | null
+          payload?: Json | null
+          source_id?: string | null
+          source_ref?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          structure_type?: Database["public"]["Enums"]["structure_type"] | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          frozen_until?: string | null
+          id?: string
+          level?: number | null
+          payload?: Json | null
+          source_id?: string | null
+          source_ref?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          structure_type?: Database["public"]["Enums"]["structure_type"] | null
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -288,11 +457,72 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_balances"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      withdrawals: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          fee_cents: number
+          id: string
+          method_id: string | null
+          processed_at: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          fee_cents?: number
+          id?: string
+          method_id?: string | null
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          fee_cents?: number
+          id?: string
+          method_id?: string | null
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      user_balances: {
+        Row: {
+          available_cents: number | null
+          frozen_cents: number | null
+          pending_cents: number | null
+          updated_at: string | null
+          user_id: string | null
+          withdrawn_cents: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_network_stats: {
@@ -336,8 +566,29 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin" | "superadmin"
+      auto_withdraw_schedule: "daily" | "weekly" | "monthly"
       currency_type: "USD" | "KZT"
       order_status: "draft" | "pending" | "paid" | "cancelled"
+      payment_method_type: "card" | "bank" | "crypto" | "other"
+      structure_type: "primary" | "secondary"
+      transaction_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "frozen"
+      transaction_type:
+        | "commission"
+        | "bonus"
+        | "withdrawal"
+        | "adjustment"
+        | "purchase"
+      withdrawal_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -466,8 +717,32 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "superadmin"],
+      auto_withdraw_schedule: ["daily", "weekly", "monthly"],
       currency_type: ["USD", "KZT"],
       order_status: ["draft", "pending", "paid", "cancelled"],
+      payment_method_type: ["card", "bank", "crypto", "other"],
+      structure_type: ["primary", "secondary"],
+      transaction_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "frozen",
+      ],
+      transaction_type: [
+        "commission",
+        "bonus",
+        "withdrawal",
+        "adjustment",
+        "purchase",
+      ],
+      withdrawal_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
     },
   },
 } as const
