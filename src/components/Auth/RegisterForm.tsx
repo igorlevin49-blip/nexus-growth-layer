@@ -280,13 +280,13 @@ export function RegisterForm() {
                 <div className="space-y-1">
                   <Label htmlFor="terms" className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Я принимаю{" "}
-                    <Button variant="link" className="p-0 h-auto text-primary">
-                      Пользовательское соглашение
-                    </Button>{" "}
+                    <a href="/docs/offer-agreement" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      Договор оферты
+                    </a>{" "}
                     и{" "}
-                    <Button variant="link" className="p-0 h-auto text-primary">
+                    <a href="/docs/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                       Политику конфиденциальности
-                    </Button>
+                    </a>
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     Также я согласен(на) получать уведомления о работе платформы

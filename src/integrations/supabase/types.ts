@@ -117,6 +117,99 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_document_versions: {
+        Row: {
+          changelog: string | null
+          content_md: string
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+          version: number
+        }
+        Insert: {
+          changelog?: string | null
+          content_md: string
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+          version: number
+        }
+        Update: {
+          changelog?: string | null
+          content_md?: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          created_at: string
+          current_version_id: string | null
+          effective_at: string | null
+          id: string
+          is_published: boolean
+          language: string
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
+          slug: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_version_id?: string | null
+          effective_at?: string | null
+          id?: string
+          is_published?: boolean
+          language?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          slug: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_version_id?: string | null
+          effective_at?: string | null
+          id?: string
+          is_published?: boolean
+          language?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          slug?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -415,6 +508,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_consents: {
+        Row: {
+          accepted_at: string
+          document_id: string
+          document_version: number
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          document_id: string
+          document_version: number
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          document_id?: string
+          document_version?: number
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_consents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_consents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

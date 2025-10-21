@@ -11,7 +11,8 @@ import {
   X,
   Globe,
   Shield,
-  Package
+  Package,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ export function AppLayout() {
     { name: "Товары", href: "/admin/products", icon: Package },
     { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
+    { name: "Документы", href: "/admin/documents", icon: FileText },
   ];
 
   const superAdminNavigation = [
@@ -182,6 +184,19 @@ export function AppLayout() {
                   {lang.code.toUpperCase()}
                 </Button>
               ))}
+            </div>
+          </div>
+
+          {/* Footer links */}
+          <div className="px-3 py-3 border-t border-border">
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <NavLink to="/docs/offer-agreement" className="hover:text-primary">
+                Договор оферты
+              </NavLink>
+              <span>·</span>
+              <NavLink to="/docs/privacy-policy" className="hover:text-primary">
+                Политика конфиденциальности
+              </NavLink>
             </div>
           </div>
 

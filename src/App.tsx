@@ -22,6 +22,9 @@ import ShopSettings from "./pages/admin/ShopSettings";
 import ShopCart from "./pages/ShopCart";
 import ShopCheckout from "./pages/ShopCheckout";
 import NotFound from "./pages/NotFound";
+import Docs from "./pages/Docs";
+import DocView from "./pages/DocView";
+import Documents from "./pages/admin/Documents";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,8 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/docs" element={<Docs />} />
+            <Route path="/docs/:slug" element={<DocView />} />
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard" element={<Dashboard />} />
@@ -50,6 +55,7 @@ const App = () => (
               <Route path="shop/checkout" element={<ShopCheckout />} />
               <Route path="admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
               <Route path="admin/roles" element={<ProtectedRoute requireSuperAdmin><RoleManagement /></ProtectedRoute>} />
+              <Route path="admin/documents" element={<ProtectedRoute requireAdmin><Documents /></ProtectedRoute>} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
