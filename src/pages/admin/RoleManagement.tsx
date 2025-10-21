@@ -28,24 +28,27 @@ export default function RoleManagement() {
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_roles')
         .select(`
-          id,
-          full_name,
-          email,
-          created_at,
-          user_roles!inner(*)
+          role,
+          user_id,
+          profiles!inner(
+            id,
+            full_name,
+            email,
+            created_at
+          )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false, foreignTable: 'profiles' });
 
       if (error) throw error;
 
-      const usersWithRoles = data?.map(user => ({
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        created_at: user.created_at,
-        role: (user.user_roles as any)?.role || 'user'
+      const usersWithRoles = data?.map(userRole => ({
+        id: userRole.profiles.id,
+        full_name: userRole.profiles.full_name,
+        email: userRole.profiles.email,
+        created_at: userRole.profiles.created_at,
+        role: userRole.role
       })) || [];
 
       setUsers(usersWithRoles);
