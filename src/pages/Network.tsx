@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Users, UserPlus, Share2, Copy, Download, TrendingUp, AlertCircle, Clock, DollarSign, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,29 +48,17 @@ const getStatusBadge = (member: NetworkMember) => {
 };
 
 export default function Network() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMember, setSelectedMember] = useState<NetworkMember | null>(null);
-  
-  const tab = searchParams.get('tab') || 'tree';
-  const searchQuery = searchParams.get('query') || '';
-  const filterLevel = searchParams.get('level') || 'all';
-  const filterStatus = searchParams.get('status') || 'all';
+  const [tab, setTab] = useState('tree');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   
   const maxLevel = filterLevel === 'all' ? 8 : parseInt(filterLevel);
   
   const { data: stats, isLoading: statsLoading } = useNetworkStats();
   const { data: networkMembers, isLoading: membersLoading } = useNetworkTree(maxLevel);
   const { data: activities, isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
-  
-  const updateParam = (key: string, value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set(key, value);
-    } else {
-      newParams.delete(key);
-    }
-    setSearchParams(newParams);
-  };
 
   const filteredMembers = useMemo(() => {
     if (!networkMembers) return [];
@@ -173,7 +160,7 @@ export default function Network() {
 
       <Card>
         <CardHeader>
-          <Tabs value={tab} onValueChange={(v) => updateParam('tab', v)}>
+          <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="tree">Дерево структуры</TabsTrigger>
               <TabsTrigger value="list">Список партнёров</TabsTrigger>
@@ -182,15 +169,15 @@ export default function Network() {
 
             <TabsContent value="tree" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
-                <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => updateParam('query', e.target.value)} />
-                <Select value={filterLevel} onValueChange={(v) => updateParam('level', v)}>
+                <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <Select value={filterLevel} onValueChange={setFilterLevel}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все уровни</SelectItem>
                     {[1,2,3,4,5,6,7,8].map(l => <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filterStatus} onValueChange={(v) => updateParam('status', v)}>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все</SelectItem>
