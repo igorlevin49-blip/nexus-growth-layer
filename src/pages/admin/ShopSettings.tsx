@@ -15,7 +15,7 @@ import {
 
 type ShopSettings = {
   monthly_activation_required_usd: number;
-  currency: string;
+  currency: "USD" | "KZT";
   rate_usd_kzt: number;
 };
 
@@ -133,7 +133,7 @@ export default function AdminShopSettings() {
               <Label>Основная валюта</Label>
               <Select
                 value={settings.currency}
-                onValueChange={(value) =>
+                onValueChange={(value: "USD" | "KZT") =>
                   setSettings({ ...settings, currency: value })
                 }
               >

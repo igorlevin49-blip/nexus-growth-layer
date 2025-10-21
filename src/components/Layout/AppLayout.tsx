@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { 
-  Home, 
-  ShoppingCart, 
-  Users, 
-  BarChart3, 
-  Settings, 
+import {
+  Home,
+  ShoppingCart,
+  Users,
+  BarChart3,
+  Settings,
   LogOut,
   Menu,
   X,
   Globe,
-  Shield
+  Shield,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,12 +41,14 @@ export function AppLayout() {
 
   const adminNavigation = [
     { name: "Пользователи", href: "/admin/users", icon: Users },
-    { name: "Товары", href: "/admin/products", icon: ShoppingCart },
+    { name: "Товары", href: "/admin/products", icon: Package },
+    { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
   ];
 
   const superAdminNavigation = [
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },
+    { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },
   ];
 
   const getRoleLabel = (role: string | null) => {

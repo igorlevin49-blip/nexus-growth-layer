@@ -1,95 +1,203 @@
-import { Star, ShoppingCart, Zap } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Plus, Minus } from "lucide-react";
 
-interface Product {
+type Product = {
   id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  rating: number;
-  reviewCount: number;
-  isActivation: boolean;
-  description: string;
-}
+  title: string;
+  description: string | null;
+  price_usd: number;
+  price_kzt: number;
+  is_activation: boolean;
+  is_popular: boolean;
+  is_new: boolean;
+  image_url: string | null;
+  stock: number | null;
+};
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (productId: string) => void;
+  viewMode?: "grid" | "list";
+  cartQuantity?: number;
+  onUpdateQuantity?: (productId: string, quantity: number) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const discount = product.originalPrice ? 
-    Math.round((1 - product.price / product.originalPrice) * 100) : 0;
+export function ProductCard({ 
+  product, 
+  onAddToCart, 
+  viewMode = "grid",
+  cartQuantity = 0,
+  onUpdateQuantity 
+}: ProductCardProps) {
+  const isOutOfStock = product.stock !== null && product.stock === 0;
+
+  if (viewMode === "list") {
+    return (
+      <Card className="overflow-hidden">
+        <div className="flex flex-col md:flex-row">
+          <div className="md:w-48 h-48 bg-muted flex items-center justify-center">
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ShoppingCart className="w-12 h-12 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex-1 p-6">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  {product.is_activation && (
+                    <Badge variant="default">Активационный</Badge>
+                  )}
+                  {product.is_popular && (
+                    <Badge variant="secondary">Популярный</Badge>
+                  )}
+                  {product.is_new && (
+                    <Badge variant="outline">Новинка</Badge>
+                  )}
+                  {isOutOfStock && (
+                    <Badge variant="destructive">Нет в наличии</Badge>
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
+                {product.description && (
+                  <p className="text-muted-foreground mb-4">{product.description}</p>
+                )}
+                <div className="flex gap-4">
+                  <div>
+                    <span className="text-2xl font-bold">${product.price_usd}</span>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <span className="text-lg">{product.price_kzt} ₸</span>
+                  </div>
+                </div>
+                {product.stock !== null && product.stock > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    В наличии: {product.stock} шт.
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 items-end">
+                {cartQuantity > 0 && onUpdateQuantity ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => onUpdateQuantity(product.id, cartQuantity - 1)}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="w-12 text-center font-semibold">{cartQuantity}</span>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => onUpdateQuantity(product.id, cartQuantity + 1)}
+                      disabled={product.stock !== null && cartQuantity >= product.stock}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => onAddToCart(product.id)}
+                    disabled={isOutOfStock}
+                    className="w-full md:w-auto"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {isOutOfStock ? "Нет в наличии" : "В корзину"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="financial-card group hover:shadow-[var(--shadow-elevated)] transition-all duration-200">
-      <CardHeader className="pb-3">
-        <div className="relative">
+    <Card className="overflow-hidden flex flex-col">
+      <div className="aspect-square bg-muted flex items-center justify-center">
+        {product.image_url ? (
           <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-48 object-cover rounded-lg"
+            src={product.image_url}
+            alt={product.title}
+            className="w-full h-full object-cover"
           />
-          {product.isActivation && (
-            <Badge className="absolute top-2 left-2 profit-indicator">
-              <Zap className="h-3 w-3 mr-1" />
-              Активация
-            </Badge>
+        ) : (
+          <ShoppingCart className="w-12 h-12 text-muted-foreground" />
+        )}
+      </div>
+      <CardHeader>
+        <div className="flex gap-2 mb-2 flex-wrap">
+          {product.is_activation && (
+            <Badge variant="default">Активационный</Badge>
           )}
-          {discount > 0 && (
-            <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground">
-              -{discount}%
-            </Badge>
+          {product.is_popular && (
+            <Badge variant="secondary">Популярный</Badge>
+          )}
+          {product.is_new && (
+            <Badge variant="outline">Новинка</Badge>
+          )}
+          {isOutOfStock && (
+            <Badge variant="destructive">Нет в наличии</Badge>
           )}
         </div>
+        <h3 className="font-semibold text-lg">{product.title}</h3>
       </CardHeader>
-
-      <CardContent className="pb-3">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-          {product.description}
-        </p>
-
-        <div className="flex items-center space-x-1 mb-3">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-4 w-4 ${
-                  i < Math.floor(product.rating)
-                    ? "text-warning fill-current"
-                    : "text-muted-foreground"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-muted-foreground">
-            ({product.reviewCount})
-          </span>
+      <CardContent className="flex-1 flex flex-col">
+        {product.description && (
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+            {product.description}
+          </p>
+        )}
+        <div className="mb-4">
+          <div className="text-2xl font-bold">${product.price_usd}</div>
+          <div className="text-sm text-muted-foreground">{product.price_kzt} ₸</div>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold">${product.price}</span>
-          {product.originalPrice && (
-            <span className="text-lg text-muted-foreground line-through">
-              ${product.originalPrice}
-            </span>
+        {product.stock !== null && product.stock > 0 && (
+          <p className="text-xs text-muted-foreground mb-4">
+            В наличии: {product.stock} шт.
+          </p>
+        )}
+        <div className="mt-auto">
+          {cartQuantity > 0 && onUpdateQuantity ? (
+            <div className="flex items-center gap-2">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => onUpdateQuantity(product.id, cartQuantity - 1)}
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="flex-1 text-center font-semibold">{cartQuantity}</span>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => onUpdateQuantity(product.id, cartQuantity + 1)}
+                disabled={product.stock !== null && cartQuantity >= product.stock}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => onAddToCart(product.id)}
+              disabled={isOutOfStock}
+              className="w-full"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              {isOutOfStock ? "Нет в наличии" : "В корзину"}
+            </Button>
           )}
         </div>
       </CardContent>
-
-      <CardFooter>
-        <Button 
-          className="w-full hero-gradient border-0"
-          onClick={() => onAddToCart(product.id)}
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          В корзину
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

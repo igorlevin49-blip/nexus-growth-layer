@@ -1,9 +1,9 @@
 import { Calendar, Target, Users, Wallet } from "lucide-react";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
+import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
@@ -38,7 +38,7 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <DashboardStats />
 
-      {/* Quick Actions & Alerts */}
+      {/* Quick Actions & Activation Progress */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="financial-card">
           <CardHeader>
@@ -48,10 +48,6 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full hero-gradient border-0" size="lg">
-              <Wallet className="h-4 w-4 mr-2" />
-              Продлить подписку
-            </Button>
             <Button variant="outline" className="w-full" size="lg">
               <Users className="h-4 w-4 mr-2" />
               Пригласить партнёра
@@ -72,43 +68,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="financial-card">
-          <CardHeader>
-            <CardTitle>Месячные цели</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Активация ($100)</span>
-                <span>$85.50</span>
-              </div>
-              <Progress value={85.5} className="mb-1" />
-              <p className="text-xs text-muted-foreground">
-                Осталось $14.50 до завершения
-              </p>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Новые партнёры (5)</span>
-                <span>3</span>
-              </div>
-              <Progress value={60} className="mb-1" />
-              <p className="text-xs text-muted-foreground">
-                Пригласите ещё 2 партнёра
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-border">
-              <Badge className="profit-indicator mb-2">
-                🎯 Цель месяца: 85% выполнено
-              </Badge>
-              <p className="text-xs text-muted-foreground">
-                При достижении целей вы получите бонус $150
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <ActivationProgress />
       </div>
 
       {/* Network Tree */}

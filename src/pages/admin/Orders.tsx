@@ -33,12 +33,12 @@ type Order = {
   user_id: string;
   total_usd: number;
   total_kzt: number;
-  status: string;
+  status: "draft" | "pending" | "paid" | "cancelled";
   created_at: string;
   profiles?: {
     full_name: string | null;
     email: string | null;
-  };
+  } | null;
 };
 
 type OrderItem = {
@@ -70,13 +70,7 @@ export default function AdminOrders() {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -118,7 +112,7 @@ export default function AdminOrders() {
     setDialogOpen(true);
   };
 
-  const handleUpdateStatus = async (orderId: string, status: string) => {
+  const handleUpdateStatus = async (orderId: string, status: "draft" | "pending" | "paid" | "cancelled") => {
     if (userRole !== "superadmin") {
       toast({
         title: "Доступ запрещен",
@@ -220,7 +214,7 @@ export default function AdminOrders() {
                     {order.id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
-                    {order.profiles?.full_name || order.profiles?.email || "N/A"}
+                    {order.user_id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
                     <div>
@@ -263,11 +257,9 @@ export default function AdminOrders() {
                   <p className="font-mono text-xs">{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Покупатель</p>
-                  <p>
-                    {selectedOrder.profiles?.full_name ||
-                      selectedOrder.profiles?.email ||
-                      "N/A"}
+                  <p className="text-sm text-muted-foreground">ID Покупателя</p>
+                  <p className="font-mono text-xs">
+                    {selectedOrder.user_id.slice(0, 8)}
                   </p>
                 </div>
                 <div>
@@ -281,7 +273,7 @@ export default function AdminOrders() {
                   {userRole === "superadmin" ? (
                     <Select
                       value={selectedOrder.status}
-                      onValueChange={(status) =>
+                      onValueChange={(status: "draft" | "pending" | "paid" | "cancelled") =>
                         handleUpdateStatus(selectedOrder.id, status)
                       }
                     >
