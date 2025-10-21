@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Bell, Shield, Globe, CreditCard, Eye, EyeOff, Save } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import { useSecurityActions } from "@/hooks/useSecurityActions";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useAutoWithdraw } from "@/hooks/useAutoWithdraw";
+import { PaymentMethodsDialog } from "@/components/Finances/PaymentMethodsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,25 +16,76 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 
 export default function Settings() {
+  const profile = useProfile();
+  const notificationSettings = useNotificationSettings();
+  const { changePassword } = useSecurityActions();
+  const paymentMethods = usePaymentMethods();
+  const autoWithdraw = useAutoWithdraw();
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [language, setLanguage] = useState("ru");
-  const [timezone, setTimezone] = useState("Europe/Moscow");
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
-  const [notifications, setNotifications] = useState({
-    newPartner: true,
-    commissions: true,
-    systemUpdates: false,
-    newsletter: true,
-    sms: false,
-    telegram: true
+  // Password change form
+  const [passwordForm, setPasswordForm] = useState({
+    current: '',
+    new: '',
+    confirm: ''
   });
 
-  const [privacy, setPrivacy] = useState({
-    profileVisible: true,
-    showStats: false,
-    allowContact: true
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+    telegram_username: '',
+    bio: ''
   });
+
+  // Load profile data
+  useEffect(() => {
+    if (profile.data) {
+      setProfileForm({
+        first_name: profile.data.first_name || '',
+        last_name: profile.data.last_name || '',
+        phone: profile.data.phone || '',
+        telegram_username: profile.data.telegram_username || '',
+        bio: profile.data.bio || ''
+      });
+    }
+  }, [profile.data]);
+
+  const handleProfileSave = () => {
+    profile.updateProfile.mutate(profileForm);
+  };
+
+  const handlePasswordChange = () => {
+    changePassword.mutate({
+      currentPassword: passwordForm.current,
+      newPassword: passwordForm.new,
+      confirmPassword: passwordForm.confirm
+    }, {
+      onSuccess: () => {
+        setPasswordForm({ current: '', new: '', confirm: '' });
+      }
+    });
+  };
+
+  const handleNotificationChange = (key: string, value: boolean) => {
+    notificationSettings.updateSettings.mutate({ [key]: value });
+  };
+
+  const handlePreferencesSave = () => {
+    if (profile.data) {
+      profile.updateProfile.mutate({
+        language: profile.data.language,
+        timezone: profile.data.timezone,
+        is_public_profile: profile.data.is_public_profile,
+        show_stats: profile.data.show_stats,
+        allow_contacts: profile.data.allow_contacts
+      });
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -78,27 +135,51 @@ export default function Settings() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Имя</Label>
-                  <Input id="firstName" defaultValue="Иван" />
+                  <Input 
+                    id="firstName" 
+                    value={profileForm.first_name}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, first_name: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Фамилия</Label>
-                  <Input id="lastName" defaultValue="Иванов" />
+                  <Input 
+                    id="lastName" 
+                    value={profileForm.last_name}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, last_name: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="ivan@example.com" />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={profile.data?.email || ''} 
+                    disabled 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Телефон</Label>
-                  <Input id="phone" type="tel" defaultValue="+7 (999) 123-45-67" />
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+7 (999) 123-45-67"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telegram">Telegram</Label>
-                  <Input id="telegram" defaultValue="@ivan_ivanov" />
+                  <Input 
+                    id="telegram" 
+                    value={profileForm.telegram_username}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, telegram_username: e.target.value }))}
+                    placeholder="username"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="partnerLevel">Уровень партнёра</Label>
-                  <Input id="partnerLevel" defaultValue="Gold" disabled />
+                  <Input id="partnerLevel" value="Gold" disabled />
                 </div>
               </div>
 
@@ -108,10 +189,16 @@ export default function Settings() {
                   id="bio"
                   className="w-full min-h-[100px] px-3 py-2 border border-border rounded-md bg-background"
                   placeholder="Расскажите о себе и своих целях..."
+                  value={profileForm.bio}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
                 />
               </div>
 
-              <Button className="hero-gradient border-0">
+              <Button 
+                className="hero-gradient border-0"
+                onClick={handleProfileSave}
+                disabled={profile.updateProfile.isPending}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Сохранить изменения
               </Button>
@@ -138,6 +225,8 @@ export default function Settings() {
                         id="currentPassword"
                         type={showCurrentPassword ? "text" : "password"}
                         placeholder="Введите текущий пароль"
+                        value={passwordForm.current}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, current: e.target.value }))}
                       />
                       <Button
                         type="button"
@@ -157,6 +246,8 @@ export default function Settings() {
                         id="newPassword"
                         type={showNewPassword ? "text" : "password"}
                         placeholder="Введите новый пароль"
+                        value={passwordForm.new}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, new: e.target.value }))}
                       />
                       <Button
                         type="button"
@@ -175,10 +266,18 @@ export default function Settings() {
                       id="confirmPassword"
                       type="password"
                       placeholder="Повторите новый пароль"
+                      value={passwordForm.confirm}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm: e.target.value }))}
                     />
                   </div>
                 </div>
-                <Button variant="outline">Изменить пароль</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handlePasswordChange}
+                  disabled={changePassword.isPending || !passwordForm.current || !passwordForm.new || !passwordForm.confirm}
+                >
+                  Изменить пароль
+                </Button>
               </div>
 
               <div className="border-t border-border pt-6">
@@ -244,10 +343,10 @@ export default function Settings() {
               <div className="space-y-4">
                 <h3 className="font-semibold">Email уведомления</h3>
                 {[
-                  { key: "newPartner", label: "Новые партнёры", description: "Уведомления о регистрации новых партнёров" },
-                  { key: "commissions", label: "Начисления", description: "Информация о комиссиях и бонусах" },
-                  { key: "systemUpdates", label: "Обновления системы", description: "Технические уведомления и обновления" },
-                  { key: "newsletter", label: "Новостная рассылка", description: "Еженедельная сводка и новости компании" }
+                  { key: "email_new_partner", label: "Новые партнёры", description: "Уведомления о регистрации новых партнёров" },
+                  { key: "email_commissions", label: "Начисления", description: "Информация о комиссиях и бонусах" },
+                  { key: "email_system", label: "Обновления системы", description: "Технические уведомления и обновления" },
+                  { key: "email_newsletter", label: "Новостная рассылка", description: "Еженедельная сводка и новости компании" }
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div>
@@ -255,10 +354,8 @@ export default function Settings() {
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
                     <Switch 
-                      checked={notifications[item.key as keyof typeof notifications]}
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, [item.key]: checked }))
-                      }
+                      checked={Boolean(notificationSettings.data?.[item.key as 'email_new_partner' | 'email_commissions' | 'email_system' | 'email_newsletter'])}
+                      onCheckedChange={(checked) => handleNotificationChange(item.key, checked)}
                     />
                   </div>
                 ))}
@@ -273,10 +370,8 @@ export default function Settings() {
                       <p className="text-sm text-muted-foreground">Важные уведомления через SMS</p>
                     </div>
                     <Switch 
-                      checked={notifications.sms}
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, sms: checked }))
-                      }
+                      checked={notificationSettings.data?.sms_enabled ?? false}
+                      onCheckedChange={(checked) => handleNotificationChange('sms_enabled', checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -285,10 +380,8 @@ export default function Settings() {
                       <p className="text-sm text-muted-foreground">Уведомления через Telegram бота</p>
                     </div>
                     <Switch 
-                      checked={notifications.telegram}
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, telegram: checked }))
-                      }
+                      checked={notificationSettings.data?.telegram_enabled ?? false}
+                      onCheckedChange={(checked) => handleNotificationChange('telegram_enabled', checked)}
                     />
                   </div>
                 </div>
@@ -309,19 +402,32 @@ export default function Settings() {
               <div className="space-y-4">
                 <h3 className="font-semibold">Банковские карты</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-400 rounded"></div>
-                      <div>
-                        <p className="font-medium">**** **** **** 1234</p>
-                        <p className="text-sm text-muted-foreground">Expires 12/26</p>
+                  {paymentMethods.data?.map((method) => (
+                    <div key={method.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-400 rounded"></div>
+                        <div>
+                          <p className="font-medium">{method.masked}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {method.type === 'card' ? 'Карта' : method.type === 'bank' ? 'Банк' : method.type}
+                          </p>
+                        </div>
+                        {method.is_default && <Badge className="profit-indicator">Основная</Badge>}
                       </div>
-                      <Badge className="profit-indicator">Основная</Badge>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => paymentMethods.removeMethod.mutate(method.id)}
+                        disabled={paymentMethods.data?.length === 1 && autoWithdraw.data?.enabled}
+                      >
+                        Удалить
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm">Удалить</Button>
-                  </div>
+                  ))}
                 </div>
-                <Button variant="outline">+ Добавить карту</Button>
+                <Button variant="outline" onClick={() => setShowPaymentDialog(true)}>
+                  + Добавить карту
+                </Button>
               </div>
 
               <div className="border-t border-border pt-6">
@@ -334,21 +440,45 @@ export default function Settings() {
                         Автоматически выводить средства при достижении лимита
                       </p>
                     </div>
-                    <Switch />
+                    <Switch 
+                      checked={autoWithdraw.data?.enabled ?? false}
+                      onCheckedChange={(checked) => 
+                        autoWithdraw.updateRule.mutate({ enabled: checked })
+                      }
+                    />
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="autoWithdrawLimit">Сумма для автовывода</Label>
-                      <Input id="autoWithdrawLimit" type="number" placeholder="1000" />
+                      <Input 
+                        id="autoWithdrawLimit" 
+                        type="number" 
+                        value={(autoWithdraw.data?.threshold_cents ?? 100000) / 100}
+                        onChange={(e) => 
+                          autoWithdraw.updateRule.mutate({ 
+                            threshold_cents: Math.round(parseFloat(e.target.value) * 100) 
+                          })
+                        }
+                        placeholder="1000" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="withdrawalCard">Карта для вывода</Label>
-                      <Select>
+                      <Select 
+                        value={autoWithdraw.data?.method_id || ''}
+                        onValueChange={(value) => 
+                          autoWithdraw.updateRule.mutate({ method_id: value })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите карту" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="card1">**** 1234 (Основная)</SelectItem>
+                          {paymentMethods.data?.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              {method.masked} {method.is_default ? '(Основная)' : ''}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -371,7 +501,12 @@ export default function Settings() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="language">Язык интерфейса</Label>
-                  <Select value={language} onValueChange={setLanguage}>
+                  <Select 
+                    value={profile.data?.language || 'ru'} 
+                    onValueChange={(value) => 
+                      profile.data && profile.updateProfile.mutate({ language: value as 'ru' | 'kz' | 'en' })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -384,7 +519,12 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Часовой пояс</Label>
-                  <Select value={timezone} onValueChange={setTimezone}>
+                  <Select 
+                    value={profile.data?.timezone || 'Europe/Moscow'} 
+                    onValueChange={(value) => 
+                      profile.data && profile.updateProfile.mutate({ timezone: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -401,9 +541,9 @@ export default function Settings() {
                 <h3 className="font-semibold mb-4">Приватность</h3>
                 <div className="space-y-4">
                   {[
-                    { key: "profileVisible", label: "Публичный профиль", description: "Другие пользователи могут видеть ваш профиль" },
-                    { key: "showStats", label: "Показывать статистику", description: "Отображать ваши достижения в профиле" },
-                    { key: "allowContact", label: "Разрешить контакты", description: "Другие партнёры могут связаться с вами" }
+                    { key: "is_public_profile", label: "Публичный профиль", description: "Другие пользователи могут видеть ваш профиль" },
+                    { key: "show_stats", label: "Показывать статистику", description: "Отображать ваши достижения в профиле" },
+                    { key: "allow_contacts", label: "Разрешить контакты", description: "Другие партнёры могут связаться с вами" }
                   ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between">
                       <div>
@@ -411,9 +551,9 @@ export default function Settings() {
                         <p className="text-sm text-muted-foreground">{item.description}</p>
                       </div>
                       <Switch 
-                        checked={privacy[item.key as keyof typeof privacy]}
+                        checked={Boolean(profile.data?.[item.key as keyof typeof profile.data])}
                         onCheckedChange={(checked) => 
-                          setPrivacy(prev => ({ ...prev, [item.key]: checked }))
+                          profile.data && profile.updateProfile.mutate({ [item.key]: checked })
                         }
                       />
                     </div>
@@ -421,7 +561,11 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button className="hero-gradient border-0">
+              <Button 
+                className="hero-gradient border-0"
+                onClick={handlePreferencesSave}
+                disabled={profile.updateProfile.isPending}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Сохранить настройки
               </Button>
@@ -429,6 +573,11 @@ export default function Settings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <PaymentMethodsDialog 
+        open={showPaymentDialog} 
+        onOpenChange={setShowPaymentDialog} 
+      />
     </div>
   );
 }
