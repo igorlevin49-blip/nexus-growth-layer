@@ -44,6 +44,21 @@ export function AppLayout() {
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
   ];
 
+  const superAdminNavigation = [
+    { name: "Управление ролями", href: "/admin/roles", icon: Shield },
+  ];
+
+  const getRoleLabel = (role: string | null) => {
+    switch (role) {
+      case 'superadmin':
+        return 'Супер-админ';
+      case 'admin':
+        return 'Администратор';
+      default:
+        return 'Пользователь';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar overlay */}
@@ -123,6 +138,24 @@ export function AppLayout() {
                     </NavLink>
                   );
                 })}
+                {userRole === 'superadmin' && superAdminNavigation.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.href}
+                      className={cn(
+                        "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "bg-destructive/10 text-destructive border border-destructive/20"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </NavLink>
+                  );
+                })}
               </div>
             )}
           </nav>
@@ -153,11 +186,13 @@ export function AppLayout() {
           <div className="p-3 border-t border-border">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-medium text-sm">ИИ</span>
+                <span className="text-primary font-medium text-sm">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Иван Иванов</p>
-                <p className="text-xs text-muted-foreground">Партнёр</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.email || 'Пользователь'}</p>
+                <p className="text-xs text-muted-foreground">{getRoleLabel(userRole)}</p>
               </div>
             </div>
             <Button 
