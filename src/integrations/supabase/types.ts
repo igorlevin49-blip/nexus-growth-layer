@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -142,6 +174,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           balance: number | null
           created_at: string | null
           email: string | null
@@ -159,6 +192,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           balance?: number | null
           created_at?: string | null
           email?: string | null
@@ -176,6 +210,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           balance?: number | null
           created_at?: string | null
           email?: string | null
@@ -260,6 +295,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_network_stats: {
+        Args: { user_id_param: string }
+        Returns: {
+          activations_this_month: number
+          active_partners: number
+          commissions_this_month: number
+          frozen_partners: number
+          max_level: number
+          new_this_month: number
+          total_partners: number
+          volume_this_month: number
+        }[]
+      }
+      get_network_tree: {
+        Args: { max_level?: number; root_user_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          direct_referrals: number
+          email: string
+          full_name: string
+          level: number
+          monthly_activation_met: boolean
+          monthly_volume: number
+          partner_id: string
+          referral_code: string
+          subscription_status: string
+          total_team: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

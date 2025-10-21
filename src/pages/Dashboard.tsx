@@ -72,7 +72,7 @@ export default function Dashboard() {
       </div>
 
       {/* Network Tree */}
-      <NetworkTree />
+      <NetworkTree members={[]} />
 
       {/* Recent Activity */}
       <Card className="financial-card">
