@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_activation_snapshot: boolean | null
+          order_id: string
+          price_kzt: number
+          price_usd: number
+          product_id: string | null
+          qty: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_activation_snapshot?: boolean | null
+          order_id: string
+          price_kzt: number
+          price_usd: number
+          product_id?: string | null
+          qty?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_activation_snapshot?: boolean | null
+          order_id?: string
+          price_kzt?: number
+          price_usd?: number
+          product_id?: string | null
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: Database["public"]["Enums"]["order_status"] | null
+          total_kzt: number
+          total_usd: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_kzt?: number
+          total_usd?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_kzt?: number
+          total_usd?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_activation: boolean | null
+          is_new: boolean | null
+          is_popular: boolean | null
+          price_kzt: number
+          price_usd: number
+          slug: string
+          stock: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_activation?: boolean | null
+          is_new?: boolean | null
+          is_popular?: boolean | null
+          price_kzt: number
+          price_usd: number
+          slug: string
+          stock?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_activation?: boolean | null
+          is_new?: boolean | null
+          is_popular?: boolean | null
+          price_kzt?: number
+          price_usd?: number
+          slug?: string
+          stock?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           balance: number | null
@@ -76,6 +202,30 @@ export type Database = {
           },
         ]
       }
+      shop_settings: {
+        Row: {
+          currency: Database["public"]["Enums"]["currency_type"] | null
+          id: number
+          monthly_activation_required_usd: number | null
+          rate_usd_kzt: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          currency?: Database["public"]["Enums"]["currency_type"] | null
+          id?: number
+          monthly_activation_required_usd?: number | null
+          rate_usd_kzt?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          currency?: Database["public"]["Enums"]["currency_type"] | null
+          id?: number
+          monthly_activation_required_usd?: number | null
+          rate_usd_kzt?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -112,6 +262,8 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin" | "superadmin"
+      currency_type: "USD" | "KZT"
+      order_status: "draft" | "pending" | "paid" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -240,6 +392,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "superadmin"],
+      currency_type: ["USD", "KZT"],
+      order_status: ["draft", "pending", "paid", "cancelled"],
     },
   },
 } as const
