@@ -44,13 +44,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "activity_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_balances"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       auto_withdraw_rules: {
@@ -346,13 +339,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profiles_sponsor_id_fkey"
-            columns: ["sponsor_id"]
-            isOneToOne: false
-            referencedRelation: "user_balances"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       shop_settings: {
@@ -457,13 +443,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_balances"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       withdrawals: {
@@ -512,17 +491,7 @@ export type Database = {
       }
     }
     Views: {
-      user_balances: {
-        Row: {
-          available_cents: number | null
-          frozen_cents: number | null
-          pending_cents: number | null
-          updated_at: string | null
-          user_id: string | null
-          withdrawn_cents: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_network_stats: {
@@ -554,6 +523,17 @@ export type Database = {
           subscription_status: string
           total_team: number
           user_id: string
+        }[]
+      }
+      get_user_balance: {
+        Args: { p_user_id: string }
+        Returns: {
+          available_cents: number
+          frozen_cents: number
+          pending_cents: number
+          updated_at: string
+          user_id: string
+          withdrawn_cents: number
         }[]
       }
       has_role: {
