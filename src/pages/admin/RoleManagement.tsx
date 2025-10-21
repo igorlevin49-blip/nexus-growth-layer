@@ -34,7 +34,7 @@ export default function RoleManagement() {
           full_name,
           email,
           created_at,
-          user_roles!inner(role)
+          user_roles!inner(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -45,7 +45,7 @@ export default function RoleManagement() {
         full_name: user.full_name,
         email: user.email,
         created_at: user.created_at,
-        role: (user.user_roles as any)[0]?.role || 'user'
+        role: (user.user_roles as any)?.role || 'user'
       })) || [];
 
       setUsers(usersWithRoles);
