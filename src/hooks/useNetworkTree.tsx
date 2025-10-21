@@ -17,7 +17,7 @@ export interface NetworkMember {
   monthly_volume: number;
 }
 
-export function useNetworkTree(maxLevel: number = 8) {
+export function useNetworkTree(maxLevel: number = 10) {
   return useQuery({
     queryKey: ['network-tree', maxLevel],
     queryFn: async () => {

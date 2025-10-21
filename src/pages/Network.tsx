@@ -54,7 +54,7 @@ export default function Network() {
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  const maxLevel = filterLevel === 'all' ? 8 : parseInt(filterLevel);
+  const maxLevel = filterLevel === 'all' ? 10 : parseInt(filterLevel);
   
   const { data: stats, isLoading: statsLoading } = useNetworkStats();
   const { data: networkMembers, isLoading: membersLoading } = useNetworkTree(maxLevel);
@@ -174,7 +174,7 @@ export default function Network() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все уровни</SelectItem>
-                    {[1,2,3,4,5,6,7,8].map(l => <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>)}
+                    {[1,2,3,4,5,6,7,8,9,10].map(l => <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
