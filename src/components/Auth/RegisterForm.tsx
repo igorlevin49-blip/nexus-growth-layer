@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export function RegisterForm() {
@@ -27,8 +27,63 @@ export function RegisterForm() {
     return null;
   }
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return "Пароль должен быть не менее 8 символов";
+    }
+    if (!/[a-zA-Z]/.test(pwd)) {
+      return "Пароль должен содержать минимум 1 букву";
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return "Пароль должен содержать минимум 1 цифру";
+    }
+    return null;
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    // Remove all non-digit characters
+    const cleaned = phone.replace(/\D/g, '');
+    // Check if it's a valid Kazakhstan phone number (starts with 7 and has 11 digits)
+    return cleaned.length >= 10 && cleaned.length <= 15;
+  };
+
+  const normalizePhone = (phone: string): string => {
+    // Remove all non-digit characters and ensure it starts with country code
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('8')) {
+      return '+7' + cleaned.substring(1);
+    }
+    if (!cleaned.startsWith('7') && !cleaned.startsWith('+')) {
+      return '+7' + cleaned;
+    }
+    if (!cleaned.startsWith('+')) {
+      return '+' + cleaned;
+    }
+    return cleaned;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate password strength
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
+    // Validate phone if provided
+    if (phone && !validatePhone(phone)) {
+      toast.error("Неверный формат телефона");
+      return;
+    }
+
+    // Validate full name
+    if (fullName.length < 2 || fullName.length > 128) {
+      toast.error("Имя должно быть от 2 до 128 символов");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -49,24 +104,22 @@ export function RegisterForm() {
 
       // Update profile with phone
       const { data: { user: newUser } } = await supabase.auth.getUser();
-      if (newUser) {
+      if (newUser && phone) {
+        const normalizedPhone = normalizePhone(phone);
         await supabase
           .from('profiles')
-          .update({ phone })
+          .update({ phone: normalizedPhone })
           .eq('id', newUser.id);
       }
 
-      toast({
-        title: "Регистрация успешна",
+      toast.success("Регистрация успешна", {
         description: "Добро пожаловать в систему!",
       });
 
       navigate('/');
     } catch (error: any) {
-      toast({
-        title: "Ошибка регистрации",
+      toast.error("Ошибка регистрации", {
         description: error.message || "Не удалось зарегистрироваться",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -190,12 +243,12 @@ export function RegisterForm() {
                   <div className="relative">
                     <Input
                       id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Минимум 6 символов"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Минимум 8 символов"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
                     />
                     <Button
                       type="button"

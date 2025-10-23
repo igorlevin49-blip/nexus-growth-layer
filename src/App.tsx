@@ -26,6 +26,9 @@ import Docs from "./pages/Docs";
 import DocView from "./pages/DocView";
 import Documents from "./pages/admin/Documents";
 
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -38,6 +41,8 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/docs" element={<Docs />} />
             <Route path="/docs/:slug" element={<DocView />} />
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

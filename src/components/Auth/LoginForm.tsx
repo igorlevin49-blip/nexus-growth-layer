@@ -158,9 +158,11 @@ export function LoginForm() {
 
 
               <div className="text-center space-y-2">
-                <Button variant="link" size="sm" className="text-muted-foreground">
-                  Забыли пароль?
-                </Button>
+                <a href="/forgot-password">
+                  <Button variant="link" size="sm" className="text-muted-foreground">
+                    Забыли пароль?
+                  </Button>
+                </a>
                 <div className="text-sm text-muted-foreground">
                   Нет аккаунта?{" "}
                   <a href="/register" className="text-primary hover:underline font-medium">
