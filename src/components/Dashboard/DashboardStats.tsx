@@ -1,49 +1,56 @@
-import { TrendingUp, TrendingDown, Users, DollarSign, Calendar, Snowflake } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, DollarSign, Snowflake } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-
-const stats = [
-  {
-    title: "Общий баланс",
-    value: "$2,847.50",
-    change: "+12.5%",
-    trend: "up" as const,
-    icon: DollarSign,
-    description: "За последние 30 дней"
-  },
-  {
-    title: "Активные партнёры",
-    value: "47",
-    change: "+3",
-    trend: "up" as const,
-    icon: Users,
-    description: "Новых в этом месяце"
-  },
-  {
-    title: "Замороженные средства",
-    value: "$450.00",
-    change: "-5.2%",
-    trend: "down" as const,
-    icon: Snowflake,
-    description: "Ожидают разморозки"
-  },
-  {
-    title: "Месячная активация",
-    value: "$85.50",
-    change: "85.5%",
-    trend: "up" as const,
-    icon: Calendar,
-    description: "из $100 требуемых"
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { useBalance } from "@/hooks/useBalance";
+import { useNetworkStats } from "@/hooks/useNetworkStats";
+import { formatCents } from "@/utils/formatMoney";
 
 export function DashboardStats() {
+  const { data: balance, isLoading: balanceLoading } = useBalance();
+  const { data: networkStats, isLoading: statsLoading } = useNetworkStats();
+
+  const stats = [
+    {
+      title: "Доступный баланс",
+      value: balanceLoading ? null : formatCents(balance?.available_cents || 0, 'USD'),
+      change: "+0%",
+      trend: "up" as const,
+      icon: DollarSign,
+      description: "Доступно для вывода"
+    },
+    {
+      title: "Активные партнёры",
+      value: statsLoading ? null : String(networkStats?.active_partners || 0),
+      change: statsLoading ? null : `+${networkStats?.new_this_month || 0}`,
+      trend: "up" as const,
+      icon: Users,
+      description: "Новых в этом месяце"
+    },
+    {
+      title: "Замороженные средства",
+      value: balanceLoading ? null : formatCents(balance?.frozen_cents || 0, 'USD'),
+      change: "-0%",
+      trend: "down" as const,
+      icon: Snowflake,
+      description: "Ожидают разморозки"
+    },
+    {
+      title: "Комиссии за месяц",
+      value: statsLoading ? null : formatCents(Math.round((networkStats?.commissions_this_month || 0) * 100), 'USD'),
+      change: "+0%",
+      trend: "up" as const,
+      icon: DollarSign,
+      description: "Заработано в этом месяце"
+    },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         const isUp = stat.trend === "up";
+        const isLoading = stat.value === null;
         
         return (
           <Card key={stat.title} className="financial-card">
@@ -54,27 +61,36 @@ export function DashboardStats() {
               <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center space-x-2 mt-2">
-                <Badge 
-                  variant="secondary" 
-                  className={
-                    isUp ? "profit-indicator" : "loss-indicator"
-                  }
-                >
-                  {isUp ? (
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1" />
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-24 mb-2" />
+                  <Skeleton className="h-5 w-16 mb-2" />
+                  <Skeleton className="h-4 w-32" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  {stat.change && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Badge 
+                        variant="secondary" 
+                        className={
+                          isUp ? "profit-indicator" : "loss-indicator"
+                        }
+                      >
+                        {isUp ? (
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 mr-1" />
+                        )}
+                        {stat.change}
+                      </Badge>
+                    </div>
                   )}
-                  {stat.change}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stat.description}
-              </p>
-              {stat.title === "Месячная активация" && (
-                <Progress value={85.5} className="mt-3" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {stat.description}
+                  </p>
+                </>
               )}
             </CardContent>
           </Card>
