@@ -210,13 +210,13 @@ export default function Shop() {
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Магазин</h1>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Магазин</h1>
         <Button
           onClick={() => window.location.href = "/shop/cart"}
           variant="outline"
-          className="relative"
+          className="relative w-full sm:w-auto"
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
           Корзина
@@ -229,36 +229,40 @@ export default function Shop() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="grid grid-cols-2 sm:flex gap-2 mb-6">
         <Button
           variant={filter === "all" ? "default" : "outline"}
           onClick={() => setFilter("all")}
+          className="text-xs sm:text-sm"
         >
           Все товары
         </Button>
         <Button
           variant={filter === "activation" ? "default" : "outline"}
           onClick={() => setFilter("activation")}
+          className="text-xs sm:text-sm"
         >
           Активационные
         </Button>
         <Button
           variant={filter === "popular" ? "default" : "outline"}
           onClick={() => setFilter("popular")}
+          className="text-xs sm:text-sm"
         >
           Популярные
         </Button>
         <Button
           variant={filter === "new" ? "default" : "outline"}
           onClick={() => setFilter("new")}
+          className="text-xs sm:text-sm"
         >
           Новинки
         </Button>
       </div>
 
       {/* Search and controls */}
-      <div className="flex gap-4 mb-6 flex-wrap items-center">
-        <div className="flex-1 min-w-[250px]">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -270,35 +274,37 @@ export default function Shop() {
           </div>
         </div>
 
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Сортировка" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="title-asc">По названию (А-Я)</SelectItem>
-            <SelectItem value="title-desc">По названию (Я-А)</SelectItem>
-            <SelectItem value="price-asc">По цене (возр.)</SelectItem>
-            <SelectItem value="price-desc">По цене (убыв.)</SelectItem>
-            <SelectItem value="date-new">Сначала новые</SelectItem>
-            <SelectItem value="date-old">Сначала старые</SelectItem>
-          </SelectContent>
-        </Select>
-
         <div className="flex gap-2">
-          <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("grid")}
-          >
-            <Grid className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="w-4 h-4" />
-          </Button>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title-asc">По названию (А-Я)</SelectItem>
+              <SelectItem value="title-desc">По названию (Я-А)</SelectItem>
+              <SelectItem value="price-asc">По цене (возр.)</SelectItem>
+              <SelectItem value="price-desc">По цене (убыв.)</SelectItem>
+              <SelectItem value="date-new">Сначала новые</SelectItem>
+              <SelectItem value="date-old">Сначала старые</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

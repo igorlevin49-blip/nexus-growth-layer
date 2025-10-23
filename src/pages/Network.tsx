@@ -116,19 +116,19 @@ export default function Network() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Моя сеть</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Моя сеть</h1>
           <p className="text-muted-foreground mt-1">Управление партнёрской структурой</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={handleExport}>
             <Download className="h-4 w-4" />
-            Экспорт
+            <span className="sm:inline">Экспорт</span>
           </Button>
-          <Button className="gap-2" onClick={handleCopyLink}>
+          <Button className="gap-2 w-full sm:w-auto" onClick={handleCopyLink}>
             <UserPlus className="h-4 w-4" />
-            Пригласить партнёра
+            <span className="sm:inline">Пригласить партнёра</span>
           </Button>
         </div>
       </div>
@@ -181,10 +181,18 @@ export default function Network() {
       <Card>
         <CardHeader>
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="tree">Дерево структуры</TabsTrigger>
-              <TabsTrigger value="list">Список партнёров</TabsTrigger>
-              <TabsTrigger value="activity">Активность</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="tree" className="text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">Дерево структуры</span>
+                <span className="sm:hidden">Дерево</span>
+              </TabsTrigger>
+              <TabsTrigger value="list" className="text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">Список партнёров</span>
+                <span className="sm:hidden">Список</span>
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="text-xs sm:text-sm px-2 py-2">
+                Активность
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="tree" className="space-y-4">
@@ -259,7 +267,7 @@ export default function Network() {
         </CardHeader>
       </Card>
 
-      <Card><CardContent className="p-6"><div className="flex justify-between"><code className="text-sm">{window.location.origin}/register</code><div className="flex gap-2"><Button size="sm" onClick={handleCopyLink}><Copy className="h-4 w-4 mr-2" />Копировать</Button><Button size="sm" onClick={handleShareLink}><Share2 className="h-4 w-4 mr-2" />Поделиться</Button></div></div></CardContent></Card>
+      <Card><CardContent className="p-4 sm:p-6"><div className="flex flex-col sm:flex-row sm:justify-between gap-4"><code className="text-xs sm:text-sm break-all">{window.location.origin}/register</code><div className="flex flex-col sm:flex-row gap-2"><Button size="sm" className="w-full sm:w-auto" onClick={handleCopyLink}><Copy className="h-4 w-4 mr-2" />Копировать</Button><Button size="sm" className="w-full sm:w-auto" onClick={handleShareLink}><Share2 className="h-4 w-4 mr-2" />Поделиться</Button></div></div></CardContent></Card>
       
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
         <DialogContent><DialogHeader><DialogTitle>Карточка партнёра</DialogTitle></DialogHeader>{selectedMember && (<div className="space-y-4"><h3 className="font-semibold">{selectedMember.full_name}</h3><p className="text-sm">{selectedMember.email}</p></div>)}</DialogContent>

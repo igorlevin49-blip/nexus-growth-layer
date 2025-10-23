@@ -90,9 +90,9 @@ export default function Settings() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Настройки</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Настройки</h1>
           <p className="text-muted-foreground">
             Управление профилем, безопасностью и уведомлениями
           </p>
@@ -103,12 +103,25 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="profile">Профиль</TabsTrigger>
-          <TabsTrigger value="security">Безопасность</TabsTrigger>
-          <TabsTrigger value="notifications">Уведомления</TabsTrigger>
-          <TabsTrigger value="payments">Платежи</TabsTrigger>
-          <TabsTrigger value="preferences">Предпочтения</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+          <TabsTrigger value="profile" className="text-xs sm:text-sm px-2 py-2">
+            Профиль
+          </TabsTrigger>
+          <TabsTrigger value="security" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">Безопасность</span>
+            <span className="sm:hidden">Защита</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="text-xs sm:text-sm px-2 py-2 col-span-2 sm:col-span-1">
+            <span className="hidden sm:inline">Уведомления</span>
+            <span className="sm:hidden">Уведомл.</span>
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="text-xs sm:text-sm px-2 py-2">
+            Платежи
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="text-xs sm:text-sm px-2 py-2 col-span-2 sm:col-span-1 lg:col-span-1">
+            <span className="hidden sm:inline">Предпочтения</span>
+            <span className="sm:hidden">Настройки</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">

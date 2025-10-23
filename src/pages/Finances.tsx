@@ -69,16 +69,16 @@ export default function Finances() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Финансы</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Финансы</h1>
           <p className="text-muted-foreground">
             Управление балансом, комиссиями и выводом средств
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -88,7 +88,7 @@ export default function Finances() {
               <SelectItem value="year">За год</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Отчёт
           </Button>
@@ -143,18 +143,20 @@ export default function Finances() {
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="financial-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-success" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Wallet className="h-6 w-6 text-success" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Вывести средства</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Доступно: {balance ? formatCents(balance.available_cents) : "$0.00"}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Вывести средства</h3>
-                <p className="text-sm text-muted-foreground">
-                  Доступно: {balance ? formatCents(balance.available_cents) : "$0.00"}
-                </p>
-              </div>
-              <Button className="hero-gradient border-0" onClick={() => setWithdrawalOpen(true)}>
+              <Button className="hero-gradient border-0 w-full sm:w-auto" onClick={() => setWithdrawalOpen(true)}>
                 Вывести
               </Button>
             </div>
@@ -162,16 +164,18 @@ export default function Finances() {
         </Card>
 
         <Card className="financial-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-primary" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Способы оплаты</h3>
+                  <p className="text-sm text-muted-foreground">Управление картами</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Способы оплаты</h3>
-                <p className="text-sm text-muted-foreground">Управление картами</p>
-              </div>
-              <Button variant="outline" onClick={() => setPaymentMethodsOpen(true)}>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={() => setPaymentMethodsOpen(true)}>
                 Настроить
               </Button>
             </div>
@@ -179,16 +183,18 @@ export default function Finances() {
         </Card>
 
         <Card className="financial-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-warning" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Calendar className="h-6 w-6 text-warning" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Автовывод</h3>
+                  <p className="text-sm text-muted-foreground">Не настроен</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Автовывод</h3>
-                <p className="text-sm text-muted-foreground">Не настроен</p>
-              </div>
-              <Button variant="outline" onClick={() => setAutoWithdrawOpen(true)}>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={() => setAutoWithdrawOpen(true)}>
                 Включить
               </Button>
             </div>
@@ -198,10 +204,18 @@ export default function Finances() {
 
       {/* Tabs */}
       <Tabs defaultValue="transactions" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="transactions">История операций</TabsTrigger>
-          <TabsTrigger value="commissions">Комиссионная структура</TabsTrigger>
-          <TabsTrigger value="analytics">Аналитика</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="transactions" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">История операций</span>
+            <span className="sm:hidden">История</span>
+          </TabsTrigger>
+          <TabsTrigger value="commissions" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">Комиссионная структура</span>
+            <span className="sm:hidden">Комиссии</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 py-2">
+            Аналитика
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="transactions" className="space-y-6">

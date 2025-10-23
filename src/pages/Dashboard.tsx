@@ -10,10 +10,10 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
-      <div className="hero-gradient rounded-lg p-6 text-white">
-        <div className="flex items-center justify-between">
+      <div className="hero-gradient rounded-lg p-4 sm:p-6 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Добро пожаловать, Иван!</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Добро пожаловать, Иван!</h1>
             <p className="text-white/80 mb-4">
               Ваша подписка активна. Продолжайте развивать свою сеть и достигать новых целей.
             </p>
@@ -28,9 +28,9 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="hidden md:block text-right">
+          <div className="sm:text-right">
             <div className="text-sm text-white/80 mb-1">Ваш ID</div>
-            <div className="text-2xl font-bold">#12345</div>
+            <div className="text-xl sm:text-2xl font-bold">#12345</div>
           </div>
         </div>
       </div>
