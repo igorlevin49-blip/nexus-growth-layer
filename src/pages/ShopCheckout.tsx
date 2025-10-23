@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle } from "lucide-react";
 
@@ -123,8 +123,7 @@ export default function ShopCheckout() {
       if (itemsError) throw itemsError;
 
       setOrderId(order.id);
-      toast({
-        title: "Заказ создан",
+      toast.success("Заказ создан", {
         description: "Переходим к оплате...",
       });
 
@@ -132,10 +131,8 @@ export default function ShopCheckout() {
       setTimeout(() => handlePayment(order.id), 1000);
     } catch (error) {
       console.error("Error creating order:", error);
-      toast({
-        title: "Ошибка",
+      toast.error("Ошибка", {
         description: "Не удалось создать заказ",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -156,16 +153,13 @@ export default function ShopCheckout() {
       localStorage.removeItem("cart");
       setOrderCompleted(true);
 
-      toast({
-        title: "Оплата успешна!",
+      toast.success("Оплата успешна!", {
         description: "Спасибо за покупку",
       });
     } catch (error) {
       console.error("Error processing payment:", error);
-      toast({
-        title: "Ошибка оплаты",
+      toast.error("Ошибка оплаты", {
         description: "Попробуйте еще раз",
-        variant: "destructive",
       });
     }
   };

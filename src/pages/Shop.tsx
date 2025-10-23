@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/Shop/ProductCard";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
@@ -85,10 +85,8 @@ export default function Shop() {
       setProducts(data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast({
-        title: "Ошибка",
+      toast.error("Ошибка", {
         description: "Не удалось загрузить товары",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -103,10 +101,8 @@ export default function Shop() {
     const currentQty = existingItem ? existingItem.quantity : 0;
 
     if (product.stock !== null && currentQty >= product.stock) {
-      toast({
-        title: "Недостаточно товара",
+      toast.error("Недостаточно товара", {
         description: `В наличии только ${product.stock} шт.`,
-        variant: "destructive",
       });
       return;
     }
@@ -123,8 +119,7 @@ export default function Shop() {
       setCartItems([...cartItems, { productId, quantity: 1 }]);
     }
 
-    toast({
-      title: "Добавлено в корзину",
+    toast.success("Добавлено в корзину", {
       description: product.title,
     });
   };
@@ -141,10 +136,8 @@ export default function Shop() {
 
     const product = products.find((p) => p.id === productId);
     if (product && product.stock !== null && quantity > product.stock) {
-      toast({
-        title: "Недостаточно товара",
+      toast.error("Недостаточно товара", {
         description: `В наличии только ${product.stock} шт.`,
-        variant: "destructive",
       });
       return;
     }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -50,10 +50,8 @@ export default function AdminShopSettings() {
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
-      toast({
-        title: "Ошибка",
+      toast.error("Ошибка", {
         description: "Не удалось загрузить настройки",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -73,16 +71,13 @@ export default function AdminShopSettings() {
         .eq("id", 1);
 
       if (error) throw error;
-      toast({
-        title: "Настройки сохранены",
+      toast.success("Настройки сохранены", {
         description: "Изменения применены успешно",
       });
     } catch (error) {
       console.error("Error saving settings:", error);
-      toast({
-        title: "Ошибка",
+      toast.error("Ошибка", {
         description: "Не удалось сохранить настройки",
-        variant: "destructive",
       });
     } finally {
       setSaving(false);

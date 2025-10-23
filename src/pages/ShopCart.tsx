@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
@@ -81,10 +81,8 @@ export default function ShopCart() {
 
     const product = products.find((p) => p.id === productId);
     if (product && product.stock !== null && quantity > product.stock) {
-      toast({
-        title: "Недостаточно товара",
+      toast.error("Недостаточно товара", {
         description: `В наличии только ${product.stock} шт.`,
-        variant: "destructive",
       });
       return;
     }
@@ -98,24 +96,18 @@ export default function ShopCart() {
   const handleRemoveItem = (productId: string) => {
     const updatedItems = cartItems.filter((item) => item.productId !== productId);
     saveCart(updatedItems);
-    toast({
-      title: "Удалено из корзины",
-    });
+    toast.success("Удалено из корзины");
   };
 
   const handleClearCart = () => {
     saveCart([]);
-    toast({
-      title: "Корзина очищена",
-    });
+    toast.success("Корзина очищена");
   };
 
   const handleCheckout = () => {
     if (!user) {
-      toast({
-        title: "Требуется авторизация",
+      toast.error("Требуется авторизация", {
         description: "Для оформления заказа необходимо войти в систему",
-        variant: "destructive",
       });
       navigate("/login");
       return;
