@@ -22,6 +22,7 @@ interface ProductCardProps {
   viewMode?: "grid" | "list";
   cartQuantity?: number;
   onUpdateQuantity?: (productId: string, quantity: number) => void;
+  currency?: "USD" | "KZT";
 }
 
 export function ProductCard({ 
@@ -29,9 +30,15 @@ export function ProductCard({
   onAddToCart, 
   viewMode = "grid",
   cartQuantity = 0,
-  onUpdateQuantity 
+  onUpdateQuantity,
+  currency = "USD"
 }: ProductCardProps) {
   const isOutOfStock = product.stock !== null && product.stock === 0;
+  
+  const displayPrice = currency === "USD" ? product.price_usd : product.price_kzt;
+  const displayCurrencySymbol = currency === "USD" ? "$" : "₸";
+  const secondaryPrice = currency === "USD" ? product.price_kzt : product.price_usd;
+  const secondaryCurrencySymbol = currency === "USD" ? "₸" : "$";
 
   if (viewMode === "list") {
     return (
@@ -71,10 +78,10 @@ export function ProductCard({
                 )}
                 <div className="flex gap-4">
                   <div>
-                    <span className="text-2xl font-bold">${product.price_usd}</span>
+                    <span className="text-2xl font-bold">{displayCurrencySymbol}{displayPrice}</span>
                   </div>
                   <div className="text-muted-foreground">
-                    <span className="text-lg">{product.price_kzt} ₸</span>
+                    <span className="text-lg">{secondaryCurrencySymbol}{secondaryPrice}</span>
                   </div>
                 </div>
                 {product.stock !== null && product.stock > 0 && (
@@ -158,8 +165,8 @@ export function ProductCard({
           </p>
         )}
         <div className="mb-4">
-          <div className="text-2xl font-bold">${product.price_usd}</div>
-          <div className="text-sm text-muted-foreground">{product.price_kzt} ₸</div>
+          <div className="text-2xl font-bold">{displayCurrencySymbol}{displayPrice}</div>
+          <div className="text-sm text-muted-foreground">{secondaryCurrencySymbol}{secondaryPrice}</div>
         </div>
         {product.stock !== null && product.stock > 0 && (
           <p className="text-xs text-muted-foreground mb-4">

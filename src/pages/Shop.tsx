@@ -44,6 +44,7 @@ export default function Shop() {
   const [viewMode, setViewMode] = useState<"grid" | "list">((searchParams.get("view") as "grid" | "list") || "grid");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "title-asc");
   const [filter, setFilter] = useState<FilterType>((searchParams.get("filter") as FilterType) || "all");
+  const [currency, setCurrency] = useState<"USD" | "KZT">("USD");
 
   // Load cart from localStorage
   useEffect(() => {
@@ -58,10 +59,28 @@ export default function Shop() {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Load products
+  // Load products and settings
   useEffect(() => {
     fetchProducts();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("shop_settings")
+        .select("currency")
+        .eq("id", 1)
+        .single();
+      
+      if (error) throw error;
+      if (data) {
+        setCurrency(data.currency);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  };
 
   // Update URL params
   useEffect(() => {
@@ -174,9 +193,13 @@ export default function Shop() {
       case "title-desc":
         return b.title.localeCompare(a.title);
       case "price-asc":
-        return a.price_usd - b.price_usd;
+        const priceA = currency === "USD" ? a.price_usd : a.price_kzt;
+        const priceB = currency === "USD" ? b.price_usd : b.price_kzt;
+        return priceA - priceB;
       case "price-desc":
-        return b.price_usd - a.price_usd;
+        const priceA2 = currency === "USD" ? a.price_usd : a.price_kzt;
+        const priceB2 = currency === "USD" ? b.price_usd : b.price_kzt;
+        return priceB2 - priceA2;
       case "date-new":
         return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       case "date-old":
@@ -189,7 +212,8 @@ export default function Shop() {
   // Calculate cart totals
   const cartTotal = cartItems.reduce((sum, item) => {
     const product = products.find((p) => p.id === item.productId);
-    return sum + (product ? product.price_usd * item.quantity : 0);
+    const price = currency === "USD" ? product?.price_usd : product?.price_kzt;
+    return sum + (price ? price * item.quantity : 0);
   }, 0);
 
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -330,6 +354,7 @@ export default function Shop() {
                   ?.quantity || 0
               }
               onUpdateQuantity={handleUpdateQuantity}
+              currency={currency}
             />
           ))}
         </div>

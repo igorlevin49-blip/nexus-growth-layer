@@ -29,6 +29,7 @@ export default function ShopCheckout() {
   const [rate, setRate] = useState(450);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<"USD" | "KZT">("USD");
 
   useEffect(() => {
     if (!user) {
@@ -67,11 +68,14 @@ export default function ShopCheckout() {
     try {
       const { data, error } = await supabase
         .from("shop_settings")
-        .select("rate_usd_kzt")
+        .select("rate_usd_kzt, currency")
         .eq("id", 1)
         .single();
       if (error) throw error;
-      if (data) setRate(Number(data.rate_usd_kzt));
+      if (data) {
+        setRate(Number(data.rate_usd_kzt));
+        setCurrency(data.currency);
+      }
     } catch (error) {
       console.error("Error fetching rate:", error);
     }
@@ -169,12 +173,21 @@ export default function ShopCheckout() {
     return sum + (product ? product.price_usd * item.quantity : 0);
   }, 0);
 
-  const totalKzt = totalUsd * rate;
+  const totalKzt = cartItems.reduce((sum, item) => {
+    const product = products.find((p) => p.id === item.productId);
+    return sum + (product ? product.price_kzt * item.quantity : 0);
+  }, 0);
 
   const activationTotal = cartItems.reduce((sum, item) => {
     const product = products.find((p) => p.id === item.productId);
-    return sum + (product && product.is_activation ? product.price_usd * item.quantity : 0);
+    if (!product || !product.is_activation) return sum;
+    return sum + (currency === "USD" ? product.price_usd * item.quantity : product.price_kzt * item.quantity);
   }, 0);
+
+  const displayTotal = currency === "USD" ? totalUsd : totalKzt;
+  const displayCurrency = currency === "USD" ? "$" : "₸";
+  const secondaryTotal = currency === "USD" ? totalKzt : totalUsd;
+  const secondaryCurrency = currency === "USD" ? "₸" : "$";
 
   if (orderCompleted) {
     return (
@@ -187,7 +200,7 @@ export default function ShopCheckout() {
           </p>
           {activationTotal > 0 && (
             <p className="mb-6 text-lg">
-              Активационные товары на сумму <strong>${activationTotal.toFixed(2)}</strong> учтены в вашем прогрессе
+              Активационные товары на сумму <strong>{displayCurrency}{activationTotal.toFixed(2)}</strong> учтены в вашем прогрессе
             </p>
           )}
           <div className="flex gap-4 justify-center">
@@ -237,10 +250,10 @@ export default function ShopCheckout() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold">
-                          ${(product.price_usd * item.quantity).toFixed(2)}
+                          {currency === "USD" ? `$${(product.price_usd * item.quantity).toFixed(2)}` : `${(product.price_kzt * item.quantity).toFixed(2)} ₸`}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {(product.price_kzt * item.quantity).toFixed(2)} ₸
+                          {currency === "USD" ? `${(product.price_kzt * item.quantity).toFixed(2)} ₸` : `$${(product.price_usd * item.quantity).toFixed(2)}`}
                         </div>
                       </div>
                     </div>
@@ -262,18 +275,18 @@ export default function ShopCheckout() {
                   <div className="bg-primary/10 p-4 rounded-lg">
                     <p className="text-sm font-medium">Активационные товары</p>
                     <p className="text-2xl font-bold text-primary">
-                      ${activationTotal.toFixed(2)}
+                      {displayCurrency}{activationTotal.toFixed(2)}
                     </p>
                   </div>
                 )}
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-2xl font-bold mb-2">
                     <span>Итого:</span>
-                    <span>${totalUsd.toFixed(2)}</span>
+                    <span>{displayCurrency}{displayTotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>В тенге:</span>
-                    <span>{totalKzt.toFixed(2)} ₸</span>
+                    <span>{currency === "USD" ? "В тенге:" : "В долларах:"}</span>
+                    <span>{secondaryCurrency}{secondaryTotal.toFixed(2)}</span>
                   </div>
                 </div>
                 <Button
