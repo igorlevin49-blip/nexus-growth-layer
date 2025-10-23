@@ -57,12 +57,10 @@ export default function Network() {
   const maxLevel = filterLevel === 'all' ? 10 : parseInt(filterLevel);
   
   const { data: stats, isLoading: statsLoading } = useNetworkStats();
-  const { data: networkMembers, isLoading: membersLoading } = useNetworkTree(maxLevel);
-  const { data: activities, isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
+  const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevel);
+  const { data: activities = [], isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
 
   const filteredMembers = useMemo(() => {
-    if (!networkMembers) return [];
-    
     return networkMembers.filter(member => {
       const matchesSearch = !searchQuery || 
         member.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -135,28 +133,50 @@ export default function Network() {
         </div>
       </div>
 
-      {statsLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20" /></CardContent></Card>
-          ))}
-        </div>
-      ) : stats && (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Всего партнёров</p><p className="text-2xl font-bold">{stats.total_partners}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Активных</p><p className="text-2xl font-bold text-success">{stats.active_partners}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Заморожено</p><p className="text-2xl font-bold text-warning">{stats.frozen_partners}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Уровней</p><p className="text-2xl font-bold">{stats.max_level}</p></CardContent></Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Новые партнёры</p><p className="text-2xl font-bold">{stats.new_this_month}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Активации</p><p className="text-2xl font-bold">{stats.activations_this_month}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">${stats.volume_this_month.toFixed(0)}</p></CardContent></Card>
-            <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Комиссии</p><p className="text-2xl font-bold">${stats.commissions_this_month.toFixed(0)}</p></CardContent></Card>
-          </div>
-        </>
-      )}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Всего партнёров</p><p className="text-2xl font-bold">{stats?.total_partners || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Активных</p><p className="text-2xl font-bold text-success">{stats?.active_partners || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Заморожено</p><p className="text-2xl font-bold text-warning">{stats?.frozen_partners || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Уровней</p><p className="text-2xl font-bold">{stats?.max_level || 0}</p></>
+          )}
+        </CardContent></Card>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Новые партнёры</p><p className="text-2xl font-bold">{stats?.new_this_month || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Активации</p><p className="text-2xl font-bold">{stats?.activations_this_month || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">${stats?.volume_this_month.toFixed(0) || 0}</p></>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {statsLoading ? <Skeleton className="h-20" /> : (
+            <><p className="text-sm text-muted-foreground">Комиссии</p><p className="text-2xl font-bold">${stats?.commissions_this_month.toFixed(0) || 0}</p></>
+          )}
+        </CardContent></Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -187,11 +207,25 @@ export default function Network() {
                   </SelectContent>
                 </Select>
               </div>
-              {membersLoading ? <Skeleton className="h-40" /> : <NetworkTree members={filteredMembers} />}
+              {membersLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                </div>
+              ) : (
+                <NetworkTree members={filteredMembers} />
+              )}
             </TabsContent>
 
             <TabsContent value="list">
-              {membersLoading ? <Skeleton className="h-40" /> : filteredMembers.length === 0 ? (
+              {membersLoading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16" />
+                  ))}
+                </div>
+              ) : filteredMembers.length === 0 ? (
                 <div className="text-center py-12"><Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Партнёры не найдены</p></div>
               ) : (
                 <div className="space-y-2">{filteredMembers.map(m => (
@@ -204,7 +238,13 @@ export default function Network() {
             </TabsContent>
 
             <TabsContent value="activity">
-              {activitiesLoading ? <Skeleton className="h-40" /> : !activities?.length ? (
+              {activitiesLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16" />
+                  ))}
+                </div>
+              ) : activities.length === 0 ? (
                 <div className="text-center py-12"><Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Нет активности</p></div>
               ) : (
                 <div className="space-y-4">{activities.map(a => (

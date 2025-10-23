@@ -31,6 +31,8 @@ export function useNetworkTree(maxLevel: number = 10) {
 
       if (error) throw error;
       return (data || []) as NetworkMember[];
-    }
+    },
+    staleTime: 30000,
+    placeholderData: []
   });
 }

@@ -34,6 +34,7 @@ export function useNetworkStats() {
         volume_this_month: 0,
         commissions_this_month: 0
       };
-    }
+    },
+    staleTime: 30000
   });
 }
