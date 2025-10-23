@@ -7,6 +7,7 @@ import { ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { PayActivationButton } from "./PayActivationButton";
 
 export function ActivationProgress() {
   const { user } = useAuth();
@@ -125,16 +126,20 @@ export function ActivationProgress() {
         </div>
 
         {!isActivated && (
-          <div className="pt-3 border-t">
+          <div className="pt-3 border-t space-y-3">
+            <PayActivationButton 
+              requiredAmountCents={Math.round(requiredAmount * 100)}
+              currentAmountCents={Math.round(currentAmount * 100)}
+            />
             <Button
               onClick={() => navigate("/shop?filter=activation")}
               className="w-full"
-              variant="default"
+              variant="outline"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               Активационные товары
             </Button>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Для получения MLM-бонусов необходима месячная активация
             </p>
           </div>

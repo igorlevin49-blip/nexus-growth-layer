@@ -11,12 +11,31 @@ import { useNetworkTree } from "@/hooks/useNetworkTree";
 import { useTransactions } from "@/hooks/useTransactions";
 import { toast } from "sonner";
 import { formatCents } from "@/utils/formatMoney";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: networkMembers = [] } = useNetworkTree(10);
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions({ limit: 3 });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle payment result
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast.success('Оплата успешно завершена!', {
+        description: 'Ваша активация обновлена.',
+      });
+      setSearchParams({});
+    } else if (paymentStatus === 'failure') {
+      toast.error('Оплата не завершена', {
+        description: 'Попробуйте снова или обратитесь в поддержку.',
+      });
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   // Get user display name
   const getUserName = () => {

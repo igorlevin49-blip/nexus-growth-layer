@@ -1,1 +1,7 @@
 project_id = "mxqukplimaeilkpvihpr"
+
+[functions.freedompay-create-payment]
+verify_jwt = true
+
+[functions.freedompay-callback]
+verify_jwt = false
