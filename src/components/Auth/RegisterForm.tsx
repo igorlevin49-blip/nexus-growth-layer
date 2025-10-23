@@ -1,25 +1,44 @@
-import { useState } from "react";
-import { Eye, EyeOff, UserPlus, Phone, Mail, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { APP_CONFIG } from "@/config/constants";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Get referral code from URL or cookie
+  useEffect(() => {
+    const refFromUrl = searchParams.get('ref');
+    const refFromCookie = localStorage.getItem(APP_CONFIG.REFERRAL_COOKIE_KEY);
+    
+    if (refFromUrl) {
+      setReferralCode(refFromUrl);
+      // Save to cookie for 30 days
+      localStorage.setItem(APP_CONFIG.REFERRAL_COOKIE_KEY, refFromUrl);
+    } else if (refFromCookie) {
+      setReferralCode(refFromCookie);
+    }
+  }, [searchParams]);
 
   // Redirect if already logged in
   if (user) {
@@ -65,6 +84,12 @@ export function RegisterForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      toast.error("Пароли не совпадают");
+      return;
+    }
+
     // Validate password strength
     const passwordError = validatePassword(password);
     if (passwordError) {
@@ -87,9 +112,27 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Find sponsor by referral code if provided
+      let sponsorId: string | null = null;
+      if (referralCode) {
+        const { data: sponsorProfile, error: sponsorError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', referralCode.trim())
+          .maybeSingle();
+        
+        if (sponsorProfile) {
+          sponsorId = sponsorProfile.id;
+        } else if (!sponsorError) {
+          toast.warning("Код приглашения не найден", {
+            description: "Регистрация продолжается без реферера",
+          });
+        }
+      }
+
+      const redirectUrl = `${APP_CONFIG.DOMAIN}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -100,23 +143,36 @@ export function RegisterForm() {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      // Update profile with phone
-      const { data: { user: newUser } } = await supabase.auth.getUser();
-      if (newUser && phone) {
-        const normalizedPhone = normalizePhone(phone);
+      // Update profile with additional data
+      if (authData.user) {
+        const updateData: any = {
+          full_name: fullName,
+        };
+        
+        if (phone) {
+          updateData.phone = normalizePhone(phone);
+        }
+        
+        if (sponsorId) {
+          updateData.sponsor_id = sponsorId;
+        }
+
         await supabase
           .from('profiles')
-          .update({ phone: normalizedPhone })
-          .eq('id', newUser.id);
+          .update(updateData)
+          .eq('id', authData.user.id);
+
+        // Clear referral cookie after successful registration
+        localStorage.removeItem(APP_CONFIG.REFERRAL_COOKIE_KEY);
       }
 
       toast.success("Регистрация успешна", {
         description: "Добро пожаловать в систему!",
       });
 
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error("Ошибка регистрации", {
         description: error.message || "Не удалось зарегистрироваться",
@@ -125,9 +181,6 @@ export function RegisterForm() {
       setLoading(false);
     }
   };
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [registrationType, setRegistrationType] = useState("phone");
-  const [acceptTerms, setAcceptTerms] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -144,186 +197,123 @@ export function RegisterForm() {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Personal Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Личные данные</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Имя *</Label>
-                  <Input
-                    id="firstName"
-                    placeholder="Иван"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Фамилия *</Label>
-                  <Input
-                    id="lastName"
-                    placeholder="Иванов"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Method Selection */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Способ регистрации</h3>
-              <Tabs value={registrationType} onValueChange={setRegistrationType} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="phone" className="flex items-center space-x-1">
-                    <Phone className="h-3 w-3" />
-                    <span className="hidden sm:inline">Телефон</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="email" className="flex items-center space-x-1">
-                    <Mail className="h-3 w-3" />
-                    <span className="hidden sm:inline">Email</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="telegram" className="flex items-center space-x-1">
-                    <MessageCircle className="h-3 w-3" />
-                    <span className="hidden sm:inline">Telegram</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="phone" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Номер телефона *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+7 (___) ___-__-__"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      На этот номер будет отправлен код подтверждения
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="email" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email адрес *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@domain.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      На этот email будет отправлена ссылка для подтверждения
-                    </p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="telegram" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="telegram">Логин Telegram *</Label>
-                    <Input
-                      id="telegram"
-                      placeholder="@username"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Подтверждение будет отправлено через Telegram бота
-                    </p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {/* Password Section */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Пароль</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Пароль *</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Минимум 8 символов"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+            <form onSubmit={handleRegister} className="space-y-6">
+              {/* Full Name */}
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Полное имя *</Label>
+                <Input
+                  id="fullName"
+                  placeholder="Иван Иванов"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   required
-                  minLength={8}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Подтвердите пароль *</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Повторите пароль"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                  minLength={2}
+                  maxLength={128}
+                />
               </div>
-            </div>
 
-            {/* Referral Code */}
-            <div className="space-y-2">
-              <Label htmlFor="referralCode">Код приглашения (опционально)</Label>
-              <Input
-                id="referralCode"
-                placeholder="Введите код, если вас пригласили"
-              />
-              <p className="text-xs text-muted-foreground">
-                Если у вас есть код приглашения от партнёра, введите его здесь
-              </p>
-            </div>
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Payment Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Платёжные данные</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Номер карты (для выплат)</Label>
+              {/* Phone (optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="phone">Телефон (опционально)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+7 (___) ___-__-__"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Пароль *</Label>
+                <div className="relative">
                   <Input
-                    id="cardNumber"
-                    placeholder="**** **** **** ****"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Минимум 8 символов"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Эти данные можно добавить позже в настройках профиля
+                  Минимум 8 символов, 1 буква и 1 цифра
                 </p>
               </div>
-            </div>
 
-            {/* Terms and Conditions */}
-            <div className="space-y-4">
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Подтвердите пароль *</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Повторите пароль"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Referral Code */}
+              <div className="space-y-2">
+                <Label htmlFor="referralCode">Код приглашения</Label>
+                <Input
+                  id="referralCode"
+                  placeholder="Введите код, если вас пригласили"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                />
+                {referralCode && (
+                  <p className="text-xs text-primary">
+                    ✓ Вы регистрируетесь по реферальной ссылке
+                  </p>
+                )}
+              </div>
+
+              {/* Terms and Conditions */}
               <div className="flex items-start space-x-2">
                 <Checkbox 
                   id="terms" 
@@ -331,7 +321,7 @@ export function RegisterForm() {
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                 />
                 <div className="space-y-1">
-                  <Label htmlFor="terms" className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <Label htmlFor="terms" className="text-sm leading-none">
                     Я принимаю{" "}
                     <a href="/docs/offer-agreement" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                       Договор оферты
@@ -341,15 +331,10 @@ export function RegisterForm() {
                       Политику конфиденциальности
                     </a>
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Также я согласен(на) получать уведомления о работе платформы
-                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <form onSubmit={handleRegister}>
+              {/* Submit Button */}
               <Button 
                 type="submit"
                 className="w-full hero-gradient border-0" 

@@ -12,8 +12,10 @@ import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { useNetworkStats } from "@/hooks/useNetworkStats";
 import { useNetworkTree, NetworkMember } from "@/hooks/useNetworkTree";
 import { useNetworkActivity } from "@/hooks/useNetworkActivity";
+import { useProfile } from "@/hooks/useProfile";
 import { exportNetworkToCSV } from "@/utils/exportCSV";
 import { toast } from "sonner";
+import { getReferralLink, APP_CONFIG } from "@/config/constants";
 
 const getActivityIcon = (type: string) => {
   switch (type) {
@@ -59,13 +61,14 @@ export default function Network() {
   const { data: stats, isLoading: statsLoading } = useNetworkStats();
   const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevel);
   const { data: activities = [], isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
+  const { data: profile } = useProfile();
 
   const filteredMembers = useMemo(() => {
     return networkMembers.filter(member => {
       const matchesSearch = !searchQuery || 
         member.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.referral_code.toLowerCase().includes(searchQuery.toLowerCase());
+        member.referral_code?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesLevel = filterLevel === 'all' || member.level === parseInt(filterLevel);
       
@@ -79,15 +82,19 @@ export default function Network() {
   }, [networkMembers, searchQuery, filterLevel, filterStatus]);
 
   const handleCopyLink = () => {
-    const domain = window.location.origin;
-    const referralLink = `${domain}/register`;
-    navigator.clipboard.writeText(referralLink);
-    toast.success("Реферальная ссылка скопирована!");
+    const refCode = (profile as any)?.referral_code;
+    if (refCode) {
+      const referralLink = getReferralLink(refCode);
+      navigator.clipboard.writeText(referralLink);
+      toast.success("Реферальная ссылка скопирована!");
+    }
   };
 
   const handleShareLink = async () => {
-    const domain = window.location.origin;
-    const referralLink = `${domain}/register`;
+    const refCode = (profile as any)?.referral_code;
+    if (!refCode) return;
+    
+    const referralLink = getReferralLink(refCode);
     
     if (navigator.share) {
       try {
@@ -267,7 +274,27 @@ export default function Network() {
         </CardHeader>
       </Card>
 
-      <Card><CardContent className="p-4 sm:p-6"><div className="flex flex-col sm:flex-row sm:justify-between gap-4"><code className="text-xs sm:text-sm break-all">{window.location.origin}/register</code><div className="flex flex-col sm:flex-row gap-2"><Button size="sm" className="w-full sm:w-auto" onClick={handleCopyLink}><Copy className="h-4 w-4 mr-2" />Копировать</Button><Button size="sm" className="w-full sm:w-auto" onClick={handleShareLink}><Share2 className="h-4 w-4 mr-2" />Поделиться</Button></div></div></CardContent></Card>
+      <Card>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+            <code className="text-xs sm:text-sm break-all">
+              {(profile as any)?.referral_code 
+                ? getReferralLink((profile as any).referral_code)
+                : `${APP_CONFIG.DOMAIN}/register`}
+            </code>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button size="sm" className="w-full sm:w-auto" onClick={handleCopyLink}>
+                <Copy className="h-4 w-4 mr-2" />
+                Копировать
+              </Button>
+              <Button size="sm" className="w-full sm:w-auto" onClick={handleShareLink}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Поделиться
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
         <DialogContent><DialogHeader><DialogTitle>Карточка партнёра</DialogTitle></DialogHeader>{selectedMember && (<div className="space-y-4"><h3 className="font-semibold">{selectedMember.full_name}</h3><p className="text-sm">{selectedMember.email}</p></div>)}</DialogContent>

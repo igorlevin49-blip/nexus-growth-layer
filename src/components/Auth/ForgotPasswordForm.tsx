@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import { APP_CONFIG } from "@/config/constants";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ export function ForgotPasswordForm() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${APP_CONFIG.DOMAIN}/reset-password`,
       });
 
       if (error) throw error;

@@ -14,6 +14,8 @@ import { formatCents } from "@/utils/formatMoney";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
+import { APP_CONFIG, getReferralLink } from "@/config/constants";
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -59,7 +61,7 @@ export default function Dashboard() {
   const copyReferralLink = () => {
     const refCode = (profile as any)?.referral_code;
     if (refCode) {
-      const link = `${window.location.origin}/register?ref=${refCode}`;
+      const link = getReferralLink(refCode);
       navigator.clipboard.writeText(link);
       toast.success("Реферальная ссылка скопирована!");
     }
@@ -153,7 +155,7 @@ export default function Dashboard() {
                 <div className="flex items-center space-x-2">
                   <code className="flex-1 bg-muted px-3 py-2 rounded text-xs break-all">
                     {(profile as any)?.referral_code 
-                      ? `${window.location.origin}/register?ref=${(profile as any).referral_code}`
+                      ? getReferralLink((profile as any).referral_code)
                       : 'Загрузка...'}
                   </code>
                   <Button 

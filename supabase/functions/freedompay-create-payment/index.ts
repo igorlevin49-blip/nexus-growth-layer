@@ -40,7 +40,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get('FREEDOMPAY_API_KEY');
     const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
     const apiUrl = Deno.env.get('FREEDOMPAY_API_URL') || 'https://api.freedompay.kz';
-    const appUrl = Deno.env.get('APP_URL') || 'https://mg-market.kz';
+    const appUrl = 'https://mg-market.kz';
 
     if (!merchantId || !apiKey || !secretKey) {
       throw new Error('Freedom Pay credentials not configured');

@@ -505,6 +505,54 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_user_id: string
+          referrer_id: string
+          structure_type: number
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_user_id: string
+          referrer_id: string
+          structure_type?: number
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+          referrer_id?: string
+          structure_type?: number
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string | null
@@ -763,6 +811,25 @@ export type Database = {
           referral_code: string
           subscription_status: string
           total_team: number
+          user_id: string
+        }[]
+      }
+      get_referral_network: {
+        Args: {
+          max_levels?: number
+          root_user_id: string
+          structure_type_param?: number
+        }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          level: number
+          monthly_activation_met: boolean
+          partner_id: string
+          referral_code: string
+          structure_type: number
+          subscription_status: string
           user_id: string
         }[]
       }
