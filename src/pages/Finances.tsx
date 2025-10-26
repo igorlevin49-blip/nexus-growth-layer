@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { DollarSign, TrendingUp, TrendingDown, Calendar, Download, CreditCard, Wallet } from "lucide-react";
+import { DollarSign, Calendar, Download, CreditCard, Wallet } from "lucide-react";
 import { useBalance } from "@/hooks/useBalance";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCommissionStructure } from "@/hooks/useCommissionStructure";
+import { useProfile } from "@/hooks/useProfile";
 import { formatCents } from "@/utils/formatMoney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { WithdrawalDialog } from "@/components/Finances/WithdrawalDialog";
 import { PaymentMethodsDialog } from "@/components/Finances/PaymentMethodsDialog";
 import { AutoWithdrawDialog } from "@/components/Finances/AutoWithdrawDialog";
+import { SubscriptionStructure } from "@/components/Finances/SubscriptionStructure";
+import { ProductStructure } from "@/components/Finances/ProductStructure";
 
 export default function Finances() {
   const [period, setPeriod] = useState("month");
@@ -22,13 +25,19 @@ export default function Finances() {
   
   // Get real data from hooks
   const { data: balance, isLoading: balanceLoading } = useBalance();
+  const { data: profile } = useProfile();
   const { data: transactions, isLoading: transactionsLoading } = useTransactions({
     type: transactionFilter === 'all' ? undefined : 
           transactionFilter === 'income' ? ['commission', 'bonus'] :
           transactionFilter === 'expense' ? ['withdrawal', 'purchase'] :
           undefined
   });
-  const { data: commissionLevels, isLoading: commissionsLoading } = useCommissionStructure({ structureType: 'primary' });
+  
+  // Структура 1 (Абонентская - 5 уровней)
+  const { data: structure1Levels, isLoading: structure1Loading } = useCommissionStructure({ structureType: 1 });
+  
+  // Структура 2 (Товарная - 10 уровней)
+  const { data: structure2Levels, isLoading: structure2Loading } = useCommissionStructure({ structureType: 2 });
   
   // Calculate period dates
   const getDateRange = () => {
@@ -204,14 +213,18 @@ export default function Finances() {
 
       {/* Tabs */}
       <Tabs defaultValue="transactions" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger value="transactions" className="text-xs sm:text-sm px-2 py-2">
-            <span className="hidden sm:inline">История операций</span>
+            <span className="hidden sm:inline">История</span>
             <span className="sm:hidden">История</span>
           </TabsTrigger>
-          <TabsTrigger value="commissions" className="text-xs sm:text-sm px-2 py-2">
-            <span className="hidden sm:inline">Комиссионная структура</span>
-            <span className="sm:hidden">Комиссии</span>
+          <TabsTrigger value="structure1" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">Абонентская</span>
+            <span className="sm:hidden">С1</span>
+          </TabsTrigger>
+          <TabsTrigger value="structure2" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">Товарная</span>
+            <span className="sm:hidden">С2</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 py-2">
             Аналитика
@@ -287,43 +300,22 @@ export default function Finances() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="commissions" className="space-y-6">
-          <Card className="financial-card">
-            <CardHeader>
-              <CardTitle>Комиссионная структура</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {commissionsLoading ? (
-                  <p className="text-center text-muted-foreground">Загрузка...</p>
-                ) : !commissionLevels || commissionLevels.length === 0 ? (
-                  <p className="text-center text-muted-foreground">Нет данных о комиссиях</p>
-                ) : (
-                  commissionLevels.map((level) => (
-                    <div key={level.level} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-bold text-sm">{level.level}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{level.description || `Уровень ${level.level}`}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Комиссия: {level.percent}%
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-success">{formatCents(level.earned || 0)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          из оборота {formatCents(level.volume || 0)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="structure1" className="space-y-6">
+          <SubscriptionStructure
+            levels={structure1Levels || []}
+            isLoading={structure1Loading}
+            directReferrals={0}
+            subscriptionExpiresAt={profile?.subscription_expires_at || null}
+          />
+        </TabsContent>
+
+        <TabsContent value="structure2" className="space-y-6">
+          <ProductStructure
+            levels={structure2Levels || []}
+            isLoading={structure2Loading}
+            subscriptionActive={profile?.subscription_status === 'active'}
+            monthlyActivationMet={profile?.monthly_activation_completed || false}
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">

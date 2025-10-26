@@ -18,6 +18,9 @@ export interface Profile {
   show_stats: boolean;
   allow_contacts: boolean;
   bio: string | null;
+  subscription_status?: string;
+  subscription_expires_at?: string | null;
+  monthly_activation_completed?: boolean;
 }
 
 export function useProfile() {

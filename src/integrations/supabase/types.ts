@@ -210,6 +210,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mlm_commission_rules: {
+        Row: {
+          created_at: string
+          effective_from: string
+          id: string
+          level: number
+          percent: number
+          plan_id: string
+          structure_type: number
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          id?: string
+          level: number
+          percent: number
+          plan_id?: string
+          structure_type: number
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          id?: string
+          level?: number
+          percent?: number
+          plan_id?: string
+          structure_type?: number
+        }
+        Relationships: []
+      }
       notification_settings: {
         Row: {
           created_at: string | null
@@ -423,6 +453,7 @@ export type Database = {
           balance: number | null
           bio: string | null
           created_at: string | null
+          direct_referrals_count: number | null
           email: string | null
           first_name: string | null
           full_name: string | null
@@ -437,6 +468,7 @@ export type Database = {
           referral_code: string
           show_stats: boolean | null
           sponsor_id: string | null
+          subscription_active: boolean | null
           subscription_expires_at: string | null
           subscription_status: string | null
           telegram_username: string | null
@@ -449,6 +481,7 @@ export type Database = {
           balance?: number | null
           bio?: string | null
           created_at?: string | null
+          direct_referrals_count?: number | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -463,6 +496,7 @@ export type Database = {
           referral_code?: string
           show_stats?: boolean | null
           sponsor_id?: string | null
+          subscription_active?: boolean | null
           subscription_expires_at?: string | null
           subscription_status?: string | null
           telegram_username?: string | null
@@ -475,6 +509,7 @@ export type Database = {
           balance?: number | null
           bio?: string | null
           created_at?: string | null
+          direct_referrals_count?: number | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -489,6 +524,7 @@ export type Database = {
           referral_code?: string
           show_stats?: boolean | null
           sponsor_id?: string | null
+          subscription_active?: boolean | null
           subscription_expires_at?: string | null
           subscription_status?: string | null
           telegram_username?: string | null
