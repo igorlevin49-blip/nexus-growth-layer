@@ -51,6 +51,7 @@ export function AppLayout() {
   const superAdminNavigation = [
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },
     { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },
+    { name: "MLM-настройки", href: "/admin/mlm-settings", icon: Settings },
   ];
 
   const getRoleLabel = (role: string | null) => {

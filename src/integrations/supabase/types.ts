@@ -215,6 +215,7 @@ export type Database = {
           created_at: string
           effective_from: string
           id: string
+          is_active: boolean
           level: number
           percent: number
           plan_id: string
@@ -224,6 +225,7 @@ export type Database = {
           created_at?: string
           effective_from?: string
           id?: string
+          is_active?: boolean
           level: number
           percent: number
           plan_id?: string
@@ -233,10 +235,32 @@ export type Database = {
           created_at?: string
           effective_from?: string
           id?: string
+          is_active?: boolean
           level?: number
           percent?: number
           plan_id?: string
           structure_type?: number
+        }
+        Relationships: []
+      }
+      mlm_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -819,6 +843,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_global_stats: {
+        Args: { end_date?: string; start_date?: string }
+        Returns: {
+          active_users_count: number
+          avg_order_cents: number
+          frozen_users_count: number
+          orders_count: number
+          subscriptions_count: number
+          total_revenue_cents: number
+        }[]
+      }
+      get_admin_structure_stats: {
+        Args: {
+          end_date?: string
+          start_date?: string
+          structure_type_param: number
+        }
+        Returns: {
+          frozen_amount_cents: number
+          level: number
+          pass_up_count: number
+          percent: number
+          total_amount_cents: number
+          transactions_count: number
+        }[]
+      }
       get_network_stats: {
         Args: { user_id_param: string }
         Returns: {
