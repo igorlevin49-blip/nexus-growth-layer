@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMLMRules } from "@/hooks/useMLMRules";
 import { useMLMSettings, useUpdateMLMSetting, useUpdateMLMRule } from "@/hooks/useMLMSettings";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Save, Settings } from "lucide-react";
 
 export default function AdminMLMSettings() {
@@ -19,6 +19,22 @@ export default function AdminMLMSettings() {
 
   const [editingRules1, setEditingRules1] = useState<Record<string, number>>({});
   const [editingRules2, setEditingRules2] = useState<Record<string, number>>({});
+  const [financeSettings, setFinanceSettings] = useState({
+    subscription_usd: 100,
+    activation_min_usd: 40,
+    usd_kzt_rate: 450
+  });
+
+  // Инициализировать финансовые настройки при загрузке
+  useEffect(() => {
+    if (settings) {
+      setFinanceSettings({
+        subscription_usd: parseFloat(settings.finance_subscription_usd) || 100,
+        activation_min_usd: parseFloat(settings.finance_activation_min_usd) || 40,
+        usd_kzt_rate: parseFloat(settings.finance_usd_kzt_rate) || 450
+      });
+    }
+  }, [settings]);
 
   const handleSaveGlobalSettings = () => {
     if (!settings) return;
@@ -27,6 +43,12 @@ export default function AdminMLMSettings() {
     Object.keys(settings).forEach(key => {
       updateSetting.mutate({ key, value: settings[key] });
     });
+  };
+
+  const handleSaveFinanceSettings = () => {
+    updateSetting.mutate({ key: 'finance_subscription_usd', value: financeSettings.subscription_usd });
+    updateSetting.mutate({ key: 'finance_activation_min_usd', value: financeSettings.activation_min_usd });
+    updateSetting.mutate({ key: 'finance_usd_kzt_rate', value: financeSettings.usd_kzt_rate });
   };
 
   const handleSaveRule = (ruleId: string, structureType: 1 | 2, level: number, percent: number) => {
@@ -201,13 +223,10 @@ export default function AdminMLMSettings() {
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings?.finance_subscription_usd || 100}
+                    value={financeSettings.subscription_usd}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      updateSetting.mutate({ 
-                        key: 'finance_subscription_usd', 
-                        value: parseFloat(value) || 100 
-                      });
+                      const value = parseFloat(e.target.value) || 0;
+                      setFinanceSettings(prev => ({ ...prev, subscription_usd: value }));
                     }}
                     placeholder="100.00"
                   />
@@ -222,13 +241,10 @@ export default function AdminMLMSettings() {
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings?.finance_activation_min_usd || 40}
+                    value={financeSettings.activation_min_usd}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      updateSetting.mutate({ 
-                        key: 'finance_activation_min_usd', 
-                        value: parseFloat(value) || 40 
-                      });
+                      const value = parseFloat(e.target.value) || 0;
+                      setFinanceSettings(prev => ({ ...prev, activation_min_usd: value }));
                     }}
                     placeholder="40.00"
                   />
@@ -243,26 +259,28 @@ export default function AdminMLMSettings() {
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings?.finance_usd_kzt_rate || 450}
+                    value={financeSettings.usd_kzt_rate}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      updateSetting.mutate({ 
-                        key: 'finance_usd_kzt_rate', 
-                        value: parseFloat(value) || 450 
-                      });
+                      const value = parseFloat(e.target.value) || 0;
+                      setFinanceSettings(prev => ({ ...prev, usd_kzt_rate: value }));
                     }}
                     placeholder="450.00"
                   />
                   <p className="text-xs text-muted-foreground">
                     Используется для автозаполнения цен товаров и расчёта платежей
                   </p>
-                  {settings?.finance_subscription_usd && settings?.finance_usd_kzt_rate && (
+                  {financeSettings.subscription_usd && financeSettings.usd_kzt_rate && (
                     <p className="text-xs font-semibold text-primary">
-                      Подписка в KZT: {Math.round(parseFloat(settings.finance_subscription_usd) * parseFloat(settings.finance_usd_kzt_rate))} ₸
+                      Подписка в KZT: {Math.round(financeSettings.subscription_usd * financeSettings.usd_kzt_rate)} ₸
                     </p>
                   )}
                 </div>
               </div>
+
+              <Button onClick={handleSaveFinanceSettings} className="w-full">
+                <Save className="h-4 w-4 mr-2" />
+                Сохранить финансовые настройки
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
