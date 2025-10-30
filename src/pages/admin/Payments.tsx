@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AppLayout } from "@/components/Layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -177,25 +176,35 @@ export default function AdminPayments() {
     setDeleteDialog({ open: true, type });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmPhrase !== 'DELETE PERMANENTLY') {
+      toast.error("Введите правильную фразу подтверждения");
+      return;
+    }
+
     const ids = deleteDialog.type === 'order' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
 
-    hardDeleteRecords.mutate({
-      record_type: deleteDialog.type,
-      record_ids: ids,
-      confirmation_phrase: deleteConfirmPhrase,
-      dry_run: false
-    }, {
-      onSuccess: () => {
-        setDeleteDialog({ open: false, type: deleteDialog.type });
-        setDeleteConfirmPhrase("");
-        if (deleteDialog.type === 'order') {
-          setSelectedOrders(new Set());
-        } else {
-          setSelectedSubscriptions(new Set());
-        }
+    try {
+      const { data, error } = await supabase.rpc('hard_delete_records', {
+        record_type: deleteDialog.type,
+        record_ids: ids,
+        confirmation_phrase: deleteConfirmPhrase,
+        dry_run: false
+      });
+
+      if (error) throw error;
+
+      setDeleteDialog({ open: false, type: deleteDialog.type });
+      setDeleteConfirmPhrase("");
+      if (deleteDialog.type === 'order') {
+        setSelectedOrders(new Set());
+      } else {
+        setSelectedSubscriptions(new Set());
       }
-    });
+      toast.success('Записи удалены навсегда');
+    } catch (error: any) {
+      toast.error(error.message || 'Ошибка при удалении');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -213,9 +222,7 @@ export default function AdminPayments() {
   };
 
   return (
-    <AppLayout>
-      <>
-      <div className="space-y-6">
+    <div className="p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Управление оплатами</h1>
           <p className="text-muted-foreground">
@@ -628,7 +635,5 @@ export default function AdminPayments() {
           </DialogContent>
         </Dialog>
       </div>
-      </>
-    </AppLayout>
   );
 }

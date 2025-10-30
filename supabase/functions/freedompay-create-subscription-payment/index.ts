@@ -110,8 +110,8 @@ Deno.serve(async (req) => {
       console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Missing FreedomPay credentials');
       return new Response(
         JSON.stringify({ 
-          error: 'CONFIGURATION_ERROR', 
-          message: 'Платёжный провайдер не настроен', 
+          error: 'PROVIDER_NOT_CONFIGURED', 
+          message: 'Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.', 
           correlationId 
         }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
