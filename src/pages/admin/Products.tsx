@@ -117,12 +117,22 @@ export default function AdminProducts() {
 
   const handleSave = async () => {
     try {
+      // Валидация: хотя бы одна цена должна быть заполнена
+      if (!formData.price_usd && !formData.price_kzt) {
+        toast({
+          title: "Ошибка",
+          description: "Необходимо указать хотя бы одну цену (USD или KZT)",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const productData = {
         title: formData.title,
         slug: formData.slug,
         description: formData.description || null,
-        price_usd: parseFloat(formData.price_usd),
-        price_kzt: parseFloat(formData.price_kzt),
+        price_usd: formData.price_usd ? parseFloat(formData.price_usd) : null,
+        price_kzt: formData.price_kzt ? parseFloat(formData.price_kzt) : null,
         is_activation: formData.is_activation,
         is_popular: formData.is_popular,
         is_new: formData.is_new,
@@ -147,9 +157,15 @@ export default function AdminProducts() {
       fetchProducts();
     } catch (error: any) {
       console.error("Error saving product:", error);
+      
+      // Обрабатываем ошибку от триггера БД
+      const errorMessage = error.message?.includes('хотя бы одну цену')
+        ? error.message
+        : 'Не удалось сохранить товар';
+      
       toast({
         title: "Ошибка",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -193,6 +209,9 @@ export default function AdminProducts() {
               <DialogTitle>
                 {editingProduct ? "Редактировать товар" : "Новый товар"}
               </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Можно заполнить одну валюту — вторая рассчитается автоматически при сохранении
+              </p>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -295,7 +314,11 @@ export default function AdminProducts() {
                   />
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full">
+              <Button 
+                onClick={handleSave} 
+                className="w-full"
+                disabled={!formData.price_usd && !formData.price_kzt}
+              >
                 {editingProduct ? "Сохранить" : "Добавить"}
               </Button>
             </div>

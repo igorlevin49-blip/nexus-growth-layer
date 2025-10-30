@@ -40,10 +40,30 @@ export const PayActivationButton = ({
         throw new Error('Payment URL not received');
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error);
-      toast.error('Ошибка при создании платежа', {
-        description: error.message || 'Попробуйте позже',
+      
+      // Определяем понятное сообщение об ошибке
+      let errorTitle = 'Ошибка при создании платежа';
+      let errorDescription = 'Попробуйте позже';
+
+      if (error.message) {
+        if (error.message.includes('авторизация') || error.message.includes('Unauthorized')) {
+          errorTitle = 'Требуется авторизация';
+          errorDescription = 'Пожалуйста, войдите в систему';
+        } else if (error.message.includes('подписку') || error.message.includes('subscription')) {
+          errorTitle = 'Требуется активная подписка';
+          errorDescription = 'Сначала активируйте годовую подписку';
+        } else if (error.message.includes('сумма') || error.message.includes('amount')) {
+          errorTitle = 'Некорректная сумма';
+          errorDescription = 'Проверьте настройки активации';
+        } else {
+          errorDescription = error.message;
+        }
+      }
+
+      toast.error(errorTitle, {
+        description: errorDescription,
       });
     } finally {
       setIsProcessing(false);

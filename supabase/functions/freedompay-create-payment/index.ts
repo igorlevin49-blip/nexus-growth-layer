@@ -19,7 +19,14 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      console.error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Необходима авторизация' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 401 
+        }
+      );
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(
@@ -27,13 +34,39 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
-      throw new Error('Unauthorized');
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Необходима авторизация' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 401 
+        }
+      );
     }
 
     const { amount_cents, description } = await req.json();
 
-    if (!amount_cents || amount_cents <= 0) {
-      throw new Error('Invalid amount');
+    // Валидация входных данных
+    if (!amount_cents || typeof amount_cents !== 'number' || amount_cents <= 0) {
+      console.error('Invalid amount:', amount_cents);
+      return new Response(
+        JSON.stringify({ error: 'Некорректная сумма платежа. Сумма должна быть больше 0.' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 422 
+        }
+      );
+    }
+
+    if (!description || typeof description !== 'string') {
+      console.error('Invalid description:', description);
+      return new Response(
+        JSON.stringify({ error: 'Описание платежа обязательно' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 422 
+        }
+      );
     }
 
     const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
@@ -43,8 +76,35 @@ serve(async (req) => {
     const appUrl = 'https://mg-market.kz';
 
     if (!merchantId || !apiKey || !secretKey) {
-      throw new Error('Freedom Pay credentials not configured');
+      console.error('Freedom Pay credentials not configured');
+      return new Response(
+        JSON.stringify({ error: 'Платёжная система не настроена. Обратитесь к администратору.' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 500 
+        }
+      );
     }
+
+    // Get exchange rate from shop settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('shop_settings')
+      .select('rate_usd_kzt')
+      .eq('id', 1)
+      .single();
+
+    if (settingsError || !settings) {
+      console.error('Settings error:', settingsError);
+      return new Response(
+        JSON.stringify({ error: 'Не удалось получить настройки курса валют' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 500 
+        }
+      );
+    }
+
+    const exchangeRate = settings.rate_usd_kzt || 450;
 
     // Create order in our database
     const { data: order, error: orderError } = await supabase
@@ -53,19 +113,25 @@ serve(async (req) => {
         user_id: user.id,
         status: 'pending',
         total_usd: amount_cents / 100,
-        total_kzt: 0,
+        total_kzt: (amount_cents / 100) * exchangeRate,
       })
       .select()
       .single();
 
     if (orderError || !order) {
       console.error('Order creation error:', orderError);
-      throw new Error('Failed to create order');
+      return new Response(
+        JSON.stringify({ error: 'Не удалось создать заказ: ' + (orderError?.message || 'неизвестная ошибка') }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 500 
+        }
+      );
     }
 
     // Create payment request to Freedom Pay
     const orderId = order.id;
-    const amountKzt = Math.round((amount_cents / 100) * 450); // Convert USD to KZT (approximate rate)
+    const amountKzt = Math.round((amount_cents / 100) * exchangeRate);
     
     const paymentData = {
       merchant_id: merchantId,
@@ -101,12 +167,18 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Freedom Pay API error:', errorText);
-      throw new Error('Failed to create payment');
+      return new Response(
+        JSON.stringify({ error: 'Не удалось создать платёж в платёжной системе' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 500 
+        }
+      );
     }
 
     const result = await response.json();
 
-    console.log('Payment created:', { orderId, paymentUrl: result.payment_url });
+    console.log('Payment created:', { orderId, paymentUrl: result.payment_url, amount_cents, exchangeRate });
 
     return new Response(
       JSON.stringify({
@@ -119,10 +191,24 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in freedompay-create-payment:', error);
+    
+    // Логирование для отладки
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    console.error('Payment creation failed:', {
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage.includes('Unauthorized') || errorMessage.includes('авторизация')
+          ? 'Необходима авторизация'
+          : errorMessage.includes('credentials') || errorMessage.includes('настроена')
+          ? 'Платёжная система временно недоступна. Попробуйте позже.'
+          : 'Ошибка создания платежа: ' + errorMessage
+      }),
       { 
-        status: 400,
+        status: errorMessage.includes('Unauthorized') ? 401 : 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
