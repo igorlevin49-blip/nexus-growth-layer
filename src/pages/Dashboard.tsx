@@ -2,9 +2,11 @@ import { Calendar, Target, Users, Copy } from "lucide-react";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
+import { RegistrationMessage } from "@/components/Dashboard/RegistrationMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useNetworkTree } from "@/hooks/useNetworkTree";
@@ -58,7 +60,14 @@ export default function Dashboard() {
     return "друг";
   };
 
+  const isSubscriptionActive = (profile as any)?.subscription_status === 'active';
+
   const copyReferralLink = () => {
+    if (!isSubscriptionActive) {
+      toast.error("Реферальная ссылка станет доступна после активации подписки");
+      return;
+    }
+    
     const refCode = (profile as any)?.referral_code;
     if (refCode) {
       const link = getReferralLink(refCode);
@@ -132,6 +141,9 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Registration Message */}
+      <RegistrationMessage />
+
       {/* Stats Grid */}
       <DashboardStats />
 
@@ -151,6 +163,15 @@ export default function Dashboard() {
               </p>
               {profileLoading ? (
                 <Skeleton className="h-9 w-full" />
+              ) : !isSubscriptionActive ? (
+                <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Реферальная ссылка станет доступна после активации подписки
+                  </p>
+                  <Badge variant="outline" className="mt-2">
+                    Подписка: {(profile as any)?.subscription_status || 'неактивна'}
+                  </Badge>
+                </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <code className="flex-1 bg-muted px-3 py-2 rounded text-xs break-all">

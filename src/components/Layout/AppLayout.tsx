@@ -44,6 +44,7 @@ export function AppLayout() {
     { name: "Пользователи", href: "/admin/users", icon: Users },
     { name: "Товары", href: "/admin/products", icon: Package },
     { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
+    { name: "Оплаты", href: "/admin/payments", icon: FileText },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
   ];

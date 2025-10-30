@@ -46,6 +46,39 @@ export type Database = {
           },
         ]
       }
+      admin_actions: {
+        Row: {
+          action_type: string
+          admin_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       auto_withdraw_rules: {
         Row: {
           created_at: string
@@ -666,6 +699,54 @@ export type Database = {
           monthly_activation_required_usd?: number | null
           rate_usd_kzt?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          admin_comment: string | null
+          amount_kzt: number
+          amount_usd: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          payment_confirmed_at: string | null
+          payment_confirmed_by: string | null
+          payment_method: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_comment?: string | null
+          amount_kzt: number
+          amount_usd: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_method?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_comment?: string | null
+          amount_kzt?: number
+          amount_usd?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_method?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
