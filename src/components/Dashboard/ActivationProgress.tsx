@@ -39,6 +39,19 @@ export function ActivationProgress() {
         setRequiredAmount(Number(settings.monthly_activation_required_usd));
       }
 
+      // Check profile subscription status
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_status, monthly_activation_completed')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      
+      if (profile) {
+        setIsActivated(profile.monthly_activation_completed || false);
+      }
+
       // Get current month activation sum
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
@@ -128,8 +141,8 @@ export function ActivationProgress() {
         {!isActivated && (
           <div className="pt-3 border-t space-y-3">
             <PayActivationButton 
-              requiredAmountCents={Math.round(requiredAmount * 100)}
-              currentAmountCents={Math.round(currentAmount * 100)}
+              requiredAmountUSD={requiredAmount}
+              currentAmountUSD={currentAmount}
             />
             <Button
               onClick={() => navigate("/shop?filter=activation")}

@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   const correlationId = crypto.randomUUID();
-  console.log('[ACTIVATION_PAYMENT]', correlationId, 'Request received');
+  console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Request received');
 
   try {
     // Initialize Supabase client
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'No authorization header');
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'No authorization header');
       return new Response(
         JSON.stringify({ error: 'UNAUTHORIZED', message: 'Требуется авторизация', correlationId }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,110 +35,79 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Auth error:', userError);
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Auth error:', userError);
       return new Response(
         JSON.stringify({ error: 'UNAUTHORIZED', message: 'Неверный токен авторизации', correlationId }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'User authenticated:', user.id);
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'User authenticated:', user.id);
 
-    // Check if user has active subscription (business rule)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('subscription_status')
-      .eq('id', user.id)
+    // Get subscription price from mlm_settings (SSOT)
+    const { data: subscriptionSetting, error: settingError } = await supabase
+      .from('mlm_settings')
+      .select('value')
+      .eq('key', 'finance_subscription_usd')
       .single();
 
-    if (profileError) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Failed to fetch profile:', profileError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'DATABASE_ERROR', 
-          message: 'Не удалось проверить статус подписки', 
-          correlationId 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (profile.subscription_status !== 'active') {
-      console.warn('[ACTIVATION_PAYMENT]', correlationId, 'Subscription required but not active');
-      return new Response(
-        JSON.stringify({ 
-          error: 'SUBSCRIPTION_REQUIRED', 
-          message: 'Сначала активируйте годовую подписку', 
-          correlationId 
-        }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Parse request body
-    const body = await req.json();
-    const { product_id } = body;
-    
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Request data:', { product_id });
-
-    // Validate product_id
-    if (!product_id || typeof product_id !== 'string') {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing or invalid product_id');
-      return new Response(
-        JSON.stringify({ 
-          error: 'VALIDATION_ERROR', 
-          message: 'Необходимо указать активационный товар', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch activation product
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', product_id)
-      .eq('is_activation', true)
-      .single();
-
-    if (productError || !product) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Product not found:', productError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'VALIDATION_ERROR', 
-          message: 'Активационный товар не найден', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate product prices
-    if (!product.price_usd || !product.price_kzt || product.price_usd <= 0 || product.price_kzt <= 0) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Invalid product prices:', product);
+    if (settingError || !subscriptionSetting) {
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Failed to fetch subscription price:', settingError);
       return new Response(
         JSON.stringify({ 
           error: 'CONFIGURATION_ERROR', 
-          message: 'Цены на товар не настроены корректно', 
+          message: 'Стоимость подписки не настроена в системе', 
           correlationId 
         }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const amountUSD = product.price_usd;
-    const amountKZT = product.price_kzt;
+    const subscriptionUSD = parseFloat(subscriptionSetting.value);
 
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Product prices:', { amountUSD, amountKZT });
+    if (isNaN(subscriptionUSD) || subscriptionUSD <= 0) {
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Invalid subscription price:', subscriptionUSD);
+      return new Response(
+        JSON.stringify({ 
+          error: 'CONFIGURATION_ERROR', 
+          message: 'Некорректная стоимость подписки', 
+          correlationId 
+        }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Get FreedomPay credentials from environment
+    // Get exchange rate from mlm_settings
+    const { data: rateSetting, error: rateError } = await supabase
+      .from('mlm_settings')
+      .select('value')
+      .eq('key', 'finance_usd_kzt_rate')
+      .single();
+
+    if (rateError || !rateSetting) {
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Failed to fetch exchange rate:', rateError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'CONFIGURATION_ERROR', 
+          message: 'Курс валюты не настроен в системе', 
+          correlationId 
+        }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const exchangeRate = parseFloat(rateSetting.value);
+    const subscriptionKZT = Math.round(subscriptionUSD * exchangeRate);
+
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Amounts:', { subscriptionUSD, subscriptionKZT, exchangeRate });
+
+    // Get FreedomPay credentials
     const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
     const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
     const appUrl = Deno.env.get('VITE_APP_URL') || 'https://mg-market.kz';
 
     if (!merchantId || !secretKey) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing FreedomPay credentials');
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Missing FreedomPay credentials');
       return new Response(
         JSON.stringify({ 
           error: 'CONFIGURATION_ERROR', 
@@ -149,71 +118,46 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create order in database with activation item
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
+    // Create subscription record in DB
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from('subscriptions')
       .insert({
         user_id: user.id,
-        total_usd: amountUSD,
-        total_kzt: amountKZT,
-        status: 'pending'
+        amount_usd: subscriptionUSD,
+        amount_kzt: subscriptionKZT,
+        status: 'pending',
+        payment_method: 'freedompay'
       })
       .select()
       .single();
 
-    if (orderError || !order) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Failed to create order:', orderError);
+    if (subscriptionError || !subscription) {
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Failed to create subscription:', subscriptionError);
       return new Response(
         JSON.stringify({ 
           error: 'DATABASE_ERROR', 
-          message: 'Не удалось создать заказ', 
+          message: 'Не удалось создать заявку на подписку', 
           correlationId 
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Order created:', order.id);
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Subscription created:', subscription.id);
 
-    // Add product to order items
-    const { error: itemError } = await supabase
-      .from('order_items')
-      .insert({
-        order_id: order.id,
-        product_id: product.id,
-        qty: 1,
-        price_usd: amountUSD,
-        price_kzt: amountKZT,
-        is_activation_snapshot: true
-      });
-
-    if (itemError) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Failed to add order item:', itemError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'DATABASE_ERROR', 
-          message: 'Не удалось добавить товар в заказ', 
-          correlationId 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Prepare payment data for FreedomPay
-    const orderId = `ACT-${order.id}`;
+    // Prepare FreedomPay payment data
+    const orderId = `SUB-${subscription.id}`;
     const paymentData = {
       pg_merchant_id: merchantId,
       pg_order_id: orderId,
       pg_currency: 'KZT',
-      pg_amount: amountKZT,
-      pg_description: `Активация: ${product.title}`,
+      pg_amount: subscriptionKZT,
+      pg_description: `Годовая подписка ($${subscriptionUSD})`,
       pg_salt: crypto.randomUUID(),
       pg_success_url: `${appUrl}/payment/success`,
       pg_failure_url: `${appUrl}/payment/failure`,
       pg_result_url: `${supabaseUrl}/functions/v1/freedompay-callback`,
     };
-
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Payment data prepared:', orderId);
 
     // Generate signature
     const signatureString = [
@@ -242,7 +186,7 @@ Deno.serve(async (req) => {
       pg_sig: signature,
     });
 
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Calling FreedomPay API');
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Calling FreedomPay API');
 
     const freedomPayResponse = await fetch('https://api.freedompay.kz/payment.php', {
       method: 'POST',
@@ -251,7 +195,7 @@ Deno.serve(async (req) => {
     });
 
     const responseText = await freedomPayResponse.text();
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'FreedomPay response:', responseText);
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'FreedomPay response:', responseText);
 
     // Parse XML response
     const paymentUrlMatch = responseText.match(/<pg_redirect_url>([^<]+)<\/pg_redirect_url>/);
@@ -259,21 +203,21 @@ Deno.serve(async (req) => {
 
     if (statusMatch && statusMatch[1] === 'ok' && paymentUrlMatch) {
       const paymentUrl = paymentUrlMatch[1];
-      console.log('[ACTIVATION_PAYMENT]', correlationId, 'Payment URL generated:', paymentUrl);
+      console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Payment URL generated:', paymentUrl);
 
       return new Response(
         JSON.stringify({ 
           payment_url: paymentUrl, 
           order_id: orderId,
-          product_title: product.title,
-          amount_usd: amountUSD,
-          amount_kzt: amountKZT,
+          subscription_id: subscription.id,
+          amount_usd: subscriptionUSD,
+          amount_kzt: subscriptionKZT,
           correlationId 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Invalid FreedomPay response');
+      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Invalid FreedomPay response');
       return new Response(
         JSON.stringify({ 
           error: 'PAYMENT_PROVIDER_ERROR', 
@@ -285,7 +229,7 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('[ACTIVATION_PAYMENT]', correlationId, 'Unexpected error:', error);
+    console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Unexpected error:', error);
     return new Response(
       JSON.stringify({ 
         error: 'INTERNAL_ERROR', 

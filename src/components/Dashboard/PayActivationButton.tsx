@@ -1,84 +1,90 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2, CreditCard } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-interface PayActivationButtonProps {
-  requiredAmountCents: number;
-  currentAmountCents: number;
+export interface PayActivationButtonProps {
+  requiredAmountUSD: number;
+  currentAmountUSD: number;
 }
 
-export const PayActivationButton = ({ 
-  requiredAmountCents, 
-  currentAmountCents 
-}: PayActivationButtonProps) => {
+export function PayActivationButton({ 
+  requiredAmountUSD, 
+  currentAmountUSD 
+}: PayActivationButtonProps) {
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activationProducts, setActivationProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_activation', true)
+        .order('price_usd', { ascending: true });
+      
+      if (data && data.length > 0) {
+        setActivationProducts(data);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handlePayment = async () => {
+    if (!user) {
+      toast.error("Требуется авторизация");
+      return;
+    }
+
+    if (activationProducts.length === 0) {
+      toast.error("Активационные товары не найдены");
+      return;
+    }
+
+    const product = activationProducts[0];
+    setIsProcessing(true);
+
     try {
-      setIsProcessing(true);
-
-      const remainingAmount = requiredAmountCents - currentAmountCents;
-      const amountToPay = remainingAmount > 0 ? remainingAmount : requiredAmountCents;
-
-      const { data, error } = await supabase.functions.invoke('freedompay-create-payment', {
-        body: {
-          amount_cents: amountToPay,
-          description: 'Оплата месячной активации',
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        'freedompay-create-payment',
+        {
+          body: { product_id: product.id },
+          headers: {
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+        }
+      );
 
       if (error) {
-        throw error;
+        if (error.message?.includes('SUBSCRIPTION_REQUIRED')) {
+          toast.error('Сначала активируйте годовую подписку');
+        } else {
+          toast.error(`Ошибка: ${error.message}`);
+        }
+        return;
       }
 
       if (data?.payment_url) {
-        // Redirect to payment page
+        toast.success(`${data.product_title}: $${data.amount_usd}`);
         window.location.href = data.payment_url;
-      } else {
-        throw new Error('Payment URL not received');
       }
-
     } catch (error: any) {
-      console.error('Payment error:', error);
-      
-      // Определяем понятное сообщение об ошибке
-      let errorTitle = 'Ошибка при создании платежа';
-      let errorDescription = 'Попробуйте позже';
-
-      if (error.message) {
-        if (error.message.includes('авторизация') || error.message.includes('Unauthorized')) {
-          errorTitle = 'Требуется авторизация';
-          errorDescription = 'Пожалуйста, войдите в систему';
-        } else if (error.message.includes('подписку') || error.message.includes('subscription')) {
-          errorTitle = 'Требуется активная подписка';
-          errorDescription = 'Сначала активируйте годовую подписку';
-        } else if (error.message.includes('сумма') || error.message.includes('amount')) {
-          errorTitle = 'Некорректная сумма';
-          errorDescription = 'Проверьте настройки активации';
-        } else {
-          errorDescription = error.message;
-        }
-      }
-
-      toast.error(errorTitle, {
-        description: errorDescription,
-      });
+      toast.error(error.message || 'Ошибка при создании платежа');
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <Button
-      onClick={handlePayment}
-      disabled={isProcessing}
-      className="w-full"
-      size="lg"
-    >
-      <CreditCard className="mr-2 h-4 w-4" />
-      {isProcessing ? 'Обработка...' : 'Оплатить активацию'}
+    <Button onClick={handlePayment} disabled={isProcessing} className="w-full">
+      {isProcessing ? (
+        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Создание...</>
+      ) : (
+        <><CreditCard className="mr-2 h-4 w-4" />Оплатить активацию</>
+      )}
     </Button>
   );
-};
+}

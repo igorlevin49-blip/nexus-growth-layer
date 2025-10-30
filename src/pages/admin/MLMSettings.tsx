@@ -54,8 +54,9 @@ export default function AdminMLMSettings() {
       </div>
 
       <Tabs defaultValue="rules" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="rules">Проценты по уровням</TabsTrigger>
+          <TabsTrigger value="finance">Финансы</TabsTrigger>
           <TabsTrigger value="global">Глобальные параметры</TabsTrigger>
         </TabsList>
 
@@ -182,6 +183,88 @@ export default function AdminMLMSettings() {
               </Card>
             </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        <TabsContent value="finance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Финансовые настройки (SSOT)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Эти параметры являются единственным источником правды для всех финансовых операций системы
+              </p>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Стоимость годовой подписки (USD) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings?.finance_subscription_usd || 100}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateSetting.mutate({ 
+                        key: 'finance_subscription_usd', 
+                        value: parseFloat(value) || 100 
+                      });
+                    }}
+                    placeholder="100.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Используется для создания платежа подписки
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Минимум для месячной активации (USD) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings?.finance_activation_min_usd || 40}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateSetting.mutate({ 
+                        key: 'finance_activation_min_usd', 
+                        value: parseFloat(value) || 40 
+                      });
+                    }}
+                    placeholder="40.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Минимальная сумма покупки активационных товаров
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Курс USD → KZT *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings?.finance_usd_kzt_rate || 450}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateSetting.mutate({ 
+                        key: 'finance_usd_kzt_rate', 
+                        value: parseFloat(value) || 450 
+                      });
+                    }}
+                    placeholder="450.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Используется для автозаполнения цен товаров и расчёта платежей
+                  </p>
+                  {settings?.finance_subscription_usd && settings?.finance_usd_kzt_rate && (
+                    <p className="text-xs font-semibold text-primary">
+                      Подписка в KZT: {Math.round(parseFloat(settings.finance_subscription_usd) * parseFloat(settings.finance_usd_kzt_rate))} ₸
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="global" className="space-y-4">
