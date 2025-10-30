@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import Docs from "./pages/Docs";
 import DocView from "./pages/DocView";
 import Documents from "./pages/admin/Documents";
+import TestDataCleanup from "./pages/admin/TestDataCleanup";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
               <Route path="admin/roles" element={<ProtectedRoute requireSuperAdmin><RoleManagement /></ProtectedRoute>} />
               <Route path="admin/documents" element={<ProtectedRoute requireAdmin><Documents /></ProtectedRoute>} />
+              <Route path="admin/test-data-cleanup" element={<ProtectedRoute requireSuperAdmin><TestDataCleanup /></ProtectedRoute>} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

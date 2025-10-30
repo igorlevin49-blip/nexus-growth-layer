@@ -12,7 +12,8 @@ import {
   Globe,
   Shield,
   Package,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export function AppLayout() {
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },
     { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },
     { name: "MLM-настройки", href: "/admin/mlm-settings", icon: Settings },
+    { name: "Очистка тестовых данных", href: "/admin/test-data-cleanup", icon: Trash2 },
   ];
 
   const getRoleLabel = (role: string | null) => {

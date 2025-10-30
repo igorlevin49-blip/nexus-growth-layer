@@ -396,6 +396,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_test: boolean | null
           status: Database["public"]["Enums"]["order_status"] | null
           total_kzt: number
           total_usd: number
@@ -405,6 +406,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_test?: boolean | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -414,6 +416,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_test?: boolean | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -710,6 +713,7 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          is_test: boolean | null
           payment_confirmed_at: string | null
           payment_confirmed_by: string | null
           payment_method: string | null
@@ -725,6 +729,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          is_test?: boolean | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
           payment_method?: string | null
@@ -740,6 +745,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          is_test?: boolean | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
           payment_method?: string | null
@@ -757,6 +763,7 @@ export type Database = {
           currency: string
           frozen_until: string | null
           id: string
+          is_test: boolean | null
           level: number | null
           payload: Json | null
           source_id: string | null
@@ -773,6 +780,7 @@ export type Database = {
           currency?: string
           frozen_until?: string | null
           id?: string
+          is_test?: boolean | null
           level?: number | null
           payload?: Json | null
           source_id?: string | null
@@ -789,6 +797,7 @@ export type Database = {
           currency?: string
           frozen_until?: string | null
           id?: string
+          is_test?: boolean | null
           level?: number | null
           payload?: Json | null
           source_id?: string | null
@@ -881,6 +890,7 @@ export type Database = {
           created_at: string
           fee_cents: number
           id: string
+          is_test: boolean | null
           method_id: string | null
           processed_at: string | null
           status: Database["public"]["Enums"]["withdrawal_status"]
@@ -892,6 +902,7 @@ export type Database = {
           created_at?: string
           fee_cents?: number
           id?: string
+          is_test?: boolean | null
           method_id?: string | null
           processed_at?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]
@@ -903,6 +914,7 @@ export type Database = {
           created_at?: string
           fee_cents?: number
           id?: string
+          is_test?: boolean | null
           method_id?: string | null
           processed_at?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]
@@ -924,6 +936,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      flag_test_data: {
+        Args: {
+          p_dry_run?: boolean
+          p_end_date: string
+          p_start_date: string
+          p_user_ids: string[]
+        }
+        Returns: Json
+      }
       get_admin_global_stats: {
         Args: { end_date?: string; start_date?: string }
         Returns: {
@@ -1017,6 +1038,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      purge_test_data: {
+        Args: { p_confirmation_phrase?: string; p_dry_run?: boolean }
+        Returns: Json
       }
     }
     Enums: {
