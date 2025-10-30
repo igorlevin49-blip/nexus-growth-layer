@@ -8,8 +8,11 @@ import { useAdminGlobalStats, useAdminStructureStats } from "@/hooks/useAdminSta
 import { formatCents } from "@/utils/formatMoney";
 import { useState } from "react";
 import { downloadCSV } from "@/utils/exportCSV";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function AdminReports() {
+  const [showArchived, setShowArchived] = useState(false);
   const [dateRange] = useState({
     start: new Date(new Date().setDate(1)), // начало месяца
     end: new Date()
@@ -17,7 +20,8 @@ export default function AdminReports() {
 
   const { data: globalStats, isLoading: globalLoading } = useAdminGlobalStats(
     dateRange.start,
-    dateRange.end
+    dateRange.end,
+    showArchived
   );
   
   const { data: structure1Stats, isLoading: s1Loading } = useAdminStructureStats(1, dateRange.start, dateRange.end);
@@ -79,7 +83,17 @@ export default function AdminReports() {
 
   return (
     <div className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold">Финансовые отчеты</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Финансовые отчеты</h1>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={showArchived}
+            onCheckedChange={setShowArchived}
+            id="show-archived-reports"
+          />
+          <Label htmlFor="show-archived-reports">Показывать архивные</Label>
+        </div>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

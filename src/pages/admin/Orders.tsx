@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -15,6 +18,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,8 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye } from "lucide-react";
+import { Eye, Archive, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useArchiveRecords, useHardDeleteRecords } from "@/hooks/useArchiveRecords";
+import { Input } from "@/components/ui/input";
 
 type Order = {
   id: string;
@@ -61,18 +68,30 @@ export default function AdminOrders() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [showArchived, setShowArchived] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [confirmationPhrase, setConfirmationPhrase] = useState('');
+
+  const archiveRecords = useArchiveRecords();
+  const hardDeleteRecords = useHardDeleteRecords();
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [showArchived]);
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false });
 
+      if (!showArchived) {
+        query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setOrders(data || []);
     } catch (error) {
@@ -164,6 +183,47 @@ export default function AdminOrders() {
     );
   };
 
+  const handleArchiveSelected = () => {
+    if (selectedOrders.size === 0) {
+      toast({ title: "Выберите заказы для архивации", variant: "destructive" });
+      return;
+    }
+
+    archiveRecords.mutate({ 
+      record_type: 'order', 
+      record_ids: Array.from(selectedOrders) 
+    }, {
+      onSuccess: () => {
+        setSelectedOrders(new Set());
+        fetchOrders();
+      }
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedOrders.size === 0) {
+      toast({ title: "Выберите заказы для удаления", variant: "destructive" });
+      return;
+    }
+    setDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    hardDeleteRecords.mutate({
+      record_type: 'order',
+      record_ids: Array.from(selectedOrders),
+      confirmation_phrase: confirmationPhrase,
+      dry_run: false
+    }, {
+      onSuccess: () => {
+        setDeleteDialog(false);
+        setConfirmationPhrase('');
+        setSelectedOrders(new Set());
+        fetchOrders();
+      }
+    });
+  };
+
   let filteredOrders = orders;
   if (filterStatus !== "all") {
     filteredOrders = orders.filter((o) => o.status === filterStatus);
@@ -177,28 +237,72 @@ export default function AdminOrders() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Управление заказами</h1>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все статусы</SelectItem>
-            <SelectItem value="draft">Черновик</SelectItem>
-            <SelectItem value="pending">В ожидании</SelectItem>
-            <SelectItem value="paid">Оплачен</SelectItem>
-            <SelectItem value="cancelled">Отменен</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showArchived}
+              onCheckedChange={setShowArchived}
+              id="show-archived-orders"
+            />
+            <Label htmlFor="show-archived-orders">Показывать архивные</Label>
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все статусы</SelectItem>
+              <SelectItem value="draft">Черновик</SelectItem>
+              <SelectItem value="pending">В ожидании</SelectItem>
+              <SelectItem value="paid">Оплачен</SelectItem>
+              <SelectItem value="cancelled">Отменен</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Список заказов</CardTitle>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleArchiveSelected}
+              disabled={selectedOrders.size === 0 || archiveRecords.isPending}
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Скрыть ({selectedOrders.size})
+            </Button>
+            {userRole === 'superadmin' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteSelected}
+                disabled={selectedOrders.size === 0}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Удалить ({selectedOrders.size})
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={filteredOrders.length > 0 && selectedOrders.size === filteredOrders.length}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
+                      } else {
+                        setSelectedOrders(new Set());
+                      }
+                    }}
+                  />
+                </TableHead>
                 <TableHead>ID заказа</TableHead>
                 <TableHead>Покупатель</TableHead>
                 <TableHead>Сумма</TableHead>
@@ -210,6 +314,20 @@ export default function AdminOrders() {
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedOrders.has(order.id)}
+                      onCheckedChange={(checked) => {
+                        const newSet = new Set(selectedOrders);
+                        if (checked) {
+                          newSet.add(order.id);
+                        } else {
+                          newSet.delete(order.id);
+                        }
+                        setSelectedOrders(newSet);
+                      }}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">
                     {order.id.slice(0, 8)}
                   </TableCell>
@@ -349,6 +467,44 @@ export default function AdminOrders() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">⚠️ Безвозвратное удаление</DialogTitle>
+            <DialogDescription>
+              Это действие удалит выбранные заказы НАВСЕГДА и не может быть отменено.
+              Для подтверждения введите фразу: <strong>DELETE PERMANENTLY</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="DELETE PERMANENTLY"
+              value={confirmationPhrase}
+              onChange={(e) => setConfirmationPhrase(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialog(false);
+                setConfirmationPhrase('');
+              }}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={confirmationPhrase !== 'DELETE PERMANENTLY' || hardDeleteRecords.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить навсегда
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -19,9 +19,9 @@ export interface AdminStructureStats {
   pass_up_count: number;
 }
 
-export function useAdminGlobalStats(startDate?: Date, endDate?: Date) {
+export function useAdminGlobalStats(startDate?: Date, endDate?: Date, showArchived: boolean = false) {
   return useQuery({
-    queryKey: ['admin-global-stats', startDate, endDate],
+    queryKey: ['admin-global-stats', startDate, endDate, showArchived],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_admin_global_stats', {
         start_date: startDate?.toISOString() || new Date(new Date().setDate(1)).toISOString(),

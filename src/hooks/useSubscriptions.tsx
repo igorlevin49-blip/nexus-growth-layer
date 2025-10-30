@@ -23,17 +23,22 @@ export interface Subscription {
   };
 }
 
-export function useSubscriptions() {
+export function useSubscriptions(showArchived: boolean = false) {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['subscriptions', user?.id],
+    queryKey: ['subscriptions', user?.id, showArchived],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('subscriptions')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (!showArchived) {
+        query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       
       // Fetch profiles separately

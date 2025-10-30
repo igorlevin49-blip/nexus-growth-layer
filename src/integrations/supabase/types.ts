@@ -394,8 +394,10 @@ export type Database = {
       }
       orders: {
         Row: {
+          archived_at: string | null
           created_at: string | null
           id: string
+          is_archived: boolean | null
           is_test: boolean | null
           status: Database["public"]["Enums"]["order_status"] | null
           total_kzt: number
@@ -404,8 +406,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
@@ -414,8 +418,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          archived_at?: string | null
           created_at?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
@@ -710,9 +716,11 @@ export type Database = {
           admin_comment: string | null
           amount_kzt: number
           amount_usd: number
+          archived_at: string | null
           created_at: string
           expires_at: string | null
           id: string
+          is_archived: boolean | null
           is_test: boolean | null
           payment_confirmed_at: string | null
           payment_confirmed_by: string | null
@@ -726,9 +734,11 @@ export type Database = {
           admin_comment?: string | null
           amount_kzt: number
           amount_usd: number
+          archived_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
@@ -742,9 +752,11 @@ export type Database = {
           admin_comment?: string | null
           amount_kzt?: number
           amount_usd?: number
+          archived_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
@@ -759,10 +771,12 @@ export type Database = {
       transactions: {
         Row: {
           amount_cents: number
+          archived_at: string | null
           created_at: string
           currency: string
           frozen_until: string | null
           id: string
+          is_archived: boolean | null
           is_test: boolean | null
           level: number | null
           payload: Json | null
@@ -776,10 +790,12 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          archived_at?: string | null
           created_at?: string
           currency?: string
           frozen_until?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           level?: number | null
           payload?: Json | null
@@ -793,10 +809,12 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          archived_at?: string | null
           created_at?: string
           currency?: string
           frozen_until?: string | null
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           level?: number | null
           payload?: Json | null
@@ -887,9 +905,11 @@ export type Database = {
       withdrawals: {
         Row: {
           amount_cents: number
+          archived_at: string | null
           created_at: string
           fee_cents: number
           id: string
+          is_archived: boolean | null
           is_test: boolean | null
           method_id: string | null
           processed_at: string | null
@@ -899,9 +919,11 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          archived_at?: string | null
           created_at?: string
           fee_cents?: number
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           method_id?: string | null
           processed_at?: string | null
@@ -911,9 +933,11 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          archived_at?: string | null
           created_at?: string
           fee_cents?: number
           id?: string
+          is_archived?: boolean | null
           is_test?: boolean | null
           method_id?: string | null
           processed_at?: string | null
@@ -936,6 +960,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_records: {
+        Args: { record_ids: string[]; record_type: string }
+        Returns: Json
+      }
       flag_test_data: {
         Args: {
           p_dry_run?: boolean
@@ -1031,6 +1059,15 @@ export type Database = {
           user_id: string
           withdrawn_cents: number
         }[]
+      }
+      hard_delete_records: {
+        Args: {
+          confirmation_phrase: string
+          dry_run?: boolean
+          record_ids: string[]
+          record_type: string
+        }
+        Returns: Json
       }
       has_role: {
         Args: {
