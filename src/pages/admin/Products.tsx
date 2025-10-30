@@ -117,6 +117,26 @@ export default function AdminProducts() {
 
   const handleSave = async () => {
     try {
+      // Валидация: название обязательно
+      if (!formData.title.trim()) {
+        toast({
+          title: "Ошибка",
+          description: "Необходимо указать название товара",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Валидация: slug обязателен
+      if (!formData.slug.trim()) {
+        toast({
+          title: "Ошибка",
+          description: "Необходимо указать Slug (URL) товара",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Валидация: хотя бы одна цена должна быть заполнена
       if (!formData.price_usd && !formData.price_kzt) {
         toast({
@@ -128,8 +148,8 @@ export default function AdminProducts() {
       }
 
       const productData = {
-        title: formData.title,
-        slug: formData.slug,
+        title: formData.title.trim(),
+        slug: formData.slug.trim(),
         description: formData.description || null,
         price_usd: formData.price_usd ? parseFloat(formData.price_usd) : null,
         price_kzt: formData.price_kzt ? parseFloat(formData.price_kzt) : null,
@@ -158,10 +178,18 @@ export default function AdminProducts() {
     } catch (error: any) {
       console.error("Error saving product:", error);
       
-      // Обрабатываем ошибку от триггера БД
-      const errorMessage = error.message?.includes('хотя бы одну цену')
-        ? error.message
-        : 'Не удалось сохранить товар';
+      // Обрабатываем различные типы ошибок
+      let errorMessage = 'Не удалось сохранить товар';
+      
+      if (error.message?.includes('хотя бы одну цену')) {
+        errorMessage = error.message;
+      } else if (error.message?.includes('duplicate key') && error.message?.includes('products_slug_key')) {
+        errorMessage = 'Товар с таким Slug (URL) уже существует. Пожалуйста, используйте уникальный slug.';
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = 'Такой товар уже существует. Проверьте уникальность данных.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
         title: "Ошибка",
@@ -215,22 +243,29 @@ export default function AdminProducts() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Название</Label>
+                <Label>Название *</Label>
                 <Input
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
+                  placeholder="Название товара"
+                  required
                 />
               </div>
               <div>
-                <Label>Slug (URL)</Label>
+                <Label>Slug (URL) *</Label>
                 <Input
                   value={formData.slug}
                   onChange={(e) =>
                     setFormData({ ...formData, slug: e.target.value })
                   }
+                  placeholder="unique-product-slug"
+                  required
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Уникальный идентификатор для URL (например: activation-pack-1)
+                </p>
               </div>
               <div>
                 <Label>Описание</Label>
@@ -317,7 +352,11 @@ export default function AdminProducts() {
               <Button 
                 onClick={handleSave} 
                 className="w-full"
-                disabled={!formData.price_usd && !formData.price_kzt}
+                disabled={
+                  !formData.title.trim() || 
+                  !formData.slug.trim() || 
+                  (!formData.price_usd && !formData.price_kzt)
+                }
               >
                 {editingProduct ? "Сохранить" : "Добавить"}
               </Button>
