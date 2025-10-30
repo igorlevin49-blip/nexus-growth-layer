@@ -2,22 +2,59 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CreditCard, FileText } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { useManualPayment } from "@/hooks/useManualPayment";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PaymentMethodDialog } from "./PaymentMethodDialog";
 
 export function PaySubscriptionButton() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showManualOption, setShowManualOption] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [providerNotConfigured, setProviderNotConfigured] = useState(false);
+  const [amount, setAmount] = useState<{ usd: number; kzt: number } | undefined>();
   const { createManualSubscription } = useManualPayment();
 
-  const handlePayment = async () => {
+  const handleOpenDialog = async () => {
+    // Fetch amount
+    try {
+      const { data: settings } = await supabase
+        .from('mlm_settings')
+        .select('value')
+        .eq('key', 'subscription_price_usd')
+        .single();
+
+      const priceUSD = typeof settings?.value === 'number' ? settings.value : 100;
+      
+      const { data: shopSettings } = await supabase
+        .from('shop_settings')
+        .select('rate_usd_kzt')
+        .eq('id', 1)
+        .single();
+
+      const rate = typeof shopSettings?.rate_usd_kzt === 'number' ? shopSettings.rate_usd_kzt : 450;
+      const priceKZT = Math.round(priceUSD * rate);
+
+      setAmount({ usd: priceUSD, kzt: priceKZT });
+      setDialogOpen(true);
+    } catch (error) {
+      console.error('Error fetching amount:', error);
+      setDialogOpen(true);
+    }
+  };
+
+  const handleSelectMethod = async (method: "card" | "kaspi" | "cash") => {
     setIsProcessing(true);
+    setDialogOpen(false);
+
+    if (method === "cash") {
+      await handleManualPayment();
+      return;
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke(
         'freedompay-create-subscription-payment',
         {
+          body: { method },
           headers: {
             Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
@@ -27,11 +64,11 @@ export function PaySubscriptionButton() {
       if (error) {
         console.error('Edge function error:', error);
         
-        // Check if provider not configured (422 status)
         if (error.message?.includes('PROVIDER_NOT_CONFIGURED') || error.message?.includes('422')) {
-          setShowManualOption(true);
+          setProviderNotConfigured(true);
+          setDialogOpen(true);
           toast.error('Онлайн-оплата временно недоступна', {
-            description: 'Вы можете отправить заявку на ручную оплату'
+            description: 'Выберите способ «Наличные»'
           });
         } else {
           toast.error(`Ошибка: ${error.message}`);
@@ -85,52 +122,25 @@ export function PaySubscriptionButton() {
   };
 
   return (
-    <div className="space-y-2 w-full">
-      {showManualOption && (
-        <Alert>
-          <FileText className="h-4 w-4" />
-          <AlertDescription>
-            Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.
-          </AlertDescription>
-        </Alert>
-      )}
-      <div className="flex gap-2 w-full">
-        <Button 
-          onClick={handlePayment} 
-          disabled={isProcessing || createManualSubscription.isPending} 
-          className="flex-1"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Создание...
-            </>
-          ) : (
-            <>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Оплатить онлайн
-            </>
-          )}
-        </Button>
-        <Button 
-          onClick={handleManualPayment}
-          disabled={isProcessing || createManualSubscription.isPending}
-          variant="outline"
-          className="flex-1"
-        >
-          {createManualSubscription.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Отправка...
-            </>
-          ) : (
-            <>
-              <FileText className="mr-2 h-4 w-4" />
-              Оплатить вручную
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
+    <>
+      <Button 
+        onClick={handleOpenDialog} 
+        disabled={isProcessing || createManualSubscription.isPending} 
+        className="w-full"
+      >
+        <CreditCard className="mr-2 h-4 w-4" />
+        Оплатить
+      </Button>
+
+      <PaymentMethodDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSelectMethod={handleSelectMethod}
+        isProcessing={isProcessing || createManualSubscription.isPending}
+        providerNotConfigured={providerNotConfigured}
+        type="subscription"
+        amount={amount}
+      />
+    </>
   );
 }

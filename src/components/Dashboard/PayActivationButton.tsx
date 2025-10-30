@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CreditCard, FileText } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useManualPayment } from "@/hooks/useManualPayment";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PaymentMethodDialog } from "./PaymentMethodDialog";
 
 export interface PayActivationButtonProps {
   requiredAmountUSD: number;
@@ -17,10 +17,12 @@ export function PayActivationButton({
   currentAmountUSD 
 }: PayActivationButtonProps) {
   const { user } = useAuth();
+  const { createManualActivation } = useManualPayment();
   const [isProcessing, setIsProcessing] = useState(false);
   const [activationProducts, setActivationProducts] = useState<any[]>([]);
-  const [showManualOption, setShowManualOption] = useState(false);
-  const { createManualActivation } = useManualPayment();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [providerNotConfigured, setProviderNotConfigured] = useState(false);
+  const [amount, setAmount] = useState<{ usd: number; kzt: number } | undefined>();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,7 +39,34 @@ export function PayActivationButton({
     fetchProducts();
   }, []);
 
-  const handlePayment = async () => {
+  const handleOpenDialog = async () => {
+    // Calculate amount
+    const { data: shopSettings } = await supabase
+      .from('shop_settings')
+      .select('rate_usd_kzt')
+      .eq('id', 1)
+      .single();
+
+    const rate = typeof shopSettings?.rate_usd_kzt === 'number' ? shopSettings.rate_usd_kzt : 450;
+    const priceKZT = Math.round(requiredAmountUSD * rate);
+
+    setAmount({ usd: requiredAmountUSD, kzt: priceKZT });
+    setDialogOpen(true);
+  };
+
+  const handleSelectMethod = async (method: "card" | "kaspi" | "cash") => {
+    setIsProcessing(true);
+    setDialogOpen(false);
+
+    if (method === "cash") {
+      await handleManualPayment();
+      return;
+    }
+
+    await handlePayment(method);
+  };
+
+  const handlePayment = async (method: "card" | "kaspi") => {
     if (!user) {
       toast.error("Требуется авторизация");
       return;
@@ -55,7 +84,14 @@ export function PayActivationButton({
       const { data, error } = await supabase.functions.invoke(
         'freedompay-create-payment',
         {
-          body: { product_id: product.id },
+          body: {
+            method,
+            products: activationProducts.map(p => ({
+              product_id: p.id,
+              quantity: 1,
+              price_usd: p.price_usd
+            }))
+          },
           headers: {
             Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
@@ -63,13 +99,16 @@ export function PayActivationButton({
       );
 
       if (error) {
-        if (error.message?.includes('SUBSCRIPTION_REQUIRED')) {
-          toast.error('Сначала активируйте годовую подписку');
-        } else if (error.message?.includes('PROVIDER_NOT_CONFIGURED')) {
-          setShowManualOption(true);
+        console.error('Edge function error:', error);
+        
+        if (error.message?.includes('PROVIDER_NOT_CONFIGURED') || error.message?.includes('422')) {
+          setProviderNotConfigured(true);
+          setDialogOpen(true);
           toast.error('Онлайн-оплата временно недоступна', {
-            description: 'Вы можете отправить заявку на ручную оплату'
+            description: 'Выберите способ «Наличные»'
           });
+        } else if (error.message?.includes('NO_ACTIVE_SUBSCRIPTION')) {
+          toast.error('Сначала активируйте подписку');
         } else {
           toast.error(`Ошибка: ${error.message}`);
         }
@@ -98,40 +137,25 @@ export function PayActivationButton({
   };
 
   return (
-    <div className="space-y-2 w-full">
-      {showManualOption && (
-        <Alert>
-          <FileText className="h-4 w-4" />
-          <AlertDescription>
-            Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.
-          </AlertDescription>
-        </Alert>
-      )}
-      <div className="flex gap-2 w-full">
-        <Button 
-          onClick={handlePayment} 
-          disabled={isProcessing || createManualActivation.isPending} 
-          className="flex-1"
-        >
-          {isProcessing ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Создание...</>
-          ) : (
-            <><CreditCard className="mr-2 h-4 w-4" />Оплатить онлайн</>
-          )}
-        </Button>
-        <Button 
-          onClick={handleManualPayment}
-          disabled={isProcessing || createManualActivation.isPending}
-          variant="outline"
-          className="flex-1"
-        >
-          {createManualActivation.isPending ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Отправка...</>
-          ) : (
-            <><FileText className="mr-2 h-4 w-4" />Оплатить вручную</>
-          )}
-        </Button>
-      </div>
-    </div>
+    <>
+      <Button 
+        onClick={handleOpenDialog} 
+        disabled={isProcessing || createManualActivation.isPending || currentAmountUSD >= requiredAmountUSD} 
+        className="w-full"
+      >
+        <CreditCard className="mr-2 h-4 w-4" />
+        Оплатить
+      </Button>
+
+      <PaymentMethodDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSelectMethod={handleSelectMethod}
+        isProcessing={isProcessing || createManualActivation.isPending}
+        providerNotConfigured={providerNotConfigured}
+        type="activation"
+        amount={amount}
+      />
+    </>
   );
 }

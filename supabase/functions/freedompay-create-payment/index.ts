@@ -77,85 +77,98 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body = await req.json();
-    const { product_id } = body;
+    const { products, method = 'card' } = body;
     
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Request data:', { product_id });
+    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Request data:', { products, method });
 
-    // Validate product_id
-    if (!product_id || typeof product_id !== 'string') {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing or invalid product_id');
+    // Validate products
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing or invalid products');
       return new Response(
         JSON.stringify({ 
           error: 'VALIDATION_ERROR', 
-          message: 'Необходимо указать активационный товар', 
+          message: 'Необходимо указать активационные товары', 
           correlationId 
         }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch activation product
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', product_id)
-      .eq('is_activation', true)
-      .single();
+    // Fetch activation products and calculate total
+    let totalUSD = 0;
+    let totalKZT = 0;
+    const productDetails = [];
 
-    if (productError || !product) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Product not found:', productError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'VALIDATION_ERROR', 
-          message: 'Активационный товар не найден', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    for (const item of products) {
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', item.product_id)
+        .eq('is_activation', true)
+        .single();
+
+      if (productError || !product) {
+        console.error('[ACTIVATION_PAYMENT]', correlationId, 'Product not found:', item.product_id);
+        return new Response(
+          JSON.stringify({ 
+            error: 'VALIDATION_ERROR', 
+            message: 'Один из активационных товаров не найден', 
+            correlationId 
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!product.price_usd || !product.price_kzt || product.price_usd <= 0 || product.price_kzt <= 0) {
+        console.error('[ACTIVATION_PAYMENT]', correlationId, 'Invalid product prices:', product);
+        return new Response(
+          JSON.stringify({ 
+            error: 'CONFIGURATION_ERROR', 
+            message: 'Цены на товар не настроены корректно', 
+            correlationId 
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const quantity = item.quantity || 1;
+      totalUSD += product.price_usd * quantity;
+      totalKZT += product.price_kzt * quantity;
+      productDetails.push({ ...product, quantity });
     }
 
-    // Validate product prices
-    if (!product.price_usd || !product.price_kzt || product.price_usd <= 0 || product.price_kzt <= 0) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Invalid product prices:', product);
-      return new Response(
-        JSON.stringify({ 
-          error: 'CONFIGURATION_ERROR', 
-          message: 'Цены на товар не настроены корректно', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Total amounts:', { totalUSD, totalKZT });
+
+    // Check provider credentials based on method
+    if (method === 'card' || method === 'kaspi') {
+      const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
+      const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
+      
+      if (!merchantId || !secretKey) {
+        console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing FreedomPay credentials for method:', method);
+        return new Response(
+          JSON.stringify({ 
+            error: 'PROVIDER_NOT_CONFIGURED', 
+            message: 'Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.', 
+            correlationId 
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
-
-    const amountUSD = product.price_usd;
-    const amountKZT = product.price_kzt;
-
-    console.log('[ACTIVATION_PAYMENT]', correlationId, 'Product prices:', { amountUSD, amountKZT });
 
     // Get FreedomPay credentials from environment
     const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
     const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
     const appUrl = Deno.env.get('VITE_APP_URL') || 'https://mg-market.kz';
 
-    if (!merchantId || !secretKey) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Missing FreedomPay credentials');
-      return new Response(
-        JSON.stringify({ 
-          error: 'PROVIDER_NOT_CONFIGURED', 
-          message: 'Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create order in database with activation item
+    // Create order in database with activation items
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: user.id,
-        total_usd: amountUSD,
-        total_kzt: amountKZT,
+        total_usd: totalUSD,
+        total_kzt: totalKZT,
         status: 'pending'
       })
       .select()
@@ -175,38 +188,41 @@ Deno.serve(async (req) => {
 
     console.log('[ACTIVATION_PAYMENT]', correlationId, 'Order created:', order.id);
 
-    // Add product to order items
-    const { error: itemError } = await supabase
-      .from('order_items')
-      .insert({
-        order_id: order.id,
-        product_id: product.id,
-        qty: 1,
-        price_usd: amountUSD,
-        price_kzt: amountKZT,
-        is_activation_snapshot: true
-      });
+    // Add products to order items
+    for (const product of productDetails) {
+      const { error: itemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: order.id,
+          product_id: product.id,
+          qty: product.quantity,
+          price_usd: product.price_usd,
+          price_kzt: product.price_kzt,
+          is_activation_snapshot: true
+        });
 
-    if (itemError) {
-      console.error('[ACTIVATION_PAYMENT]', correlationId, 'Failed to add order item:', itemError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'DATABASE_ERROR', 
-          message: 'Не удалось добавить товар в заказ', 
-          correlationId 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (itemError) {
+        console.error('[ACTIVATION_PAYMENT]', correlationId, 'Failed to add order item:', itemError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'DATABASE_ERROR', 
+            message: 'Не удалось добавить товар в заказ', 
+            correlationId 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Prepare payment data for FreedomPay
     const orderId = `ACT-${order.id}`;
+    const description = productDetails.map(p => p.title).join(', ');
     const paymentData = {
       pg_merchant_id: merchantId,
       pg_order_id: orderId,
       pg_currency: 'KZT',
-      pg_amount: amountKZT,
-      pg_description: `Активация: ${product.title}`,
+      pg_amount: totalKZT,
+      pg_description: `Активация: ${description}`,
       pg_salt: crypto.randomUUID(),
       pg_success_url: `${appUrl}/payment/success`,
       pg_failure_url: `${appUrl}/payment/failure`,
@@ -265,9 +281,9 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           payment_url: paymentUrl, 
           order_id: orderId,
-          product_title: product.title,
-          amount_usd: amountUSD,
-          amount_kzt: amountKZT,
+          products: productDetails.map(p => ({ id: p.id, title: p.title })),
+          amount_usd: totalUSD,
+          amount_kzt: totalKZT,
           correlationId 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

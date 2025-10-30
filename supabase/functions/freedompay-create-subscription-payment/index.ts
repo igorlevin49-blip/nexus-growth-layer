@@ -99,24 +99,34 @@ Deno.serve(async (req) => {
     const exchangeRate = parseFloat(rateSetting.value);
     const subscriptionKZT = Math.round(subscriptionUSD * exchangeRate);
 
-    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Amounts:', { subscriptionUSD, subscriptionKZT, exchangeRate });
+    // Parse request body (method can be "card", "kaspi", or undefined for backward compatibility)
+    const body = await req.json();
+    const { method = 'card' } = body;
+
+    console.log('[SUBSCRIPTION_PAYMENT]', correlationId, 'Amounts:', { subscriptionUSD, subscriptionKZT, exchangeRate }, 'method:', method);
+
+    // Check provider credentials based on method
+    if (method === 'card' || method === 'kaspi') {
+      const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
+      const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
+      
+      if (!merchantId || !secretKey) {
+        console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Missing FreedomPay credentials for method:', method);
+        return new Response(
+          JSON.stringify({ 
+            error: 'PROVIDER_NOT_CONFIGURED', 
+            message: 'Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.', 
+            correlationId 
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Get FreedomPay credentials
     const merchantId = Deno.env.get('FREEDOMPAY_MERCHANT_ID');
     const secretKey = Deno.env.get('FREEDOMPAY_SECRET_KEY');
     const appUrl = Deno.env.get('VITE_APP_URL') || 'https://mg-market.kz';
-
-    if (!merchantId || !secretKey) {
-      console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Missing FreedomPay credentials');
-      return new Response(
-        JSON.stringify({ 
-          error: 'PROVIDER_NOT_CONFIGURED', 
-          message: 'Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.', 
-          correlationId 
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // Create subscription record in DB
     const { data: subscription, error: subscriptionError } = await supabase
