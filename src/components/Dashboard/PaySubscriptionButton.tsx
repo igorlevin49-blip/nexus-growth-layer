@@ -2,25 +2,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CreditCard } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Loader2, CreditCard, FileText } from "lucide-react";
+import { useManualPayment } from "@/hooks/useManualPayment";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function PaySubscriptionButton() {
-  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showManualOption, setShowManualOption] = useState(false);
+  const { createManualSubscription } = useManualPayment();
 
   const handlePayment = async () => {
-    if (!user) {
-      toast.error("Требуется авторизация");
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      console.log('[PAY_SUBSCRIPTION] Starting payment process');
-
-      // Call subscription payment edge function
       const { data, error } = await supabase.functions.invoke(
         'freedompay-create-subscription-payment',
         {
@@ -31,72 +25,112 @@ export function PaySubscriptionButton() {
       );
 
       if (error) {
-        console.error('[PAY_SUBSCRIPTION] Error:', error);
+        console.error('Edge function error:', error);
         
-        // Handle specific error types
-        if (error.message?.includes('UNAUTHORIZED')) {
-          toast.error('Требуется авторизация. Пожалуйста, войдите в систему');
-        } else if (error.message?.includes('CONFIGURATION_ERROR')) {
-          toast.error('Настройки платёжной системы не завершены. Обратитесь к администратору');
-        } else {
-          toast.error(`Ошибка создания платежа: ${error.message}`);
-        }
-        return;
-      }
-
-      if (!data?.payment_url) {
-        console.error('[PAY_SUBSCRIPTION] No payment URL in response:', data);
-        toast.error('Не удалось получить ссылку на оплату');
-        return;
-      }
-
-      console.log('[PAY_SUBSCRIPTION] Payment URL received:', data.payment_url);
-      
-      // Show success message with details
-      toast.success(`Подписка: $${data.amount_usd} (${data.amount_kzt} ₸)`);
-      
-      // Redirect to payment page
-      window.location.href = data.payment_url;
-
-    } catch (error: any) {
-      console.error('[PAY_SUBSCRIPTION] Unexpected error:', error);
-      
-      // Parse error response
-      if (error.context?.body) {
-        try {
-          const errorData = JSON.parse(error.context.body);
-          toast.error(errorData.message || 'Неизвестная ошибка', {
-            description: errorData.correlationId ? `Код: ${errorData.correlationId}` : undefined
+        // Check if provider not configured (422 status)
+        if (error.message?.includes('PROVIDER_NOT_CONFIGURED') || error.message?.includes('422')) {
+          setShowManualOption(true);
+          toast.error('Онлайн-оплата временно недоступна', {
+            description: 'Вы можете отправить заявку на ручную оплату'
           });
-        } catch {
-          toast.error('Ошибка при создании платежа');
+        } else {
+          toast.error(`Ошибка: ${error.message}`);
         }
-      } else {
-        toast.error(error.message || 'Неизвестная ошибка при создании платежа');
+        return;
       }
+
+      if (data?.payment_url) {
+        toast.success(`Подписка: $${data.amount_usd}`);
+        window.location.href = data.payment_url;
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Ошибка при создании платежа');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleManualPayment = async () => {
+    setIsProcessing(true);
+    try {
+      // Get subscription price from settings
+      const { data: settings } = await supabase
+        .from('mlm_settings')
+        .select('value')
+        .eq('key', 'subscription_price_usd')
+        .single();
+
+      const priceUSD = typeof settings?.value === 'number' ? settings.value : 100;
+      
+      // Get exchange rate
+      const { data: shopSettings } = await supabase
+        .from('shop_settings')
+        .select('rate_usd_kzt')
+        .eq('id', 1)
+        .single();
+
+      const rate = typeof shopSettings?.rate_usd_kzt === 'number' ? shopSettings.rate_usd_kzt : 450;
+      const priceKZT = Math.round(priceUSD * rate);
+
+      await createManualSubscription.mutateAsync({
+        amount_usd: priceUSD,
+        amount_kzt: priceKZT
+      });
+    } catch (error) {
+      console.error('Manual payment error:', error);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <Button
-      onClick={handlePayment}
-      disabled={isProcessing}
-      className="w-full"
-      size="lg"
-    >
-      {isProcessing ? (
-        <>
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Создание платежа...
-        </>
-      ) : (
-        <>
-          <CreditCard className="mr-2 h-5 w-5" />
-          Оплатить подписку
-        </>
+    <div className="space-y-2 w-full">
+      {showManualOption && (
+        <Alert>
+          <FileText className="h-4 w-4" />
+          <AlertDescription>
+            Онлайн-оплата временно недоступна. Вы можете отправить заявку на ручную оплату.
+          </AlertDescription>
+        </Alert>
       )}
-    </Button>
+      <div className="flex gap-2 w-full">
+        <Button 
+          onClick={handlePayment} 
+          disabled={isProcessing || createManualSubscription.isPending} 
+          className="flex-1"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Создание...
+            </>
+          ) : (
+            <>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Оплатить онлайн
+            </>
+          )}
+        </Button>
+        <Button 
+          onClick={handleManualPayment}
+          disabled={isProcessing || createManualSubscription.isPending}
+          variant="outline"
+          className="flex-1"
+        >
+          {createManualSubscription.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Отправка...
+            </>
+          ) : (
+            <>
+              <FileText className="mr-2 h-4 w-4" />
+              Оплатить вручную
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }

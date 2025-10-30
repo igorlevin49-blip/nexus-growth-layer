@@ -79,6 +79,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit: {
+        Row: {
+          action_type: string
+          admin_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       auto_withdraw_rules: {
         Row: {
           created_at: string
@@ -394,11 +427,17 @@ export type Database = {
       }
       orders: {
         Row: {
+          approval_comment: string | null
+          approved_by: string | null
           archived_at: string | null
           created_at: string | null
           id: string
           is_archived: boolean | null
           is_test: boolean | null
+          paid_at: string | null
+          payment_intent_id: string | null
+          payment_proof_url: string | null
+          payment_type: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           total_kzt: number
           total_usd: number
@@ -406,11 +445,17 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          approval_comment?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           created_at?: string | null
           id?: string
           is_archived?: boolean | null
           is_test?: boolean | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_proof_url?: string | null
+          payment_type?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -418,11 +463,17 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          approval_comment?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           created_at?: string | null
           id?: string
           is_archived?: boolean | null
           is_test?: boolean | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_proof_url?: string | null
+          payment_type?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -716,15 +767,21 @@ export type Database = {
           admin_comment: string | null
           amount_kzt: number
           amount_usd: number
+          approval_comment: string | null
+          approved_by: string | null
           archived_at: string | null
           created_at: string
           expires_at: string | null
           id: string
           is_archived: boolean | null
           is_test: boolean | null
+          paid_at: string | null
           payment_confirmed_at: string | null
           payment_confirmed_by: string | null
+          payment_intent_id: string | null
           payment_method: string | null
+          payment_proof_url: string | null
+          payment_type: string | null
           started_at: string | null
           status: string
           updated_at: string
@@ -734,15 +791,21 @@ export type Database = {
           admin_comment?: string | null
           amount_kzt: number
           amount_usd: number
+          approval_comment?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
           is_archived?: boolean | null
           is_test?: boolean | null
+          paid_at?: string | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
+          payment_intent_id?: string | null
           payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_type?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -752,15 +815,21 @@ export type Database = {
           admin_comment?: string | null
           amount_kzt?: number
           amount_usd?: number
+          approval_comment?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
           is_archived?: boolean | null
           is_test?: boolean | null
+          paid_at?: string | null
           payment_confirmed_at?: string | null
           payment_confirmed_by?: string | null
+          payment_intent_id?: string | null
           payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_type?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -960,6 +1029,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_activation_order: {
+        Args: {
+          p_admin_id: string
+          p_comment: string
+          p_order_id: string
+          p_payment_proof_url?: string
+        }
+        Returns: Json
+      }
+      approve_subscription_payment: {
+        Args: {
+          p_admin_id: string
+          p_comment: string
+          p_payment_proof_url?: string
+          p_subscription_id: string
+        }
+        Returns: Json
+      }
       archive_records: {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
@@ -1078,6 +1165,15 @@ export type Database = {
       }
       purge_test_data: {
         Args: { p_confirmation_phrase?: string; p_dry_run?: boolean }
+        Returns: Json
+      }
+      reject_payment: {
+        Args: {
+          p_admin_id: string
+          p_comment: string
+          p_record_id: string
+          p_record_type: string
+        }
         Returns: Json
       }
     }
