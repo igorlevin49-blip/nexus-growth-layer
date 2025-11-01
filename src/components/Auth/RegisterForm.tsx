@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { APP_CONFIG } from "@/config/constants";
+import { setCookie, getCookie, deleteCookie } from "@/utils/cookies";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,12 +30,12 @@ export function RegisterForm() {
   // Get referral code from URL or cookie
   useEffect(() => {
     const refFromUrl = searchParams.get('ref');
-    const refFromCookie = localStorage.getItem(APP_CONFIG.REFERRAL_COOKIE_KEY);
+    const refFromCookie = getCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
     
     if (refFromUrl) {
       setReferralCode(refFromUrl);
-      // Save to cookie for 30 days
-      localStorage.setItem(APP_CONFIG.REFERRAL_COOKIE_KEY, refFromUrl);
+      // Save to cookie for 7 days
+      setCookie(APP_CONFIG.REFERRAL_COOKIE_KEY, refFromUrl, 7);
     } else if (refFromCookie) {
       setReferralCode(refFromCookie);
     }
@@ -171,8 +172,21 @@ export function RegisterForm() {
           .update(updateData)
           .eq('id', authData.user.id);
 
+        // Create referral record (primary structure)
+        if (sponsorId) {
+          await supabase
+            .from('referrals')
+            .insert({
+              referrer_id: sponsorId,
+              referred_user_id: authData.user.id,
+              structure_type: 1, // Primary structure
+            })
+            .select()
+            .single();
+        }
+
         // Clear referral cookie after successful registration
-        localStorage.removeItem(APP_CONFIG.REFERRAL_COOKIE_KEY);
+        deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
       }
 
       toast.success("Регистрация успешна", {

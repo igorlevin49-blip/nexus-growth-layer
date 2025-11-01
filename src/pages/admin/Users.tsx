@@ -19,9 +19,14 @@ interface Profile {
   deleted_at: string | null;
   is_archived: boolean;
   monthly_activation_completed: boolean;
+  sponsor_id: string | null;
+  referrer_snapshot: any;
   sponsor?: {
     full_name: string | null;
     email: string | null;
+    is_active: boolean;
+    deleted_at: string | null;
+    is_archived: boolean;
   } | null;
 }
 
@@ -42,7 +47,7 @@ export default function AdminUsers() {
         .from('profiles')
         .select(`
           *,
-          sponsor:sponsor_id(full_name, email)
+          sponsor:sponsor_id(full_name, email, is_active, deleted_at, is_archived)
         `);
 
       // По умолчанию не показываем архивных
@@ -145,14 +150,40 @@ export default function AdminUsers() {
                   <TableCell>{profile.full_name || 'Не указано'}</TableCell>
                   <TableCell>{profile.email}</TableCell>
                   <TableCell>
-                    {profile.sponsor ? (
-                      <div className="text-sm">
-                        <div className="font-medium">{profile.sponsor.full_name || 'Не указано'}</div>
-                        <div className="text-muted-foreground">{profile.sponsor.email}</div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {(() => {
+                      // Check if sponsor exists and is active
+                      const sponsorIsDeleted = profile.sponsor?.deleted_at || profile.sponsor?.is_archived || !profile.sponsor?.is_active;
+                      
+                      if (profile.sponsor && !sponsorIsDeleted) {
+                        // Show live sponsor data
+                        return (
+                          <div className="text-sm">
+                            <div className="font-medium">{profile.sponsor.full_name || 'Не указано'}</div>
+                            <div className="text-muted-foreground">{profile.sponsor.email}</div>
+                          </div>
+                        );
+                      } else if (profile.referrer_snapshot) {
+                        // Show snapshot if sponsor is deleted/archived
+                        return (
+                          <div className="text-sm">
+                            <div className="font-medium">{profile.referrer_snapshot.full_name || 'Не указано'}</div>
+                            <div className="text-muted-foreground">{profile.referrer_snapshot.email}</div>
+                            <Badge variant="secondary" className="mt-1">архив</Badge>
+                          </div>
+                        );
+                      } else if (profile.sponsor_id) {
+                        // Has sponsor_id but no data (shouldn't happen normally)
+                        return (
+                          <div className="text-sm">
+                            <div className="text-muted-foreground">Данные недоступны</div>
+                            <Badge variant="secondary" className="mt-1">архив</Badge>
+                          </div>
+                        );
+                      } else {
+                        // No sponsor at all
+                        return <span className="text-muted-foreground">—</span>;
+                      }
+                    })()}
                   </TableCell>
                   <TableCell>
                     <Badge 
