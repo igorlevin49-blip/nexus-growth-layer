@@ -586,6 +586,7 @@ export type Database = {
           payment_details: string | null
           phone: string | null
           referral_code: string
+          referrer_snapshot: Json | null
           show_stats: boolean | null
           sponsor_id: string | null
           subscription_active: boolean | null
@@ -617,6 +618,7 @@ export type Database = {
           payment_details?: string | null
           phone?: string | null
           referral_code?: string
+          referrer_snapshot?: Json | null
           show_stats?: boolean | null
           sponsor_id?: string | null
           subscription_active?: boolean | null
@@ -648,6 +650,7 @@ export type Database = {
           payment_details?: string | null
           phone?: string | null
           referral_code?: string
+          referrer_snapshot?: Json | null
           show_stats?: boolean | null
           sponsor_id?: string | null
           subscription_active?: boolean | null

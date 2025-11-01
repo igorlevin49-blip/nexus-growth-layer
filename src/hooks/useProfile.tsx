@@ -21,6 +21,8 @@ export interface Profile {
   subscription_status?: string;
   subscription_expires_at?: string | null;
   monthly_activation_completed?: boolean;
+  sponsor_id?: string | null;
+  referrer_snapshot?: any;
 }
 
 export function useProfile() {

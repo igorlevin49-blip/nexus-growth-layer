@@ -88,9 +88,9 @@ export function AppLayout() {
           <div className="flex h-16 items-center justify-between px-6 border-b border-border">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg hero-gradient flex items-center justify-center">
-                <span className="text-white font-bold text-sm">MLM</span>
+                <span className="text-white font-bold text-sm">MG</span>
               </div>
-              <span className="font-semibold text-lg">MLM Platform</span>
+              <span className="font-semibold text-lg">MG-market</span>
             </div>
             <Button
               variant="ghost"

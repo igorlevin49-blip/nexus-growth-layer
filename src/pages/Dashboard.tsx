@@ -4,6 +4,7 @@ import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
 import { RegistrationMessage } from "@/components/Dashboard/RegistrationMessage";
 import { SubscriptionCard } from "@/components/Dashboard/SubscriptionCard";
+import { SponsorInfo } from "@/components/Dashboard/SponsorInfo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -144,6 +145,9 @@ export default function Dashboard() {
 
       {/* Registration Message */}
       <RegistrationMessage />
+
+      {/* Sponsor Info */}
+      <SponsorInfo />
 
       {/* Stats Grid */}
       <DashboardStats />

@@ -114,15 +114,21 @@ export function RegisterForm() {
     try {
       // Find sponsor by referral code if provided
       let sponsorId: string | null = null;
+      let referrerSnapshot: any = null;
       if (referralCode) {
         const { data: sponsorProfile, error: sponsorError } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, full_name, email')
           .eq('referral_code', referralCode.trim())
           .maybeSingle();
         
         if (sponsorProfile) {
           sponsorId = sponsorProfile.id;
+          // Save snapshot of sponsor data
+          referrerSnapshot = {
+            full_name: sponsorProfile.full_name,
+            email: sponsorProfile.email,
+          };
         } else if (!sponsorError) {
           toast.warning("Код приглашения не найден", {
             description: "Регистрация продолжается без реферера",
@@ -157,6 +163,7 @@ export function RegisterForm() {
         
         if (sponsorId) {
           updateData.sponsor_id = sponsorId;
+          updateData.referrer_snapshot = referrerSnapshot;
         }
 
         await supabase
@@ -192,7 +199,7 @@ export function RegisterForm() {
             </div>
             <CardTitle className="text-2xl font-bold">Регистрация</CardTitle>
             <CardDescription>
-              Создайте аккаунт в MLM Platform и начните зарабатывать
+              Создайте аккаунт в MG-market и начните зарабатывать
             </CardDescription>
           </CardHeader>
           
