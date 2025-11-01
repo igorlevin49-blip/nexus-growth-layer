@@ -17,6 +17,8 @@ interface Profile {
   created_at: string;
   is_active: boolean;
   deleted_at: string | null;
+  is_archived: boolean;
+  monthly_activation_completed: boolean;
   sponsor?: {
     full_name: string | null;
     email: string | null;
@@ -26,22 +28,29 @@ interface Profile {
 export default function AdminUsers() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
   const softDeleteUser = useSoftDeleteUser();
   const restoreUser = useRestoreUser();
 
   useEffect(() => {
     fetchProfiles();
-  }, []);
+  }, [showArchived]);
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select(`
           *,
           sponsor:sponsor_id(full_name, email)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // По умолчанию не показываем архивных
+      if (!showArchived) {
+        query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setProfiles(data || []);
@@ -101,8 +110,19 @@ export default function AdminUsers() {
   return (
     <div className="p-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Управление пользователями</CardTitle>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input 
+                type="checkbox" 
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="rounded"
+              />
+              Показывать архивных
+            </label>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -111,8 +131,9 @@ export default function AdminUsers() {
                 <TableHead>Имя</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Пригласивший</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Активен</TableHead>
+                <TableHead>Статус аккаунта</TableHead>
+                <TableHead>Статус подписки</TableHead>
+                <TableHead>Активация</TableHead>
                 <TableHead>Баланс</TableHead>
                 <TableHead>Дата регистрации</TableHead>
                 <TableHead>Действия</TableHead>
@@ -136,25 +157,36 @@ export default function AdminUsers() {
                   <TableCell>
                     <Badge 
                       variant={
-                        profile.subscription_status === 'active' 
+                        profile.is_active && !profile.deleted_at && !profile.is_archived
                           ? 'default' 
                           : profile.subscription_status === 'frozen'
                           ? 'secondary'
                           : 'destructive'
                       }
                     >
-                      {profile.subscription_status === 'active' ? (
+                      {profile.is_active && !profile.deleted_at && !profile.is_archived ? (
                         <><CheckCircle className="w-3 h-3 mr-1" /> Активен</>
                       ) : profile.subscription_status === 'frozen' ? (
                         <><XCircle className="w-3 h-3 mr-1" /> Заморожен</>
                       ) : (
-                        'Неактивен'
+                        <><Ban className="w-3 h-3 mr-1" /> Неактивен</>
                       )}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={profile.is_active ? 'default' : 'secondary'}>
-                      {profile.is_active ? 'Да' : 'Удалён'}
+                    <Badge 
+                      variant={
+                        profile.subscription_status === 'active' 
+                          ? 'default' 
+                          : 'secondary'
+                      }
+                    >
+                      {profile.subscription_status === 'active' ? 'Активна' : 'Неактивна'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={profile.monthly_activation_completed ? 'default' : 'secondary'}>
+                      {profile.monthly_activation_completed ? 'Выполнена' : 'Не выполнена'}
                     </Badge>
                   </TableCell>
                   <TableCell>${profile.balance?.toFixed(2) || '0.00'}</TableCell>
