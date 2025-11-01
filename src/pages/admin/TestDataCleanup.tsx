@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Trash2, Flag } from "lucide-react";
 import { useAdminUsers, useFlagTestData, usePurgeTestData } from "@/hooks/useTestDataCleanup";
+import { useCleanupTestData } from "@/hooks/useCleanupTestData";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function TestDataCleanup() {
@@ -19,10 +20,15 @@ export default function TestDataCleanup() {
   const [confirmPhrase, setConfirmPhrase] = useState('');
   const [dryRunResult, setDryRunResult] = useState<any>(null);
   const [purgeResult, setPurgeResult] = useState<any>(null);
+  const [cleanupEmail, setCleanupEmail] = useState("egor.smart@mail.ru");
+  const [cleanupConfirm, setCleanupConfirm] = useState("");
+  const [cleanupPreview, setCleanupPreview] = useState<any>(null);
+  const [showCleanupDialog, setShowCleanupDialog] = useState(false);
 
   const { data: adminUsers } = useAdminUsers();
   const flagMutation = useFlagTestData();
   const purgeMutation = usePurgeTestData();
+  const cleanupMutation = useCleanupTestData();
 
   const handleDryRunFlag = async () => {
     const result = await flagMutation.mutateAsync({
@@ -73,6 +79,29 @@ export default function TestDataCleanup() {
     );
   };
 
+  const handleCleanupPreview = async () => {
+    const result = await cleanupMutation.mutateAsync({
+      superadminEmail: cleanupEmail,
+      confirmationPhrase: "",
+      dryRun: true
+    });
+    setCleanupPreview(result);
+  };
+
+  const handleCleanup = async () => {
+    if (cleanupConfirm !== 'ОЧИСТИТЬ ТЕСТОВЫЕ ДАННЫЕ') return;
+    
+    await cleanupMutation.mutateAsync({
+      superadminEmail: cleanupEmail,
+      confirmationPhrase: cleanupConfirm,
+      dryRun: false
+    });
+    
+    setShowCleanupDialog(false);
+    setCleanupConfirm("");
+    setCleanupPreview(null);
+  };
+
   return (
     <>
       <div className="container mx-auto py-8">
@@ -93,7 +122,7 @@ export default function TestDataCleanup() {
         </Alert>
 
         <Tabs defaultValue="flag" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="flag">
               <Flag className="mr-2 h-4 w-4" />
               Пометить тестовые
@@ -101,6 +130,10 @@ export default function TestDataCleanup() {
             <TabsTrigger value="purge">
               <Trash2 className="mr-2 h-4 w-4" />
               Удалить помеченные
+            </TabsTrigger>
+            <TabsTrigger value="cleanup">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Полная очистка
             </TabsTrigger>
           </TabsList>
 
@@ -232,6 +265,86 @@ export default function TestDataCleanup() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="cleanup">
+            <Card>
+              <CardHeader>
+                <CardTitle>Полная очистка (сброс к заводским настройкам)</CardTitle>
+                <CardDescription>
+                  Удаляет ВСЕХ пользователей кроме суперадмина и все их данные. Настройки, товары и структура остаются.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>КРАЙНЕ ОПАСНО!</strong> Эта операция удалит всех пользователей (кроме одного), 
+                    все заказы, подписки, транзакции, выплаты и реферальные связи. 
+                    Используйте только для полного сброса перед боевым запуском!
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cleanupEmail">Email суперадмина (будет сохранён)</Label>
+                  <Input
+                    id="cleanupEmail"
+                    type="email"
+                    value={cleanupEmail}
+                    onChange={(e) => setCleanupEmail(e.target.value)}
+                  />
+                </div>
+
+                {cleanupPreview && (
+                  <div className="border rounded-md p-4">
+                    <p className="font-semibold mb-2">DRY-RUN - будет удалено:</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Пользователи</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.users}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Заказы</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.orders}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Подписки</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.subscriptions}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Транзакции</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.transactions}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Выплаты</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.withdrawals}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Реферальные связи</p>
+                        <p className="text-2xl font-bold">{cleanupPreview.referrals}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCleanupPreview}
+                    disabled={cleanupMutation.isPending}
+                    variant="outline"
+                  >
+                    Показать что будет удалено (DRY-RUN)
+                  </Button>
+                  <Button
+                    onClick={() => setShowCleanupDialog(true)}
+                    disabled={cleanupMutation.isPending || !cleanupPreview}
+                    variant="destructive"
+                  >
+                    Выполнить полную очистку
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -296,6 +409,50 @@ export default function TestDataCleanup() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Подтвердите полную очистку</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong className="text-destructive">КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ!</strong>
+              <br />
+              Будут БЕЗВОЗВРАТНО удалены:
+              <ul className="mt-2 space-y-1">
+                <li>Пользователи: {cleanupPreview?.users || 0}</li>
+                <li>Заказы: {cleanupPreview?.orders || 0}</li>
+                <li>Подписки: {cleanupPreview?.subscriptions || 0}</li>
+                <li>Транзакции: {cleanupPreview?.transactions || 0}</li>
+                <li>Выплаты: {cleanupPreview?.withdrawals || 0}</li>
+                <li>Реферальные связи: {cleanupPreview?.referrals || 0}</li>
+              </ul>
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="cleanupConfirm">
+                  Введите фразу: <strong>ОЧИСТИТЬ ТЕСТОВЫЕ ДАННЫЕ</strong>
+                </Label>
+                <Input
+                  id="cleanupConfirm"
+                  value={cleanupConfirm}
+                  onChange={(e) => setCleanupConfirm(e.target.value)}
+                  placeholder="ОЧИСТИТЬ ТЕСТОВЫЕ ДАННЫЕ"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCleanupConfirm('')}>
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCleanup}
+              disabled={cleanupConfirm !== 'ОЧИСТИТЬ ТЕСТОВЫЕ ДАННЫЕ'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить безвозвратно
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

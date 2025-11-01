@@ -570,11 +570,13 @@ export type Database = {
           balance: number | null
           bio: string | null
           created_at: string | null
+          deleted_at: string | null
           direct_referrals_count: number | null
           email: string | null
           first_name: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           is_public_profile: boolean | null
           language: string | null
           last_name: string | null
@@ -598,11 +600,13 @@ export type Database = {
           balance?: number | null
           bio?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           direct_referrals_count?: number | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           is_public_profile?: boolean | null
           language?: string | null
           last_name?: string | null
@@ -626,11 +630,13 @@ export type Database = {
           balance?: number | null
           bio?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           direct_referrals_count?: number | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           is_public_profile?: boolean | null
           language?: string | null
           last_name?: string | null
@@ -1051,6 +1057,15 @@ export type Database = {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
       }
+      cleanup_test_data: {
+        Args: {
+          p_admin_id: string
+          p_confirmation_phrase: string
+          p_dry_run?: boolean
+          p_superadmin_email: string
+        }
+        Returns: Json
+      }
       flag_test_data: {
         Args: {
           p_dry_run?: boolean
@@ -1174,6 +1189,14 @@ export type Database = {
           p_record_id: string
           p_record_type: string
         }
+        Returns: Json
+      }
+      restore_user: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: Json
+      }
+      soft_delete_user: {
+        Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
       }
     }

@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw } from "lucide-react";
+import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
 
 interface Profile {
   id: string;
@@ -14,11 +15,19 @@ interface Profile {
   subscription_status: string;
   balance: number;
   created_at: string;
+  is_active: boolean;
+  deleted_at: string | null;
+  sponsor?: {
+    full_name: string | null;
+    email: string | null;
+  } | null;
 }
 
 export default function AdminUsers() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const softDeleteUser = useSoftDeleteUser();
+  const restoreUser = useRestoreUser();
 
   useEffect(() => {
     fetchProfiles();
@@ -28,7 +37,10 @@ export default function AdminUsers() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          sponsor:sponsor_id(full_name, email)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -72,6 +84,16 @@ export default function AdminUsers() {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    await softDeleteUser.mutateAsync(userId);
+    fetchProfiles();
+  };
+
+  const handleRestoreUser = async (userId: string) => {
+    await restoreUser.mutateAsync(userId);
+    fetchProfiles();
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-96">Загрузка...</div>;
   }
@@ -88,7 +110,9 @@ export default function AdminUsers() {
               <TableRow>
                 <TableHead>Имя</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Пригласивший</TableHead>
                 <TableHead>Статус</TableHead>
+                <TableHead>Активен</TableHead>
                 <TableHead>Баланс</TableHead>
                 <TableHead>Дата регистрации</TableHead>
                 <TableHead>Действия</TableHead>
@@ -96,9 +120,19 @@ export default function AdminUsers() {
             </TableHeader>
             <TableBody>
               {profiles.map((profile) => (
-                <TableRow key={profile.id}>
+                <TableRow key={profile.id} className={profile.deleted_at ? 'opacity-50' : ''}>
                   <TableCell>{profile.full_name || 'Не указано'}</TableCell>
                   <TableCell>{profile.email}</TableCell>
+                  <TableCell>
+                    {profile.sponsor ? (
+                      <div className="text-sm">
+                        <div className="font-medium">{profile.sponsor.full_name || 'Не указано'}</div>
+                        <div className="text-muted-foreground">{profile.sponsor.email}</div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge 
                       variant={
@@ -118,17 +152,44 @@ export default function AdminUsers() {
                       )}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant={profile.is_active ? 'default' : 'secondary'}>
+                      {profile.is_active ? 'Да' : 'Удалён'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>${profile.balance?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
-                    >
-                      <Ban className="w-4 h-4 mr-1" />
-                      {profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
+                        disabled={!profile.is_active}
+                      >
+                        <Ban className="w-4 h-4 mr-1" />
+                        {profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
+                      </Button>
+                      {profile.is_active ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteUser(profile.id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Удалить
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleRestoreUser(profile.id)}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-1" />
+                          Восстановить
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
