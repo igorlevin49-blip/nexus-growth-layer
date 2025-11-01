@@ -577,6 +577,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          is_archived: boolean | null
           is_public_profile: boolean | null
           language: string | null
           last_name: string | null
@@ -607,6 +608,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          is_archived?: boolean | null
           is_public_profile?: boolean | null
           language?: string | null
           last_name?: string | null
@@ -637,6 +639,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_archived?: boolean | null
           is_public_profile?: boolean | null
           language?: string | null
           last_name?: string | null
