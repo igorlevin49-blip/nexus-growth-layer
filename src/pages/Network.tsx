@@ -46,7 +46,7 @@ const getStatusBadge = (member: NetworkMember) => {
   if (member.subscription_status === 'frozen') {
     return <Badge className="pending-indicator">Заморожен</Badge>;
   }
-  return <Badge className="frozen-indicator">Неактивен</Badge>;
+  return <Badge className="frozen-indicator">Ожидает активации</Badge>;
 };
 
 export default function Network() {

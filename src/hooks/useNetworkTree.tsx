@@ -24,7 +24,7 @@ export function useNetworkTree(maxLevel: number = 10) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.rpc('get_network_tree', {
+      const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
         max_level: maxLevel
       });

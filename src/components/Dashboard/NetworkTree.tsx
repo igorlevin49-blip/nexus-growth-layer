@@ -78,7 +78,7 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
       case "frozen":
         return <Badge className="pending-indicator">Заморожен</Badge>;
       default:
-        return <Badge className="frozen-indicator">Неактивен</Badge>;
+        return <Badge className="frozen-indicator">Ожидает активации</Badge>;
     }
   };
 

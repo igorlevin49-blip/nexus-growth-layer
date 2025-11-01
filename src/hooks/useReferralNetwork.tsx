@@ -12,7 +12,11 @@ export type ReferralMember = {
   subscription_status: string;
   monthly_activation_met: boolean;
   created_at: string;
-  structure_type: number;
+  structure_type?: number;
+  avatar_url?: string | null;
+  direct_referrals?: number;
+  total_team?: number;
+  monthly_volume?: number;
 };
 
 export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number = 10) => {
@@ -23,10 +27,10 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase.rpc('get_referral_network', {
+      // Use the new function that reads from referrals table
+      const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
-        structure_type_param: structureType,
-        max_levels: maxLevels,
+        max_level: maxLevels,
       });
 
       if (error) {
@@ -34,7 +38,10 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
         throw error;
       }
 
-      return (data || []) as ReferralMember[];
+      return (data || []).map(item => ({
+        ...item,
+        structure_type: structureType
+      })) as ReferralMember[];
     },
     enabled: !!user?.id,
   });
