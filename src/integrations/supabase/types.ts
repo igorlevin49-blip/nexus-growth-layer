@@ -1063,6 +1063,7 @@ export type Database = {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
       }
+      bind_referral: { Args: { p_ref_code: string }; Returns: Json }
       cleanup_test_data: {
         Args: {
           p_admin_id: string

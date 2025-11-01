@@ -35,8 +35,8 @@ export function SponsorInfo() {
   // Use snapshot if sponsor is deleted/archived, otherwise use live data
   const sponsorIsDeleted = sponsor?.deleted_at || sponsor?.is_archived || !sponsor?.is_active;
   const displayName = sponsorIsDeleted 
-    ? profile.referrer_snapshot?.full_name || 'Неизвестный пользователь'
-    : sponsor?.full_name || profile.referrer_snapshot?.full_name || 'Неизвестный пользователь';
+    ? (profile.referrer_snapshot?.full_name || profile.referrer_snapshot?.email || 'Неизвестный пользователь')
+    : (sponsor?.full_name || sponsor?.email || profile.referrer_snapshot?.full_name || profile.referrer_snapshot?.email || 'Неизвестный пользователь');
 
   return (
     <Card className="border-primary/20 bg-primary/5">

@@ -113,30 +113,6 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      // Find sponsor by referral code if provided
-      let sponsorId: string | null = null;
-      let referrerSnapshot: any = null;
-      if (referralCode) {
-        const { data: sponsorProfile, error: sponsorError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .eq('referral_code', referralCode.trim())
-          .maybeSingle();
-        
-        if (sponsorProfile) {
-          sponsorId = sponsorProfile.id;
-          // Save snapshot of sponsor data
-          referrerSnapshot = {
-            full_name: sponsorProfile.full_name,
-            email: sponsorProfile.email,
-          };
-        } else if (!sponsorError) {
-          toast.warning("Код приглашения не найден", {
-            description: "Регистрация продолжается без реферера",
-          });
-        }
-      }
-
       const redirectUrl = `${APP_CONFIG.DOMAIN}/`;
       
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -161,32 +137,29 @@ export function RegisterForm() {
         if (phone) {
           updateData.phone = normalizePhone(phone);
         }
-        
-        if (sponsorId) {
-          updateData.sponsor_id = sponsorId;
-          updateData.referrer_snapshot = referrerSnapshot;
-        }
 
+        // Update basic profile data first
         await supabase
           .from('profiles')
           .update(updateData)
           .eq('id', authData.user.id);
 
-        // Create referral record (primary structure)
-        if (sponsorId) {
-          await supabase
-            .from('referrals')
-            .insert({
-              referrer_id: sponsorId,
-              referred_user_id: authData.user.id,
-              structure_type: 1, // Primary structure
-            })
-            .select()
-            .single();
-        }
+        // Bind referral via secure RPC if code provided
+        if (referralCode?.trim()) {
+          const { data: bindResult } = await supabase.rpc('bind_referral', {
+            p_ref_code: referralCode.trim()
+          });
 
-        // Clear referral cookie after successful registration
-        deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
+          const result = bindResult as { success?: boolean; error?: string } | null;
+          if (result?.success) {
+            // Clear referral cookie after successful bind
+            deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
+          } else if (result?.error === 'INVALID_CODE') {
+            toast.warning("Код приглашения не найден", {
+              description: "Регистрация продолжается без реферера",
+            });
+          }
+        }
       }
 
       toast.success("Регистрация успешна", {
