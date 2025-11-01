@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useReferralBind } from "@/hooks/useReferralBind";
+import { useReferralCapture } from "@/hooks/useReferralCapture";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,7 @@ import ResetPassword from "./pages/ResetPassword";
 const queryClient = new QueryClient();
 
 function AppContent() {
+  useReferralCapture(); // Capture ?ref= from any route
   useReferralBind(); // Auto-bind referral from cookie on first login
   return (
     <Routes>
