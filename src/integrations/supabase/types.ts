@@ -565,6 +565,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activation_due_from: string | null
           allow_contacts: boolean | null
           avatar_url: string | null
           balance: number | null
@@ -597,6 +598,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          activation_due_from?: string | null
           allow_contacts?: boolean | null
           avatar_url?: string | null
           balance?: number | null
@@ -629,6 +631,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          activation_due_from?: string | null
           allow_contacts?: boolean | null
           avatar_url?: string | null
           balance?: number | null

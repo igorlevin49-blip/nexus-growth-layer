@@ -6,15 +6,22 @@ import { CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useManualPayment } from "@/hooks/useManualPayment";
 import { PaymentMethodDialog } from "./PaymentMethodDialog";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface PayActivationButtonProps {
   requiredAmountUSD: number;
   currentAmountUSD: number;
+  activationDueFrom: Date | null;
+  isActivationRequired: boolean;
 }
 
 export function PayActivationButton({ 
   requiredAmountUSD, 
-  currentAmountUSD 
+  currentAmountUSD,
+  activationDueFrom,
+  isActivationRequired
 }: PayActivationButtonProps) {
   const { user } = useAuth();
   const { createManualActivation } = useManualPayment();
@@ -136,16 +143,45 @@ export function PayActivationButton({
     await createManualActivation.mutateAsync({ product_id: product.id });
   };
 
+  const isDisabled = 
+    isProcessing || 
+    createManualActivation.isPending || 
+    currentAmountUSD >= requiredAmountUSD ||
+    !isActivationRequired;
+
+  const getTooltipText = () => {
+    if (!isActivationRequired && activationDueFrom) {
+      return `Первая месячная активация требуется с ${format(activationDueFrom, "dd.MM.yyyy", { locale: ru })}. Сейчас ничего делать не нужно.`;
+    }
+    if (currentAmountUSD >= requiredAmountUSD) {
+      return "Активация уже выполнена";
+    }
+    return "Оплатить активацию";
+  };
+
   return (
     <>
-      <Button 
-        onClick={handleOpenDialog} 
-        disabled={isProcessing || createManualActivation.isPending || currentAmountUSD >= requiredAmountUSD} 
-        className="w-full"
-      >
-        <CreditCard className="mr-2 h-4 w-4" />
-        Оплатить
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full">
+              <Button 
+                onClick={handleOpenDialog} 
+                disabled={isDisabled} 
+                className="w-full"
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Оплатить
+              </Button>
+            </div>
+          </TooltipTrigger>
+          {isDisabled && (
+            <TooltipContent>
+              <p>{getTooltipText()}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       <PaymentMethodDialog
         open={dialogOpen}
