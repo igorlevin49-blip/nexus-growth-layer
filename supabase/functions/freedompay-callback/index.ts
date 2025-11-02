@@ -22,9 +22,24 @@ serve(async (req) => {
       throw new Error('Secret key not configured');
     }
 
-    const payload = await req.json();
-    console.log('Freedom Pay callback received:', payload);
+    // SECURITY: Parse and validate request payload
+    let payload;
+    try {
+      payload = await req.json();
+    } catch (parseError) {
+      console.error('[FREEDOMPAY_CALLBACK] Invalid JSON payload');
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
+    console.log('[FREEDOMPAY_CALLBACK] Callback received for order:', payload.order_id);
+
+    // SECURITY: Validate required fields
     const {
       order_id,
       amount,
@@ -32,6 +47,17 @@ serve(async (req) => {
       transaction_id,
       signature: receivedSignature,
     } = payload;
+
+    if (!order_id || !amount || !status || !transaction_id || !receivedSignature) {
+      console.error('[FREEDOMPAY_CALLBACK] Missing required fields');
+      return new Response(
+        JSON.stringify({ error: 'Missing required payment data' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // Verify signature
     const signatureString = `${order_id}${amount}${status}${transaction_id}${secretKey}`;
@@ -121,9 +147,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in freedompay-callback:', error);
+    // SECURITY: Log detailed error server-side, return generic message to client
+    console.error('[FREEDOMPAY_CALLBACK] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Payment processing failed' }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

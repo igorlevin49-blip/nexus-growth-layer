@@ -269,9 +269,10 @@ Deno.serve(async (req) => {
     const responseText = await freedomPayResponse.text();
     console.log('[ACTIVATION_PAYMENT]', correlationId, 'FreedomPay response:', responseText);
 
-    // Parse XML response
-    const paymentUrlMatch = responseText.match(/<pg_redirect_url>([^<]+)<\/pg_redirect_url>/);
-    const statusMatch = responseText.match(/<pg_status>([^<]+)<\/pg_status>/);
+    // SECURITY: Parse XML response using DOMParser (not available in Deno, using regex with validation)
+    // Note: For production, consider using a proper XML parser library
+    const paymentUrlMatch = responseText.match(/<pg_redirect_url>(https?:\/\/[^<]+)<\/pg_redirect_url>/);
+    const statusMatch = responseText.match(/<pg_status>(ok|error|failed)<\/pg_status>/);
 
     if (statusMatch && statusMatch[1] === 'ok' && paymentUrlMatch) {
       const paymentUrl = paymentUrlMatch[1];
@@ -301,13 +302,13 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
+    // SECURITY: Log detailed error server-side, return generic message to client
     console.error('[ACTIVATION_PAYMENT]', correlationId, 'Unexpected error:', error);
     return new Response(
       JSON.stringify({ 
         error: 'INTERNAL_ERROR', 
         message: 'Внутренняя ошибка сервера', 
-        correlationId,
-        details: error.message 
+        correlationId
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

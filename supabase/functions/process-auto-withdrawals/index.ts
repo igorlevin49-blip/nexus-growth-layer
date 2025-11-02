@@ -27,14 +27,33 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify user is authenticated and has admin role
+    // Verify user is authenticated
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
+      console.error('[AUTO_WITHDRAW] Authentication failed');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Authentication required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
+
+    // SECURITY: Verify user has admin or superadmin role
+    const { data: roleData, error: roleError } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'superadmin'])
+      .single();
+
+    if (roleError || !roleData) {
+      console.error('[AUTO_WITHDRAW] Unauthorized access attempt by user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log('[AUTO_WITHDRAW] Authorized admin user:', user.id, 'role:', roleData.role);
 
     // Use service role client for the actual operation
     const supabase = createClient(
@@ -124,9 +143,10 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in process-auto-withdrawals:', error);
+    // SECURITY: Log detailed error server-side, return generic message to client
+    console.error('[AUTO_WITHDRAW] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'Internal server error occurred' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
