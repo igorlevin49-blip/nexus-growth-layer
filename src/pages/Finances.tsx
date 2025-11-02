@@ -81,8 +81,6 @@ export default function Finances() {
   const analyticsStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - 3, 1);
   const { data: analyticsTxs } = useTransactions({
     type: ['commission', 'bonus'],
-    startDate: analyticsStart,
-    endDate: nowDate,
     limit: 1000,
   });
 
