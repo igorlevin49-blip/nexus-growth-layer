@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { APP_CONFIG } from "@/config/constants";
 import { setCookie, getCookie, deleteCookie } from "@/utils/cookies";
+import InputMask from "react-input-mask";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,23 +64,14 @@ export function RegisterForm() {
   const validatePhone = (phone: string): boolean => {
     // Remove all non-digit characters
     const cleaned = phone.replace(/\D/g, '');
-    // Check if it's a valid Kazakhstan phone number (starts with 7 and has 11 digits)
-    return cleaned.length >= 10 && cleaned.length <= 15;
+    // Check if it's a valid phone number (11 digits with country code 7)
+    return cleaned.length === 11 && cleaned.startsWith('7');
   };
 
   const normalizePhone = (phone: string): string => {
-    // Remove all non-digit characters and ensure it starts with country code
+    // Remove all non-digit characters
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('8')) {
-      return '+7' + cleaned.substring(1);
-    }
-    if (!cleaned.startsWith('7') && !cleaned.startsWith('+')) {
-      return '+7' + cleaned;
-    }
-    if (!cleaned.startsWith('+')) {
-      return '+' + cleaned;
-    }
-    return cleaned;
+    return '+' + cleaned;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -222,13 +214,21 @@ export function RegisterForm() {
               {/* Phone (optional) */}
               <div className="space-y-2">
                 <Label htmlFor="phone">Телефон (опционально)</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+7 (___) ___-__-__"
+                <InputMask
+                  mask="+7 (999) 999-99-99"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                />
+                  maskChar="_"
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      id="phone"
+                      type="tel"
+                      placeholder="+7 (___) ___-__-__"
+                    />
+                  )}
+                </InputMask>
               </div>
 
               {/* Password */}
