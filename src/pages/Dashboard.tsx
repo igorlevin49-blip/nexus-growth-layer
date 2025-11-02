@@ -2,7 +2,6 @@ import { Calendar, Target, Users, Copy } from "lucide-react";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
-import { RegistrationMessage } from "@/components/Dashboard/RegistrationMessage";
 import { SubscriptionCard } from "@/components/Dashboard/SubscriptionCard";
 import { SponsorInfo } from "@/components/Dashboard/SponsorInfo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,10 +142,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Registration Message */}
-      <RegistrationMessage />
-
-      {/* Sponsor Info */}
+      {/* Sponsor Info - Unified block */}
       <SponsorInfo />
 
       {/* Stats Grid */}

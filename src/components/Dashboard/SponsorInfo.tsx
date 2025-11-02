@@ -54,11 +54,9 @@ export function SponsorInfo() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-muted-foreground">
-              Вы зарегистрированы по приглашению
-            </p>
-            <p className="font-medium text-base mt-1">
-              {displayName}
+            <p className="text-sm font-medium text-base">
+              Вы зарегистрированы по приглашению{' '}
+              <span className="font-semibold">{displayName}</span>
             </p>
             {sponsorIsDeleted && (
               <p className="text-xs text-muted-foreground mt-1">
