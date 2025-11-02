@@ -1067,6 +1067,15 @@ export type Database = {
         Returns: Json
       }
       bind_referral: { Args: { p_ref_code: string }; Returns: Json }
+      cleanup_all_test_users: {
+        Args: {
+          p_admin_id: string
+          p_confirmation_phrase: string
+          p_dry_run?: boolean
+          p_keep_emails: string[]
+        }
+        Returns: Json
+      }
       cleanup_test_data: {
         Args: {
           p_admin_id: string

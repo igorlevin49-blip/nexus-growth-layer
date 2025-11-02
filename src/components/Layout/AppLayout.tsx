@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { SubscriptionStatus } from "./SubscriptionStatus";
 
 const navigation = [
   { name: "Панель управления", href: "/dashboard", icon: Home },
@@ -243,14 +244,7 @@ export function AppLayout() {
             <Menu className="h-4 w-4" />
           </Button>
           
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:block">
-              <div className="flex items-center space-x-2 text-sm">
-                <div className="w-2 h-2 bg-success rounded-full"></div>
-                <span className="text-muted-foreground">Подписка активна до 15.12.2024</span>
-              </div>
-            </div>
-          </div>
+          <SubscriptionStatus />
         </header>
 
         {/* Page content */}
