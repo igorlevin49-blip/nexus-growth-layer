@@ -1217,6 +1217,10 @@ export type Database = {
         }
         Returns: Json
       }
+      hard_delete_user: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

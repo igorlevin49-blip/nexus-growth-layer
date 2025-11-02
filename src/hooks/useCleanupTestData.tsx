@@ -60,7 +60,7 @@ export function useSoftDeleteUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.rpc('soft_delete_user', {
+      const { data, error } = await supabase.rpc('hard_delete_user', {
         p_user_id: userId,
         p_admin_id: user.id
       });
@@ -69,7 +69,7 @@ export function useSoftDeleteUser() {
       return data;
     },
     onSuccess: () => {
-      toast.success('Пользователь удалён');
+      toast.success('Пользователь полностью удалён из системы');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Ошибка при удалении пользователя');
