@@ -401,24 +401,31 @@ export default function Finances() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { source: "Прямые комиссии", amount: "$612.50", percent: "48%" },
-                    { source: "Командные бонусы", amount: "$485.00", percent: "38%" },
-                    { source: "Активационные", amount: "$180.00", percent: "14%" }
-                  ].map((data, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">{data.source}</span>
-                        <span className="font-medium">{data.amount}</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: data.percent }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
+                  {totalSources === 0 ? (
+                    <p className="text-muted-foreground">Нет данных за выбранный период</p>
+                  ) : (
+                    [
+                      { source: "Прямые комиссии", amountCents: directCents },
+                      { source: "Командные бонусы", amountCents: teamBonusCents },
+                      { source: "Активационные", amountCents: activationCents }
+                    ].map((data, index) => {
+                      const percent = totalSources > 0 ? Math.round((data.amountCents / totalSources) * 100) : 0;
+                      return (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">{data.source}</span>
+                            <span className="font-medium">{formatCents(data.amountCents)}</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div 
+                              className="bg-primary h-2 rounded-full" 
+                              style={{ width: `${percent}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
