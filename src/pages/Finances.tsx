@@ -75,6 +75,56 @@ export default function Finances() {
     }
   };
 
+  // Analytics calculations
+  const nowDate = new Date();
+  // Fetch last 4 months of income transactions for analytics
+  const analyticsStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - 3, 1);
+  const { data: analyticsTxs } = useTransactions({
+    type: ['commission', 'bonus'],
+    startDate: analyticsStart,
+    endDate: nowDate,
+    limit: 1000,
+  });
+
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const monthlyAnalytics = Array.from({ length: 4 }).map((_, idx) => {
+    const d = new Date(nowDate.getFullYear(), nowDate.getMonth() - (3 - idx), 1);
+    const startM = new Date(d.getFullYear(), d.getMonth(), 1);
+    const endM = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    const amountCents = (analyticsTxs || [])
+      .filter(t => new Date(t.created_at) >= startM && new Date(t.created_at) < endM)
+      .filter(t => (t.type === 'commission' || t.type === 'bonus') && t.status === 'completed')
+      .reduce((sum, t) => sum + (t.amount_cents || 0), 0);
+    return { month: monthNames[d.getMonth()], amountCents };
+  });
+
+  const monthlyWithChange = monthlyAnalytics.map((m, i) => {
+    const prev = i > 0 ? monthlyAnalytics[i - 1].amountCents : 0;
+    const change = prev > 0 ? Math.round(((m.amountCents - prev) / prev) * 100) : 0;
+    return { ...m, change };
+  });
+
+  // Sources for selected period
+  const { start, end } = getDateRange();
+  const periodTxs = (analyticsTxs || []).filter(t => {
+    const d = new Date(t.created_at);
+    return d >= start && d <= end && t.status === 'completed';
+  });
+  const directCents = periodTxs
+    .filter(t => t.type === 'commission' && (t.level === 1))
+    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+  const teamBonusCents = periodTxs
+    .filter(t => t.type === 'bonus' || (t.type === 'commission' && ((t.level ?? 0) > 1)))
+    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+  const activationCents = periodTxs
+    .filter(t => t.type === 'commission' && (
+      (t.payload?.type && String(t.payload.type).toLowerCase().includes('activation')) ||
+      t.payload?.structure === 'secondary' ||
+      t.payload?.has_activation === true
+    ))
+    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+  const totalSources = directCents + teamBonusCents + activationCents;
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -326,22 +376,21 @@ export default function Finances() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { month: "Январь", amount: "$1,250", change: "+15%" },
-                    { month: "Декабрь", amount: "$1,180", change: "+8%" },
-                    { month: "Ноябрь", amount: "$1,090", change: "+12%" },
-                    { month: "Октябрь", amount: "$975", change: "+5%" }
-                  ].map((data, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm">{data.month}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{data.amount}</span>
-                        <Badge className="profit-indicator text-xs">
-                          {data.change}
-                        </Badge>
+                  {monthlyWithChange.length === 0 ? (
+                    <p className="text-muted-foreground">Нет данных</p>
+                  ) : (
+                    monthlyWithChange.map((data, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm">{data.month}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">{formatCents(data.amountCents)}</span>
+                          <Badge className="profit-indicator text-xs">
+                            {data.change >= 0 ? `+${data.change}%` : `${data.change}%`}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
