@@ -1073,7 +1073,6 @@ export type Database = {
               p_admin_id: string
               p_confirmation_phrase: string
               p_dry_run?: boolean
-              p_keep_emails: string[]
             }
             Returns: Json
           }
@@ -1082,6 +1081,7 @@ export type Database = {
               p_admin_id: string
               p_confirmation_phrase: string
               p_dry_run?: boolean
+              p_keep_emails: string[]
             }
             Returns: Json
           }
