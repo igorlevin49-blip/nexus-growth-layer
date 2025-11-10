@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Plus, Minus, ImageOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 type Product = {
   id: string;
   title: string;
+  slug: string;
   description: string | null;
   price_usd: number;
   price_kzt: number;
@@ -91,11 +93,11 @@ export function ProductCard({
 
   if (viewMode === "list") {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="flex flex-col md:flex-row">
-          <div className="md:w-48 h-48 bg-muted flex items-center justify-center">
+          <Link to={`/product/${product.slug}`} className="md:w-48 h-48 bg-muted flex items-center justify-center">
             <ImageDisplay />
-          </div>
+          </Link>
           <div className="flex-1 p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="flex-1">
@@ -113,7 +115,9 @@ export function ProductCard({
                     <Badge variant="destructive">Нет в наличии</Badge>
                   )}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
+                <Link to={`/product/${product.slug}`}>
+                  <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">{product.title}</h3>
+                </Link>
                 {product.description && (
                   <p className="text-muted-foreground mb-4">{product.description}</p>
                 )}
@@ -170,10 +174,10 @@ export function ProductCard({
   }
 
   return (
-    <Card className="overflow-hidden flex flex-col">
-      <div className="aspect-square bg-muted flex items-center justify-center">
+    <Card className="overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
+      <Link to={`/product/${product.slug}`} className="aspect-square bg-muted flex items-center justify-center">
         <ImageDisplay />
-      </div>
+      </Link>
       <CardHeader>
         <div className="flex gap-2 mb-2 flex-wrap">
           {product.is_activation && (
@@ -189,7 +193,9 @@ export function ProductCard({
             <Badge variant="destructive">Нет в наличии</Badge>
           )}
         </div>
-        <h3 className="font-semibold text-lg">{product.title}</h3>
+        <Link to={`/product/${product.slug}`}>
+          <h3 className="font-semibold text-lg hover:text-primary transition-colors">{product.title}</h3>
+        </Link>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         {product.description && (

@@ -30,6 +30,7 @@ import Docs from "./pages/Docs";
 import DocView from "./pages/DocView";
 import Documents from "./pages/admin/Documents";
 import TestDataCleanup from "./pages/admin/TestDataCleanup";
+import ProductDetail from "./pages/ProductDetail";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -47,6 +48,7 @@ function AppContent() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/docs" element={<Docs />} />
             <Route path="/docs/:slug" element={<DocView />} />
+            <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard" element={<Dashboard />} />
