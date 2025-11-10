@@ -12,7 +12,7 @@ export interface Subscription {
   payment_method?: string;
   payment_confirmed_by?: string;
   payment_confirmed_at?: string;
-  admin_comment?: string;
+  approval_comment?: string;
   started_at?: string;
   expires_at?: string;
   created_at: string;
@@ -115,7 +115,7 @@ export function useConfirmPayment() {
             status: 'active',
             payment_confirmed_by: user?.id,
             payment_confirmed_at: new Date().toISOString(),
-            admin_comment: comment,
+            approval_comment: comment,
             started_at: new Date().toISOString(),
             expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 12 months
           })

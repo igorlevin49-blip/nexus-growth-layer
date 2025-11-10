@@ -27,6 +27,7 @@ type Order = {
   total_kzt: number;
   status: string;
   created_at: string;
+  approval_comment?: string;
   profiles?: {
     full_name: string;
     email: string;
@@ -357,7 +358,7 @@ export default function AdminPayments() {
                           </TableCell>
                           <TableCell>
                             <span className="text-sm text-muted-foreground">
-                              {sub.admin_comment || '—'}
+                              {sub.approval_comment || '—'}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -449,6 +450,7 @@ export default function AdminPayments() {
                         <TableHead>Сумма</TableHead>
                         <TableHead>Статус</TableHead>
                         <TableHead>Дата</TableHead>
+                        <TableHead>Комментарий</TableHead>
                         <TableHead>Действия</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -488,6 +490,11 @@ export default function AdminPayments() {
                           <TableCell>{getStatusBadge(order.status)}</TableCell>
                           <TableCell>
                             {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {order.approval_comment || '—'}
+                            </span>
                           </TableCell>
                           <TableCell>
                             {order.status === 'pending' && (
