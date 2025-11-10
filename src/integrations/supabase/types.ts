@@ -438,6 +438,7 @@ export type Database = {
           payment_intent_id: string | null
           payment_proof_url: string | null
           payment_type: string | null
+          provider_tx_id: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           total_kzt: number
           total_usd: number
@@ -456,6 +457,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_proof_url?: string | null
           payment_type?: string | null
+          provider_tx_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -474,6 +476,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_proof_url?: string | null
           payment_type?: string | null
+          provider_tx_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           total_kzt?: number
           total_usd?: number
@@ -838,6 +841,7 @@ export type Database = {
           payment_method: string | null
           payment_proof_url: string | null
           payment_type: string | null
+          provider_tx_id: string | null
           started_at: string | null
           status: string
           updated_at: string
@@ -862,6 +866,7 @@ export type Database = {
           payment_method?: string | null
           payment_proof_url?: string | null
           payment_type?: string | null
+          provider_tx_id?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -886,6 +891,7 @@ export type Database = {
           payment_method?: string | null
           payment_proof_url?: string | null
           payment_type?: string | null
+          provider_tx_id?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -1268,6 +1274,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      process_payment_completion: {
+        Args: {
+          p_admin_id?: string
+          p_comment?: string
+          p_payment_method?: string
+          p_payment_proof_url?: string
+          p_provider_tx_id?: string
+          p_record_id: string
+          p_record_type: string
+        }
+        Returns: Json
       }
       purge_test_data: {
         Args: { p_confirmation_phrase?: string; p_dry_run?: boolean }

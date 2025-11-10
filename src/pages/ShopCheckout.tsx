@@ -93,7 +93,7 @@ export default function ShopCheckout() {
 
       const totalKzt = totalUsd * rate;
 
-      // Create order
+      // Create order (status will be pending by default)
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -101,6 +101,7 @@ export default function ShopCheckout() {
           total_usd: totalUsd,
           total_kzt: totalKzt,
           status: "pending",
+          payment_type: "online"
         })
         .select()
         .single();
@@ -127,12 +128,16 @@ export default function ShopCheckout() {
       if (itemsError) throw itemsError;
 
       setOrderId(order.id);
-      toast.success("Заказ создан", {
-        description: "Переходим к оплате...",
+      
+      // Show pending status
+      toast.info("Заказ создан", {
+        description: "Заявка отправлена. Ожидает подтверждения администратором.",
       });
 
-      // Simulate payment (in real app, integrate with payment provider)
-      setTimeout(() => handlePayment(order.id), 1000);
+      // Clear cart and show success
+      localStorage.removeItem("cart");
+      setOrderCompleted(true);
+      
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Ошибка", {
@@ -140,31 +145,6 @@ export default function ShopCheckout() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePayment = async (orderId: string) => {
-    try {
-      // Update order status to paid
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "paid" })
-        .eq("id", orderId);
-
-      if (error) throw error;
-
-      // Clear cart
-      localStorage.removeItem("cart");
-      setOrderCompleted(true);
-
-      toast.success("Оплата успешна!", {
-        description: "Спасибо за покупку",
-      });
-    } catch (error) {
-      console.error("Error processing payment:", error);
-      toast.error("Ошибка оплаты", {
-        description: "Попробуйте еще раз",
-      });
     }
   };
 
@@ -193,14 +173,14 @@ export default function ShopCheckout() {
     return (
       <div className="container mx-auto p-8">
         <Card className="max-w-2xl mx-auto p-8 text-center">
-          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <h2 className="text-2xl font-bold mb-2">Спасибо за покупку!</h2>
+          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-2xl font-bold mb-2">Заказ создан!</h2>
           <p className="text-muted-foreground mb-6">
-            Ваш заказ успешно оформлен и оплачен
+            Ваша заявка отправлена и ожидает подтверждения администратором
           </p>
           {activationTotal > 0 && (
             <p className="mb-6 text-lg">
-              Активационные товары на сумму <strong>{displayCurrency}{activationTotal.toFixed(2)}</strong> учтены в вашем прогрессе
+              Активационные товары на сумму <strong>{displayCurrency}{activationTotal.toFixed(2)}</strong> будут учтены после одобрения
             </p>
           )}
           <div className="flex gap-4 justify-center">

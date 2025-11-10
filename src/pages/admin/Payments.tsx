@@ -209,10 +209,11 @@ export default function AdminPayments() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { variant: any; label: string }> = {
-      pending: { variant: 'secondary', label: 'Ожидает' },
+      pending: { variant: 'secondary', label: 'Ожидает одобрения' },
       active: { variant: 'default', label: 'Активна' },
       frozen: { variant: 'outline', label: 'Заморожена' },
       cancelled: { variant: 'destructive', label: 'Отменена' },
+      declined: { variant: 'destructive', label: 'Отклонено' },
       draft: { variant: 'outline', label: 'Черновик' },
       paid: { variant: 'default', label: 'Оплачено' }
     };

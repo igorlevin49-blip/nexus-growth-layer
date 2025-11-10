@@ -100,21 +100,36 @@ serve(async (req) => {
     }
 
     if (status === 'success' || status === 'paid') {
-      // Update order status
-      await supabase
-        .from('orders')
-        .update({ status: 'paid' })
-        .eq('id', order_id);
+      // Use unified payment completion handler
+      const { data: result, error: processError } = await supabase.rpc(
+        'process_payment_completion',
+        {
+          p_record_type: 'order',
+          p_record_id: order_id,
+          p_provider_tx_id: transaction_id,
+          p_payment_method: 'online'
+        }
+      );
 
-      // Create transaction record
-      const amountCents = Math.round((amount / 450) * 100); // Convert KZT to USD cents
-      
+      if (processError) {
+        console.error('Payment processing error:', processError);
+        throw processError;
+      }
+
+      console.log('Payment processed successfully:', {
+        orderId: order_id,
+        userId: order.user_id,
+        result: result,
+      });
+
+      // Create transaction record for tracking
+      const amountCents = Math.round((amount / 450) * 100);
       await supabase
         .from('transactions')
         .insert({
           user_id: order.user_id,
           type: 'purchase',
-          amount_cents: -amountCents, // Negative for purchases
+          amount_cents: -amountCents,
           status: 'completed',
           source_id: order_id,
           source_ref: `freedompay_${transaction_id}`,
@@ -124,12 +139,6 @@ serve(async (req) => {
             payment_method: 'freedompay',
           },
         });
-
-      console.log('Payment processed successfully:', {
-        orderId: order_id,
-        userId: order.user_id,
-        amount: amountCents,
-      });
 
     } else {
       // Update order as failed
