@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ImageOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Product = {
   id: string;
@@ -14,6 +16,12 @@ type Product = {
   is_new: boolean;
   image_url: string | null;
   stock: number | null;
+};
+
+type ProductImage = {
+  id: string;
+  url: string;
+  is_main: boolean;
 };
 
 interface ProductCardProps {
@@ -33,6 +41,29 @@ export function ProductCard({
   onUpdateQuantity,
   currency = "USD"
 }: ProductCardProps) {
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [mainImage, setMainImage] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchImages = async () => {
+      const { data } = await supabase
+        .from('product_images')
+        .select('id, url, is_main')
+        .eq('product_id', product.id)
+        .order('display_order');
+      
+      if (data && data.length > 0) {
+        setProductImages(data);
+        const main = data.find(img => img.is_main);
+        setMainImage(main ? main.url : data[0].url);
+      } else if (product.image_url) {
+        setMainImage(product.image_url);
+      }
+    };
+    
+    fetchImages();
+  }, [product.id, product.image_url]);
+
   const isOutOfStock = product.stock !== null && product.stock === 0;
   
   const displayPrice = currency === "USD" ? product.price_usd : product.price_kzt;
@@ -40,20 +71,30 @@ export function ProductCard({
   const secondaryPrice = currency === "USD" ? product.price_kzt : product.price_usd;
   const secondaryCurrencySymbol = currency === "USD" ? "₸" : "$";
 
+  const ImageDisplay = () => {
+    if (mainImage) {
+      return (
+        <img
+          src={mainImage}
+          alt={product.title}
+          className="w-full h-full object-cover"
+        />
+      );
+    }
+    return (
+      <div className="flex flex-col items-center justify-center gap-2">
+        <ImageOff className="w-12 h-12 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Нет изображения</span>
+      </div>
+    );
+  };
+
   if (viewMode === "list") {
     return (
       <Card className="overflow-hidden">
         <div className="flex flex-col md:flex-row">
           <div className="md:w-48 h-48 bg-muted flex items-center justify-center">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <ShoppingCart className="w-12 h-12 text-muted-foreground" />
-            )}
+            <ImageDisplay />
           </div>
           <div className="flex-1 p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -131,15 +172,7 @@ export function ProductCard({
   return (
     <Card className="overflow-hidden flex flex-col">
       <div className="aspect-square bg-muted flex items-center justify-center">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <ShoppingCart className="w-12 h-12 text-muted-foreground" />
-        )}
+        <ImageDisplay />
       </div>
       <CardHeader>
         <div className="flex gap-2 mb-2 flex-wrap">

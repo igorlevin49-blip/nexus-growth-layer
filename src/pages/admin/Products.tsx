@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -39,6 +39,15 @@ type Product = {
   stock: number | null;
 };
 
+type ProductImage = {
+  id: string;
+  product_id: string;
+  storage_path: string;
+  url: string;
+  is_main: boolean;
+  display_order: number;
+};
+
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +65,9 @@ export default function AdminProducts() {
     image_url: "",
     stock: "",
   });
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const [uploadPreviews, setUploadPreviews] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -82,7 +94,7 @@ export default function AdminProducts() {
     }
   };
 
-  const handleOpenDialog = (product?: Product) => {
+  const handleOpenDialog = async (product?: Product) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -97,6 +109,15 @@ export default function AdminProducts() {
         image_url: product.image_url || "",
         stock: product.stock?.toString() || "",
       });
+      
+      // Load existing images
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('*')
+        .eq('product_id', product.id)
+        .order('display_order');
+      
+      setProductImages(images || []);
     } else {
       setEditingProduct(null);
       setFormData({
@@ -111,8 +132,174 @@ export default function AdminProducts() {
         image_url: "",
         stock: "",
       });
+      setProductImages([]);
     }
+    setUploadingFiles([]);
+    setUploadPreviews([]);
     setDialogOpen(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    handleFiles(files);
+  };
+
+  const handleFiles = (files: File[]) => {
+    const validFiles = files.filter(file => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Ошибка",
+          description: `${file.name}: неподдерживаемый формат`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      if (file.size > maxSize) {
+        toast({
+          title: "Ошибка",
+          description: `${file.name}: размер превышает 10 МБ`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (uploadingFiles.length + validFiles.length + productImages.length > 5) {
+      toast({
+        title: "Ошибка",
+        description: "Максимум 5 изображений на товар",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingFiles(prev => [...prev, ...validFiles]);
+    
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadPreviews(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveUploadingFile = (index: number) => {
+    setUploadingFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveProductImage = async (imageId: string) => {
+    const image = productImages.find(img => img.id === imageId);
+    if (!image) return;
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('products')
+        .remove([image.storage_path]);
+
+      if (storageError) console.error("Storage delete error:", storageError);
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('product_images')
+        .delete()
+        .eq('id', imageId);
+
+      if (dbError) throw dbError;
+
+      setProductImages(prev => prev.filter(img => img.id !== imageId));
+      toast({ title: "Изображение удалено" });
+    } catch (error: any) {
+      console.error("Error removing image:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить изображение",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSetMainImage = async (imageId: string) => {
+    if (!editingProduct) return;
+
+    try {
+      // Set all images to not main
+      await supabase
+        .from('product_images')
+        .update({ is_main: false })
+        .eq('product_id', editingProduct.id);
+
+      // Set selected image as main
+      const { error } = await supabase
+        .from('product_images')
+        .update({ is_main: true })
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      setProductImages(prev =>
+        prev.map(img => ({ ...img, is_main: img.id === imageId }))
+      );
+      toast({ title: "Главное изображение установлено" });
+    } catch (error: any) {
+      console.error("Error setting main image:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось установить главное изображение",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const uploadImages = async (productId: string) => {
+    for (let i = 0; i < uploadingFiles.length; i++) {
+      const file = uploadingFiles[i];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${productId}/${Date.now()}-${i}.${fileExt}`;
+
+      try {
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('products')
+          .getPublicUrl(fileName);
+
+        // Save to database
+        const { error: dbError } = await supabase
+          .from('product_images')
+          .insert({
+            product_id: productId,
+            storage_path: fileName,
+            url: publicUrl,
+            is_main: productImages.length === 0 && i === 0,
+            display_order: productImages.length + i
+          });
+
+        if (dbError) throw dbError;
+      } catch (error: any) {
+        console.error("Error uploading image:", error);
+        toast({
+          title: "Ошибка",
+          description: `Ошибка загрузки ${file.name}`,
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -160,6 +347,8 @@ export default function AdminProducts() {
         stock: formData.stock ? parseInt(formData.stock) : null,
       };
 
+      let productId = editingProduct?.id;
+
       if (editingProduct) {
         const { error } = await supabase
           .from("products")
@@ -168,9 +357,19 @@ export default function AdminProducts() {
         if (error) throw error;
         toast({ title: "Товар обновлен" });
       } else {
-        const { error } = await supabase.from("products").insert(productData);
+        const { data, error } = await supabase
+          .from("products")
+          .insert(productData)
+          .select()
+          .single();
         if (error) throw error;
+        productId = data.id;
         toast({ title: "Товар добавлен" });
+      }
+
+      // Upload new images
+      if (uploadingFiles.length > 0 && productId) {
+        await uploadImages(productId);
       }
 
       setDialogOpen(false);
@@ -203,6 +402,17 @@ export default function AdminProducts() {
     if (!confirm("Удалить этот товар?")) return;
 
     try {
+      // Delete associated images first
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('storage_path')
+        .eq('product_id', id);
+
+      if (images && images.length > 0) {
+        const paths = images.map(img => img.storage_path);
+        await supabase.storage.from('products').remove(paths);
+      }
+
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
       toast({ title: "Товар удален" });
@@ -276,6 +486,103 @@ export default function AdminProducts() {
                   }
                 />
               </div>
+
+              {/* Image Upload Section */}
+              <div className="space-y-2">
+                <Label>Фотографии товара (до 5)</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="flex flex-col items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Нажмите для выбора или перетащите файлы
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG, WEBP до 10 МБ
+                    </p>
+                  </label>
+                </div>
+
+                {/* Preview existing images */}
+                {productImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {productImages.map((image) => (
+                      <div key={image.id} className="relative group">
+                        <img
+                          src={image.url}
+                          alt="Product"
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-1">
+                          <Button
+                            size="sm"
+                            variant={image.is_main ? "default" : "secondary"}
+                            onClick={() => handleSetMainImage(image.id)}
+                            className="h-7 px-2"
+                            title="Сделать главным"
+                          >
+                            <Star className={`w-3 h-3 ${image.is_main ? 'fill-current' : ''}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRemoveProductImage(image.id)}
+                            className="h-7 px-2"
+                            title="Удалить"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        {image.is_main && (
+                          <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
+                            Главное
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Preview uploading images */}
+                {uploadPreviews.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {uploadPreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt="Upload preview"
+                          className="w-full h-24 object-cover rounded border border-primary"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRemoveUploadingFile(index)}
+                            className="h-7 px-2"
+                            title="Удалить"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="absolute top-1 left-1 bg-secondary text-secondary-foreground text-xs px-1.5 py-0.5 rounded">
+                          Новое
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Цена USD</Label>
@@ -299,16 +606,6 @@ export default function AdminProducts() {
                     }
                   />
                 </div>
-              </div>
-              <div>
-                <Label>URL изображения</Label>
-                <Input
-                  value={formData.image_url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image_url: e.target.value })
-                  }
-                  placeholder="https://example.com/image.jpg"
-                />
               </div>
               <div>
                 <Label>Количество на складе (оставьте пустым для неограниченного)</Label>
