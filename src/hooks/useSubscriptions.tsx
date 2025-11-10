@@ -24,15 +24,15 @@ export interface Subscription {
 }
 
 export function useSubscriptions(showArchived: boolean = false) {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   
   return useQuery({
-    queryKey: ['subscriptions', user?.id, showArchived],
+    queryKey: ['subscriptions', showArchived, userRole],
     queryFn: async () => {
       let query = supabase
         .from('subscriptions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .limit(1000);
 
       if (!showArchived) {
         query = query.or('is_archived.is.null,is_archived.eq.false');
@@ -57,7 +57,16 @@ export function useSubscriptions(showArchived: boolean = false) {
         })
       );
       
-      return subscriptionsWithProfiles as Subscription[];
+      // Sort: pending first, then paid, then others
+      const sortedSubs = subscriptionsWithProfiles.sort((a, b) => {
+        const statusOrder = { pending: 0, active: 1, paid: 1, frozen: 2, cancelled: 3, declined: 3 };
+        const orderA = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
+        const orderB = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      return sortedSubs as Subscription[];
     },
     enabled: !!user
   });

@@ -61,7 +61,7 @@ export default function AdminPayments() {
       let query = supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false });
+        .limit(1000);
 
       if (!showArchived) {
         query = query.or('is_archived.is.null,is_archived.eq.false');
@@ -85,7 +85,16 @@ export default function AdminPayments() {
         })
       );
       
-      return ordersWithProfiles as Order[];
+      // Sort: pending first, then paid, then others
+      const sortedOrders = ordersWithProfiles.sort((a, b) => {
+        const statusOrder = { pending: 0, paid: 1, draft: 2, cancelled: 3, declined: 3 };
+        const orderA = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
+        const orderB = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      return sortedOrders as Order[];
     }
   });
 
