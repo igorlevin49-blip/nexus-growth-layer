@@ -34,6 +34,11 @@ export default function AdminUsers() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
+  const [bindSponsorDialog, setBindSponsorDialog] = useState<{ open: boolean; userId: string; userName: string }>({
+    open: false,
+    userId: "",
+    userName: ""
+  });
   const softDeleteUser = useSoftDeleteUser();
   const restoreUser = useRestoreUser();
 
@@ -260,6 +265,13 @@ export default function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+
+      <BindSponsorDialog
+        userId={bindSponsorDialog.userId}
+        userName={bindSponsorDialog.userName}
+        open={bindSponsorDialog.open}
+        onOpenChange={(open) => setBindSponsorDialog({ ...bindSponsorDialog, open })}
+      />
     </div>
   );
 }
