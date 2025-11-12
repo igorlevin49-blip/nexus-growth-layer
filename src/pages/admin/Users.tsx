@@ -231,6 +231,20 @@ export default function AdminUsers() {
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {!profile.sponsor_id && profile.is_active && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBindSponsorDialog({
+                            open: true,
+                            userId: profile.id,
+                            userName: profile.full_name || 'Без имени'
+                          })}
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Привязать спонсора
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
