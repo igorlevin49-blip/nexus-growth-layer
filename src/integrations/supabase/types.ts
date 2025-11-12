@@ -1091,6 +1091,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_bind_sponsor: {
+        Args: {
+          p_admin_id: string
+          p_sponsor_referral_code: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       approve_activation_order: {
         Args: {
           p_admin_id: string
