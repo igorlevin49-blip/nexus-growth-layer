@@ -11,7 +11,7 @@ export function useBindSponsor() {
     mutationFn: async ({ userId, referralCode }: { userId: string; referralCode: string }) => {
       if (!user?.id) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.rpc('admin_bind_sponsor', {
+      const { data, error } = await supabase.rpc('admin_bind_sponsor' as any, {
         p_user_id: userId,
         p_sponsor_referral_code: referralCode.trim(),
         p_admin_id: user.id
