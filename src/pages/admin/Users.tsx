@@ -78,6 +78,39 @@ export default function AdminUsers() {
     }
   };
 
+  const runDiagnose = async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_referral_diagnose');
+      if (error) throw error;
+      const total = data?.length || 0;
+      const noSponsor = (data || []).filter((d: any) => d.issue === 'no_sponsor_and_no_referral').length;
+      const missingRef = (data || []).filter((d: any) => d.issue === 'missing_referral_row').length;
+      toast({
+        title: 'Диагностика завершена',
+        description: `Найдено проблем: ${total}. Без спонсора: ${noSponsor}. Без записи referrals: ${missingRef}.`,
+      });
+    } catch (e:any) {
+      console.error('Diagnose error', e);
+      toast({ title: 'Ошибка', description: 'Не удалось выполнить диагностику', variant: 'destructive' });
+    }
+  };
+
+  const runBackfill = async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_referral_backfill');
+      if (error) throw error;
+      const res = Array.isArray(data) ? data[0] : data;
+      toast({
+        title: 'Восстановление выполнено',
+        description: `Заполнено sponsor_id: ${res?.updated_sponsor_ids || 0}; добавлено referrals: ${res?.inserted_referrals || 0}; пересчитано рефералов: ${res?.recalculated_direct_counts || 0}.`,
+      });
+      fetchProfiles();
+    } catch (e:any) {
+      console.error('Backfill error', e);
+      toast({ title: 'Ошибка', description: 'Не удалось восстановить связи', variant: 'destructive' });
+    }
+  };
+
   const toggleUserStatus = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'frozen' : 'active';
     

@@ -1091,6 +1091,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_bind_sponsor: {
+        Args: {
+          p_admin_id: string
+          p_sponsor_referral_code: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      admin_referral_backfill: {
+        Args: never
+        Returns: {
+          inserted_referrals: number
+          recalculated_direct_counts: number
+          updated_sponsor_ids: number
+        }[]
+      }
+      admin_referral_diagnose: {
+        Args: never
+        Returns: {
+          email: string
+          issue: string
+          user_id: string
+        }[]
+      }
       approve_activation_order: {
         Args: {
           p_admin_id: string
