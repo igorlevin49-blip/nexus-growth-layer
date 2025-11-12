@@ -5,8 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle, Trash2, RotateCcw } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus } from "lucide-react";
 import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
+import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Profile {
   id: string;
