@@ -5,8 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle, Trash2, RotateCcw } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus } from "lucide-react";
 import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
+import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Profile {
   id: string;
@@ -34,6 +36,11 @@ export default function AdminUsers() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
+  const [bindSponsorDialog, setBindSponsorDialog] = useState<{ open: boolean; userId: string; userName: string }>({
+    open: false,
+    userId: "",
+    userName: ""
+  });
   const softDeleteUser = useSoftDeleteUser();
   const restoreUser = useRestoreUser();
 
@@ -224,6 +231,20 @@ export default function AdminUsers() {
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {!profile.sponsor_id && profile.is_active && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBindSponsorDialog({
+                            open: true,
+                            userId: profile.id,
+                            userName: profile.full_name || 'Без имени'
+                          })}
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Привязать спонсора
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -260,6 +281,13 @@ export default function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+
+      <BindSponsorDialog
+        userId={bindSponsorDialog.userId}
+        userName={bindSponsorDialog.userName}
+        open={bindSponsorDialog.open}
+        onOpenChange={(open) => setBindSponsorDialog({ ...bindSponsorDialog, open })}
+      />
     </div>
   );
 }
