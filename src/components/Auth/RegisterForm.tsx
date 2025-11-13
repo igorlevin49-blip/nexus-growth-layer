@@ -135,6 +135,8 @@ export function RegisterForm() {
       // Redirect URL with ref code
       const redirectUrl = `${APP_CONFIG.DOMAIN}/login?ref=${encodeURIComponent(referralCode.trim())}`;
       
+      const trimmedReferralCode = referralCode.trim();
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -142,6 +144,7 @@ export function RegisterForm() {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
+            inviter_ref_code: trimmedReferralCode, // Store for backend auto-bind
           },
         },
       });

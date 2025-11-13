@@ -97,22 +97,31 @@ export default function AdminUsers() {
 
   const runBackfill = async () => {
     try {
-      const [{ data: data1, error: err1 }, { data: data2, error: err2 }] = await Promise.all([
-        supabase.rpc('admin_referral_backfill'),
-        supabase.rpc('admin_fix_missing_referrals' as any),
-      ]);
-      if (err1) throw err1;
-      if (err2) throw err2;
-      const res1 = Array.isArray(data1) ? data1[0] : data1;
-      const res2 = Array.isArray(data2) ? data2[0] : data2;
-      toast({
-        title: 'Восстановление выполнено',
-        description: `Заполнено sponsor_id: ${res1?.updated_sponsor_ids || 0}; добавлено referrals: ${(res1?.inserted_referrals || 0) + (res2?.inserted_referrals || 0)}; обновлено снимков: ${res2?.updated_snapshots || 0}; пересчитано рефералов: ${res1?.recalculated_direct_counts || 0}.`,
-      });
+      const { data, error } = await supabase.rpc('admin_backfill_sponsor_from_metadata');
+      if (error) throw error;
+      
+      const result = data as { success: boolean; updated_count: number; inserted_referrals: number; failed_count: number };
+      
+      if (result.success) {
+        toast({
+          title: 'Связи восстановлены',
+          description: `Обновлено: ${result.updated_count}, не найдено: ${result.failed_count}`,
+        });
+      } else {
+        toast({
+          title: 'Предупреждение',
+          description: 'Восстановление завершено с предупреждениями',
+        });
+      }
+      
       fetchProfiles();
-    } catch (e:any) {
-      console.error('Backfill error', e);
-      toast({ title: 'Ошибка', description: 'Не удалось восстановить связи', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Backfill error:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || "Ошибка при восстановлении связей",
+        variant: 'destructive',
+      });
     }
   };
 
