@@ -97,7 +97,7 @@ export default function AdminUsers() {
 
   const runBackfill = async () => {
     try {
-      const { data, error } = await supabase.rpc('admin_backfill_sponsor_from_metadata');
+      const { data, error } = await (supabase.rpc as any)('admin_backfill_sponsor_from_metadata');
       if (error) throw error;
       
       const result = data as { success: boolean; updated_count: number; inserted_referrals: number; failed_count: number };
