@@ -97,12 +97,17 @@ export default function AdminUsers() {
 
   const runBackfill = async () => {
     try {
-      const { data, error } = await supabase.rpc('admin_referral_backfill');
-      if (error) throw error;
-      const res = Array.isArray(data) ? data[0] : data;
+      const [{ data: data1, error: err1 }, { data: data2, error: err2 }] = await Promise.all([
+        supabase.rpc('admin_referral_backfill'),
+        supabase.rpc('admin_fix_missing_referrals' as any),
+      ]);
+      if (err1) throw err1;
+      if (err2) throw err2;
+      const res1 = Array.isArray(data1) ? data1[0] : data1;
+      const res2 = Array.isArray(data2) ? data2[0] : data2;
       toast({
         title: 'Восстановление выполнено',
-        description: `Заполнено sponsor_id: ${res?.updated_sponsor_ids || 0}; добавлено referrals: ${res?.inserted_referrals || 0}; пересчитано рефералов: ${res?.recalculated_direct_counts || 0}.`,
+        description: `Заполнено sponsor_id: ${res1?.updated_sponsor_ids || 0}; добавлено referrals: ${(res1?.inserted_referrals || 0) + (res2?.inserted_referrals || 0)}; обновлено снимков: ${res2?.updated_snapshots || 0}; пересчитано рефералов: ${res1?.recalculated_direct_counts || 0}.`,
       });
       fetchProfiles();
     } catch (e:any) {

@@ -1099,6 +1099,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_fix_missing_referrals: { Args: never; Returns: Json }
       admin_recalculate_commissions: {
         Args: never
         Returns: {
