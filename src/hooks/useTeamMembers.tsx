@@ -19,13 +19,13 @@ export const useTeamMembers = () => {
     queryKey: ["team-members"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("team_members")
+        .from("team_members" as any)
         .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as TeamMember[];
+      return (data as any) as TeamMember[];
     },
   });
 };
@@ -35,12 +35,12 @@ export const useAdminTeamMembers = () => {
     queryKey: ["admin-team-members"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("team_members")
+        .from("team_members" as any)
         .select("*")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as TeamMember[];
+      return (data as any) as TeamMember[];
     },
   });
 };
@@ -51,8 +51,8 @@ export const useCreateTeamMember = () => {
   return useMutation({
     mutationFn: async (member: Omit<TeamMember, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
-        .from("team_members")
-        .insert(member)
+        .from("team_members" as any)
+        .insert(member as any)
         .select()
         .single();
 
@@ -83,8 +83,8 @@ export const useUpdateTeamMember = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TeamMember> & { id: string }) => {
       const { data, error } = await supabase
-        .from("team_members")
-        .update(updates)
+        .from("team_members" as any)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -115,7 +115,7 @@ export const useDeleteTeamMember = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("team_members").delete().eq("id", id);
+      const { error } = await supabase.from("team_members" as any).delete().eq("id", id);
 
       if (error) throw error;
     },
@@ -163,3 +163,4 @@ export const useUploadTeamPhoto = () => {
     },
   });
 };
+
