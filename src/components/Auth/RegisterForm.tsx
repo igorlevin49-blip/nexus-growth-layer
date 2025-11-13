@@ -28,15 +28,14 @@ export function RegisterForm() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
-  // Get referral code from URL or cookie
+  // Get referral code from URL or cookie (REQUIRED)
   useEffect(() => {
     const refFromUrl = searchParams.get('ref');
     const refFromCookie = getCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
     
     if (refFromUrl) {
       setReferralCode(refFromUrl);
-      // Save to cookie for 7 days
-      setCookie(APP_CONFIG.REFERRAL_COOKIE_KEY, refFromUrl, 7);
+      setCookie(APP_CONFIG.REFERRAL_COOKIE_KEY, refFromUrl, APP_CONFIG.REFERRAL_COOKIE_EXPIRY_DAYS);
     } else if (refFromCookie) {
       setReferralCode(refFromCookie);
     }
@@ -77,6 +76,14 @@ export function RegisterForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CRITICAL: Validate referral code is present
+    if (!referralCode || !referralCode.trim()) {
+      toast.error("Регистрация возможна только по приглашению партнёра", {
+        description: "Попросите вашего партнёра прислать вам реферальную ссылку",
+      });
+      return;
+    }
+
     // Validate passwords match
     if (password !== confirmPassword) {
       toast.error("Пароли не совпадают");
@@ -105,9 +112,28 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      const redirectUrl = referralCode?.trim()
-        ? `${APP_CONFIG.DOMAIN}/login?ref=${encodeURIComponent(referralCode.trim())}`
-        : `${APP_CONFIG.DOMAIN}/login`;
+      // STEP 1: Validate referral code BEFORE creating account
+      const { data: validationData, error: validationError } = await supabase.rpc('validate_referral_code', {
+        p_ref_code: referralCode.trim()
+      });
+
+      if (validationError) {
+        throw new Error("Ошибка проверки кода приглашения");
+      }
+
+      const validation = validationData as { valid?: boolean; error?: string; sponsor_name?: string } | null;
+      
+      if (!validation?.valid) {
+        const errorMessages: Record<string, string> = {
+          'EMPTY_CODE': 'Код приглашения не может быть пустым',
+          'INVALID_CODE': 'Код приглашения не найден или недействителен',
+        };
+        throw new Error(errorMessages[validation?.error || ''] || 'Регистрация возможна только по приглашению партнёра');
+      }
+
+      // STEP 2: Create account
+      // Redirect URL with ref code
+      const redirectUrl = `${APP_CONFIG.DOMAIN}/login?ref=${encodeURIComponent(referralCode.trim())}`;
       
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -122,7 +148,7 @@ export function RegisterForm() {
 
       if (signUpError) throw signUpError;
 
-      // Update profile with additional data
+      // STEP 3: Update profile and bind referral immediately
       if (authData.user) {
         const updateData: any = {
           full_name: fullName,
@@ -132,33 +158,43 @@ export function RegisterForm() {
           updateData.phone = normalizePhone(phone);
         }
 
-        // Update basic profile data first
+        // Update basic profile data
         await supabase
           .from('profiles')
           .update(updateData)
           .eq('id', authData.user.id);
 
-        // Bind referral via secure RPC if code provided
-        if (referralCode?.trim()) {
-          const { data: bindResult } = await supabase.rpc('bind_referral', {
-            p_ref_code: referralCode.trim()
-          });
+        // CRITICAL: Bind referral immediately after account creation
+        const { data: bindResult, error: bindError } = await supabase.rpc('bind_referral', {
+          p_ref_code: referralCode.trim()
+        });
 
-          const result = bindResult as { success?: boolean; error?: string } | null;
-          if (result?.success) {
-            // Clear referral cookie after successful bind
-            deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
-          } else if (result?.error === 'INVALID_CODE') {
-            toast.warning("Код приглашения не найден", {
-              description: "Регистрация продолжается без реферера",
-            });
-          }
+        if (bindError) {
+          console.error('Bind referral error:', bindError);
+          toast.error("Ошибка привязки пригласившего", {
+            description: "Пожалуйста, обратитесь в поддержку",
+          });
+          return;
+        }
+
+        const result = bindResult as { success?: boolean; error?: string; sponsor_name?: string } | null;
+        
+        if (result?.success) {
+          // Clear referral cookie after successful bind
+          deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
+          
+          toast.success("Регистрация успешна", {
+            description: `Вы привязаны к партнёру: ${result.sponsor_name || 'успешно'}`,
+          });
+        } else {
+          // This should not happen as we validated earlier
+          console.error('Unexpected bind_referral error:', result?.error);
+          toast.error("Ошибка привязки пригласившего", {
+            description: "Пожалуйста, обратитесь в поддержку",
+          });
+          return;
         }
       }
-
-      toast.success("Регистрация успешна", {
-        description: "Добро пожаловать в систему!",
-      });
 
       navigate('/dashboard');
     } catch (error: any) {
@@ -293,18 +329,23 @@ export function RegisterForm() {
                 </div>
               </div>
 
-              {/* Referral Code */}
+              {/* Referral Code - REQUIRED */}
               <div className="space-y-2">
-                <Label htmlFor="referralCode">Код приглашения</Label>
+                <Label htmlFor="referralCode">Код приглашения *</Label>
                 <Input
                   id="referralCode"
-                  placeholder="Введите код, если вас пригласили"
+                  placeholder="Обязательно: код приглашения от партнёра"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
+                  required
                 />
-                {referralCode && (
+                {referralCode ? (
                   <p className="text-xs text-primary">
-                    ✓ Вы регистрируетесь по реферальной ссылке
+                    ✓ Код приглашения введён
+                  </p>
+                ) : (
+                  <p className="text-xs text-destructive">
+                    Регистрация возможна только по приглашению партнёра
                   </p>
                 )}
               </div>

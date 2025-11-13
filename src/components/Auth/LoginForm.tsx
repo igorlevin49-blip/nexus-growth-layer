@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useReferralBind } from "@/hooks/useReferralBind";
+import { useReferralCapture } from "@/hooks/useReferralCapture";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +20,12 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Capture referral code from URL
+  useReferralCapture();
+  
+  // Auto-bind referral on login
+  useReferralBind();
 
   // Redirect if already logged in
   if (user) {
