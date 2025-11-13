@@ -112,18 +112,22 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      // STEP 1: Validate referral code BEFORE creating account
+      // SINGLE SOURCE OF TRUTH: Validate referral code first
+      console.log('[REGISTER] Validating referral code:', referralCode.trim());
+      
       const { data: validationData, error: validationError } = await supabase.rpc('validate_referral_code', {
         p_ref_code: referralCode.trim()
       });
 
       if (validationError) {
+        console.error('[REGISTER] Validation error:', validationError);
         throw new Error("Ошибка проверки кода приглашения");
       }
 
       const validation = validationData as { valid?: boolean; error?: string; sponsor_name?: string } | null;
       
       if (!validation?.valid) {
+        console.error('[REGISTER] Invalid referral code:', validation?.error);
         const errorMessages: Record<string, string> = {
           'EMPTY_CODE': 'Код приглашения не может быть пустым',
           'INVALID_CODE': 'Код приглашения не найден или недействителен',
@@ -131,12 +135,14 @@ export function RegisterForm() {
         throw new Error(errorMessages[validation?.error || ''] || 'Регистрация возможна только по приглашению партнёра');
       }
 
-      // STEP 2: Create account
-      // Redirect URL with ref code
+      console.log('[REGISTER] Referral code validated. Sponsor:', validation.sponsor_name);
+
+      // Create account with inviter_ref_code in metadata for backend trigger
       const redirectUrl = `${APP_CONFIG.DOMAIN}/login?ref=${encodeURIComponent(referralCode.trim())}`;
-      
       const trimmedReferralCode = referralCode.trim();
 
+      console.log('[REGISTER] Creating user account...');
+      
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -144,14 +150,19 @@ export function RegisterForm() {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            inviter_ref_code: trimmedReferralCode, // Store for backend auto-bind
+            inviter_ref_code: trimmedReferralCode, // CRITICAL: Backend trigger uses this
           },
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        console.error('[REGISTER] SignUp error:', signUpError);
+        throw signUpError;
+      }
 
-      // STEP 3: Update profile and bind referral immediately
+      console.log('[REGISTER] User created:', authData.user?.id);
+
+      // Update profile with additional data
       if (authData.user) {
         const updateData: any = {
           full_name: fullName,
@@ -161,44 +172,41 @@ export function RegisterForm() {
           updateData.phone = normalizePhone(phone);
         }
 
-        // Update basic profile data
+        console.log('[REGISTER] Updating profile data...');
+        
         await supabase
           .from('profiles')
           .update(updateData)
           .eq('id', authData.user.id);
 
-        // CRITICAL: Bind referral immediately after account creation
+        // CRITICAL: Explicit bind_referral call (backup if trigger fails)
+        console.log('[REGISTER] Binding referral explicitly...');
+        
         const { data: bindResult, error: bindError } = await supabase.rpc('bind_referral', {
-          p_ref_code: referralCode.trim()
+          p_ref_code: trimmedReferralCode
         });
 
         if (bindError) {
-          console.error('Bind referral error:', bindError);
-          toast.error("Ошибка привязки пригласившего", {
-            description: "Пожалуйста, обратитесь в поддержку",
-          });
-          return;
-        }
-
-        const result = bindResult as { success?: boolean; error?: string; sponsor_name?: string } | null;
-        
-        if (result?.success) {
-          // Clear referral cookie after successful bind
-          deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
-          
-          toast.success("Регистрация успешна", {
-            description: `Вы привязаны к партнёру: ${result.sponsor_name || 'успешно'}`,
+          console.error('[REGISTER] Bind referral error:', bindError);
+          // Don't block registration - trigger should have handled it
+          toast.warning("Предупреждение", {
+            description: "Регистрация завершена, но проверьте привязку спонсора в личном кабинете",
           });
         } else {
-          // This should not happen as we validated earlier
-          console.error('Unexpected bind_referral error:', result?.error);
-          toast.error("Ошибка привязки пригласившего", {
-            description: "Пожалуйста, обратитесь в поддержку",
-          });
-          return;
+          const result = bindResult as { success?: boolean; error?: string; sponsor_name?: string } | null;
+          console.log('[REGISTER] Bind result:', result);
+          
+          if (result?.success) {
+            deleteCookie(APP_CONFIG.REFERRAL_COOKIE_KEY);
+            
+            toast.success("Регистрация успешна!", {
+              description: `Пригласивший: ${result.sponsor_name || validation.sponsor_name}`,
+            });
+          }
         }
       }
 
+      console.log('[REGISTER] Registration complete. Redirecting to dashboard...');
       navigate('/dashboard');
     } catch (error: any) {
       toast.error("Ошибка регистрации", {
