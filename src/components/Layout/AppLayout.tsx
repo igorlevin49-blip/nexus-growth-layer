@@ -49,6 +49,7 @@ export function AppLayout() {
     { name: "Оплаты", href: "/admin/payments", icon: FileText },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
+    { name: "Управление лендингом", href: "/admin/landing-settings", icon: Globe },
   ];
 
   const superAdminNavigation = [
