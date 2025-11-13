@@ -115,7 +115,7 @@ export function RegisterForm() {
       // SINGLE SOURCE OF TRUTH: Validate referral code first
       console.log('[REGISTER] Validating referral code:', referralCode.trim());
       
-      const { data: validationData, error: validationError } = await supabase.rpc('validate_referral_code', {
+      const { data: validationData, error: validationError } = await (supabase.rpc as any)('validate_referral_code', {
         p_ref_code: referralCode.trim()
       });
 
