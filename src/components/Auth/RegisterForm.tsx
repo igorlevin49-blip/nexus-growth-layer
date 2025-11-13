@@ -105,7 +105,9 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      const redirectUrl = `${APP_CONFIG.DOMAIN}/`;
+      const redirectUrl = referralCode?.trim()
+        ? `${APP_CONFIG.DOMAIN}/login?ref=${encodeURIComponent(referralCode.trim())}`
+        : `${APP_CONFIG.DOMAIN}/login`;
       
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
