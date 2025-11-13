@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useReferralBind } from "@/hooks/useReferralBind";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Shop from "./pages/Shop";
@@ -42,6 +43,7 @@ function AppContent() {
   useReferralBind(); // Auto-bind referral from cookie on first login
   return (
     <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -50,7 +52,6 @@ function AppContent() {
             <Route path="/docs/:slug" element={<DocView />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="shop" element={<Shop />} />
               <Route path="network" element={<Network />} />
