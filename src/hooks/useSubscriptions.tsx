@@ -107,65 +107,75 @@ export function useConfirmPayment() {
       type: 'subscription' | 'order';
       comment?: string;
     }) => {
+      console.log(`[CONFIRM_PAYMENT] Starting ${type} confirmation for ID:`, id);
+      
+      // UNIFIED HANDLER: Use RPC functions to ensure proper commission calculation
       if (type === 'subscription') {
-        // Confirm subscription
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({
-            status: 'active',
-            payment_confirmed_by: user?.id,
-            payment_confirmed_at: new Date().toISOString(),
-            approval_comment: comment,
-            started_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 12 months
-          })
-          .eq('id', id);
-
-        if (error) throw error;
-
-        // Log admin action
-        await supabase.from('admin_actions').insert({
-          admin_id: user?.id,
-          action_type: 'confirm_subscription_payment',
-          target_id: id,
-          target_type: 'subscription',
-          comment: comment,
-          metadata: { confirmed_at: new Date().toISOString() }
+        console.log('[CONFIRM_PAYMENT] Calling approve_subscription_payment RPC...');
+        
+        const { data, error } = await supabase.rpc('approve_subscription_payment', {
+          p_subscription_id: id,
+          p_admin_id: user?.id || '',
+          p_comment: comment || ''
         });
+
+        if (error) {
+          console.error('[CONFIRM_PAYMENT] RPC error:', error);
+          throw error;
+        }
+
+        const result = data as { success?: boolean; error?: string } | null;
+        
+        if (!result?.success) {
+          console.error('[CONFIRM_PAYMENT] RPC returned error:', result?.error);
+          throw new Error(result?.error || 'Не удалось подтвердить подписку');
+        }
+        
+        console.log('[CONFIRM_PAYMENT] Subscription confirmed successfully');
       } else {
-        // Confirm order
-        const { error } = await supabase
-          .from('orders')
-          .update({ status: 'paid' })
-          .eq('id', id);
-
-        if (error) throw error;
-
-        // Log admin action
-        await supabase.from('admin_actions').insert({
-          admin_id: user?.id,
-          action_type: 'confirm_order_payment',
-          target_id: id,
-          target_type: 'order',
-          comment: comment,
-          metadata: { confirmed_at: new Date().toISOString() }
+        console.log('[CONFIRM_PAYMENT] Calling process_payment_completion RPC for order...');
+        
+        const { data, error } = await supabase.rpc('process_payment_completion', {
+          p_record_type: 'order',
+          p_record_id: id,
+          p_payment_method: 'manual',
+          p_admin_id: user?.id || '',
+          p_comment: comment || ''
         });
+
+        if (error) {
+          console.error('[CONFIRM_PAYMENT] RPC error:', error);
+          throw error;
+        }
+
+        const result = data as { success?: boolean; error?: string; message?: string } | null;
+        
+        if (!result?.success) {
+          console.error('[CONFIRM_PAYMENT] RPC returned error:', result?.error);
+          throw new Error(result?.error || 'Не удалось подтвердить заказ');
+        }
+        
+        console.log('[CONFIRM_PAYMENT] Order confirmed successfully:', result.message);
       }
     },
     onSuccess: (_, variables) => {
+      console.log(`[CONFIRM_PAYMENT] Invalidating queries after ${variables.type} confirmation`);
+      
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['balance'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['network-tree'] });
       
       toast.success(
         variables.type === 'subscription' 
-          ? 'Подписка успешно подтверждена' 
-          : 'Оплата заказа подтверждена'
+          ? 'Подписка подтверждена. Комиссии начислены.' 
+          : 'Заказ оплачен. Комиссии начислены.'
       );
     },
     onError: (error) => {
+      console.error('[CONFIRM_PAYMENT] Error:', error);
       toast.error(`Ошибка подтверждения: ${error.message}`);
     }
   });
