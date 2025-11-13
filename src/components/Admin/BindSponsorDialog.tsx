@@ -11,9 +11,10 @@ interface BindSponsorDialogProps {
   userName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export function BindSponsorDialog({ userId, userName, open, onOpenChange }: BindSponsorDialogProps) {
+export function BindSponsorDialog({ userId, userName, open, onOpenChange, onSuccess }: BindSponsorDialogProps) {
   const [referralCode, setReferralCode] = useState("");
   const bindSponsor = useBindSponsor();
 
@@ -24,6 +25,7 @@ export function BindSponsorDialog({ userId, userName, open, onOpenChange }: Bind
     await bindSponsor.mutateAsync({ userId, referralCode });
     setReferralCode("");
     onOpenChange(false);
+    onSuccess?.();
   };
 
   return (

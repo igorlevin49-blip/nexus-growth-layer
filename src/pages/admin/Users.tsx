@@ -383,6 +383,7 @@ export default function AdminUsers() {
         userName={bindSponsorDialog.userName}
         open={bindSponsorDialog.open}
         onOpenChange={(open) => setBindSponsorDialog({ ...bindSponsorDialog, open })}
+        onSuccess={() => fetchProfiles()}
       />
     </div>
   );
