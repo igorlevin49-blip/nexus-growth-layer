@@ -18,7 +18,9 @@ import {
   Globe,
   Loader2,
   Coffee,
-  ShoppingCart
+  ShoppingCart,
+  Calendar,
+  Shield
 } from "lucide-react";
 
 const Index = () => {
@@ -61,34 +63,76 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6">
+      <section className="relative py-32 px-4 overflow-hidden">
+        {/* Анимированный фон */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-background animate-gradient bg-[length:200%_200%]" />
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
+          {/* Бейдж "Новая эра MLM" */}
+          <div className="flex justify-center mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium">
+              <TrendingUp className="w-4 h-4" />
+              Новая эра прямых продаж
+            </span>
+          </div>
+          
+          {/* Основной заголовок */}
+          <h2 className="text-6xl md:text-7xl font-bold mb-6 text-center leading-tight">
             MG MARKET — платформа{" "}
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-purple-600 to-primary bg-clip-text text-transparent">
               честных прямых продаж
             </span>
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          
+          {/* Подзаголовок */}
+          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-4xl mx-auto text-center leading-relaxed">
             Мы создаём сообщество людей, которые развиваются, заботятся о своём здоровье и доме, 
             и при этом имеют надёжную возможность зарабатывать честно и прозрачно
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+          
+          {/* Кнопки */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button 
               size="lg" 
               onClick={() => navigate('/register')}
-              className="bg-gradient-to-r from-primary to-purple-600 text-lg px-8 py-6 h-auto"
+              className="bg-gradient-to-r from-primary to-purple-600 text-lg px-10 py-7 h-auto shadow-xl hover:shadow-2xl transition-all"
             >
-              <Rocket className="mr-2" />
+              <Rocket className="mr-2 w-5 h-5" />
               Стать партнёром
             </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => navigate('/login')}
+              className="text-lg px-10 py-7 h-auto"
+            >
+              Войти в систему
+            </Button>
           </div>
-          <a 
-            href="/login" 
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            У меня уже есть аккаунт → Войти
-          </a>
+          
+          {/* Статистика компании */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <Card className="p-6 text-center border-primary/20 hover:border-primary/40 transition-colors">
+              <Calendar className="w-8 h-8 mx-auto mb-3 text-primary" />
+              <div className="text-3xl font-bold mb-1">18+</div>
+              <div className="text-sm text-muted-foreground">лет на рынке</div>
+            </Card>
+            <Card className="p-6 text-center border-primary/20 hover:border-primary/40 transition-colors">
+              <Users className="w-8 h-8 mx-auto mb-3 text-primary" />
+              <div className="text-3xl font-bold mb-1">10,000+</div>
+              <div className="text-sm text-muted-foreground">партнёров</div>
+            </Card>
+            <Card className="p-6 text-center border-primary/20 hover:border-primary/40 transition-colors">
+              <Globe className="w-8 h-8 mx-auto mb-3 text-primary" />
+              <div className="text-3xl font-bold mb-1">50+</div>
+              <div className="text-sm text-muted-foreground">стран</div>
+            </Card>
+            <Card className="p-6 text-center border-primary/20 hover:border-primary/40 transition-colors">
+              <Shield className="w-8 h-8 mx-auto mb-3 text-primary" />
+              <div className="text-3xl font-bold mb-1">100%</div>
+              <div className="text-sm text-muted-foreground">прозрачность</div>
+            </Card>
+          </div>
         </div>
       </section>
 
@@ -231,26 +275,77 @@ const Index = () => {
       <section id="product" className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h3 className="text-4xl font-bold mb-4">Лидерская программа</h3>
+            <h3 className="text-4xl md:text-5xl font-bold mb-4">Лидерская программа</h3>
             <div className="w-20 h-1 bg-gradient-to-r from-primary to-purple-600 mx-auto mb-6"></div>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Начните свой путь к финансовой независимости с программой Торговый Клуб
+            </p>
           </div>
-          <Card className="p-8 max-w-3xl mx-auto">
-            <h4 className="text-2xl font-semibold mb-6 text-center">Торговый Клуб</h4>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <p>Единоразовый взнос <strong className="text-primary">$100</strong></p>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {/* Карточка 1: Единоразовый взнос */}
+            <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardContent className="p-8 relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-2xl font-bold mb-3">Единоразовый взнос</h4>
+                <div className="text-5xl font-bold text-primary mb-4">$100</div>
+                <p className="text-muted-foreground">
+                  Доступный старт для всех. Платите один раз и получите доступ ко всем возможностям программы
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Карточка 2: Кофемашина в подарок */}
+            <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-primary">
+              <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-purple-600 text-white px-4 py-1 text-sm font-semibold rounded-bl-lg">
+                Популярное
               </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <p>Кофемашина в подарок</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <p>Ежемесячная покупка капсул на <strong className="text-primary">20 000 ₸</strong></p>
-              </div>
-            </div>
-          </Card>
+              <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardContent className="p-8 relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-success to-green-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Coffee className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-2xl font-bold mb-3">Кофемашина в подарок</h4>
+                <div className="text-5xl font-bold text-success mb-4">БЕСПЛАТНО</div>
+                <p className="text-muted-foreground">
+                  Профессиональная кофемашина + полное обучение работе с продуктом и построению бизнеса
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Карточка 3: Ежемесячная покупка */}
+            <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardContent className="p-8 relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <ShoppingCart className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-2xl font-bold mb-3">Ежемесячная покупка</h4>
+                <div className="text-5xl font-bold text-purple-600 mb-4">20,000 ₸</div>
+                <p className="text-muted-foreground">
+                  Регулярная покупка качественных капсул на месяц для вас и ваших клиентов
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* CTA кнопка */}
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              onClick={() => navigate('/register')}
+              className="bg-gradient-to-r from-primary to-purple-600 text-lg px-10 py-7 h-auto shadow-xl hover:shadow-2xl transition-all"
+            >
+              <Rocket className="mr-2" />
+              Начать сейчас
+            </Button>
+            <p className="text-sm text-muted-foreground mt-4">
+              Присоединитесь к тысячам успешных партнёров
+            </p>
+          </div>
         </div>
       </section>
 
