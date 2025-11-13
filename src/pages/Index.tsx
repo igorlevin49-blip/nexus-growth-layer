@@ -145,17 +145,21 @@ const Index = () => {
           ) : (
             <div className="grid md:grid-cols-3 gap-8">
               {teamMembers?.map((member) => (
-                <Card key={member.id} className="p-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    <Avatar className="w-20 h-20">
-                      <AvatarImage src={member.photo_url || undefined} alt={member.name} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                <Card key={member.id} className="p-8 text-center hover:shadow-lg transition-shadow">
+                  <div className="flex justify-center mb-6">
+                    <Avatar className="w-40 h-40 rounded-2xl">
+                      <AvatarImage 
+                        src={member.photo_url || undefined} 
+                        alt={member.name}
+                        className="rounded-2xl object-cover"
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-3xl font-semibold rounded-2xl">
                         {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  <h5 className="font-bold text-lg mb-2">{member.name}</h5>
-                  <p className="text-sm font-medium text-primary mb-2">{member.position}</p>
+                  <h5 className="font-bold text-xl mb-2">{member.name}</h5>
+                  <p className="text-sm font-medium text-primary mb-3">{member.position}</p>
                   <p className="text-sm text-muted-foreground">{member.description}</p>
                 </Card>
               ))}
