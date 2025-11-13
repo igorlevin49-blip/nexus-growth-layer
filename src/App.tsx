@@ -23,6 +23,7 @@ import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
 import ShopSettings from "./pages/admin/ShopSettings";
 import MLMSettings from "./pages/admin/MLMSettings";
+import LandingSettings from "./pages/admin/LandingSettings";
 import AdminPayments from "./pages/admin/Payments";
 import ShopCart from "./pages/ShopCart";
 import ShopCheckout from "./pages/ShopCheckout";
@@ -54,6 +55,7 @@ function AppContent() {
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="shop" element={<Shop />} />
+              <Route path="admin/landing-settings" element={<LandingSettings />} />
               <Route path="network" element={<Network />} />
               <Route path="finances" element={<Finances />} />
               <Route path="settings" element={<Settings />} />

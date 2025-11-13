@@ -139,6 +139,19 @@
   }
 }
 
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 8s ease infinite;
+}
+
 @layer components {
   /* Financial Dashboard Components */
   .financial-card {

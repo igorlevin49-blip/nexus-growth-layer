@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { 
   TrendingUp, 
   Users, 
@@ -13,12 +15,16 @@ import {
   CheckCircle2,
   Briefcase,
   GraduationCap,
-  Globe
+  Globe,
+  Loader2,
+  Coffee,
+  ShoppingCart
 } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: teamMembers, isLoading: teamLoading } = useTeamMembers();
 
   useEffect(() => {
     if (user) {
