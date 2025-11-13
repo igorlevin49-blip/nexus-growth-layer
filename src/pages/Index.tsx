@@ -282,7 +282,7 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
             {/* Карточка 1: Единоразовый взнос */}
             <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -299,10 +299,7 @@ const Index = () => {
             </Card>
             
             {/* Карточка 2: Кофемашина в подарок */}
-            <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-primary">
-              <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-purple-600 text-white px-4 py-1 text-sm font-semibold rounded-bl-lg">
-                Популярное
-              </div>
+            <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
               <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardContent className="p-8 relative z-10">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-success to-green-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
