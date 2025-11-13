@@ -138,32 +138,29 @@ const Index = () => {
           <div className="text-center mb-12">
             <h4 className="text-3xl font-bold mb-8">Наша команда</h4>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="p-6">
-              <Briefcase className="w-10 h-10 mb-4 text-primary" />
-              <h5 className="font-bold text-lg mb-2">Ибраев Марсбек</h5>
-              <p className="text-sm font-medium text-primary mb-2">Учредитель MG Market</p>
-              <p className="text-sm text-muted-foreground">
-                Долларовый мультимиллионер с многолетним опытом построения успешных бизнесов
-              </p>
-            </Card>
-            <Card className="p-6">
-              <Award className="w-10 h-10 mb-4 text-primary" />
-              <h5 className="font-bold text-lg mb-2">Камалов Эрбол</h5>
-              <p className="text-sm font-medium text-primary mb-2">Президент компании</p>
-              <p className="text-sm text-muted-foreground">
-                Опытный профессионал с 20 лет опыта в прямых продажах, превративший амбициозную идею в успешный бизнес
-              </p>
-            </Card>
-            <Card className="p-6">
-              <TrendingUp className="w-10 h-10 mb-4 text-primary" />
-              <h5 className="font-bold text-lg mb-2">Банников Олег</h5>
-              <p className="text-sm font-medium text-primary mb-2">CEO, Коммерческий директор</p>
-              <p className="text-sm text-muted-foreground">
-                Более 20 лет опыта в продажах, управлении командами и построении эффективных коммерческих стратегий
-              </p>
-            </Card>
-          </div>
+          {teamLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {teamMembers?.map((member) => (
+                <Card key={member.id} className="p-6 text-center">
+                  <div className="flex justify-center mb-4">
+                    <Avatar className="w-20 h-20">
+                      <AvatarImage src={member.photo_url || undefined} alt={member.name} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                        {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <h5 className="font-bold text-lg mb-2">{member.name}</h5>
+                  <p className="text-sm font-medium text-primary mb-2">{member.position}</p>
+                  <p className="text-sm text-muted-foreground">{member.description}</p>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
