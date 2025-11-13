@@ -29,7 +29,7 @@ export function LoginForm() {
 
   // Redirect if already logged in
   if (user) {
-    navigate('/');
+    navigate('/dashboard');
     return null;
   }
 
@@ -50,7 +50,7 @@ export function LoginForm() {
         description: "Вы успешно вошли в систему",
       });
 
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Ошибка входа",

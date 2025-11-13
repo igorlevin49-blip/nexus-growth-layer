@@ -43,7 +43,7 @@ export function RegisterForm() {
 
   // Redirect if already logged in
   if (user) {
-    navigate('/');
+    navigate('/dashboard');
     return null;
   }
 
