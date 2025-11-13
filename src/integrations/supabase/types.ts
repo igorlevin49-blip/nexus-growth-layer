@@ -1099,6 +1099,15 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_recalculate_commissions: {
+        Args: never
+        Returns: {
+          details: Json
+          recalculated_orders: number
+          recalculated_subscriptions: number
+          total_commissions_created: number
+        }[]
+      }
       admin_referral_backfill: {
         Args: never
         Returns: {

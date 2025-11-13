@@ -111,6 +111,42 @@ export default function AdminUsers() {
     }
   };
 
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  const runRecalculateCommissions = async () => {
+    setIsRecalculating(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_recalculate_commissions' as any);
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      if (result && result.length > 0) {
+        const r = result[0];
+        toast({
+          title: 'Пересчет комиссий завершен',
+          description: `Подписки: ${r.recalculated_subscriptions} | Заказы: ${r.recalculated_orders} | Всего комиссий: ${r.total_commissions_created}`,
+        });
+        console.log('Детали пересчета:', r.details);
+      } else {
+        toast({
+          title: 'Пересчет завершен',
+          description: 'Нет комиссий для пересчета',
+        });
+      }
+      fetchProfiles();
+    } catch (error: any) {
+      console.error('Recalculate error:', error);
+      toast({ 
+        title: 'Ошибка', 
+        description: `Не удалось пересчитать комиссии: ${error.message}`, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   const toggleUserStatus = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'frozen' : 'active';
     
@@ -158,6 +194,28 @@ export default function AdminUsers() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Управление пользователями</CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={runDiagnose}
+              variant="outline"
+              size="sm"
+            >
+              Диагностика
+            </Button>
+            <Button
+              onClick={runBackfill}
+              variant="outline"
+              size="sm"
+            >
+              Восстановить связи
+            </Button>
+            <Button
+              onClick={runRecalculateCommissions}
+              disabled={isRecalculating}
+              variant="outline"
+              size="sm"
+            >
+              {isRecalculating ? "Пересчитываем..." : "Пересчитать комиссии"}
+            </Button>
             <label className="flex items-center gap-2 text-sm">
               <input 
                 type="checkbox" 
