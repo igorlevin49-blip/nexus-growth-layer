@@ -79,29 +79,29 @@ export function SubscriptionStructure({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-2 font-medium">Уровень</th>
-                    <th className="text-left py-3 px-2 font-medium">Условие</th>
-                    <th className="text-right py-3 px-2 font-medium">Партнёры</th>
-                    <th className="text-right py-3 px-2 font-medium">Процент</th>
-                    <th className="text-right py-3 px-2 font-medium">Начислено</th>
-                    <th className="text-right py-3 px-2 font-medium">Статус</th>
+                    <th className="text-left py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Уровень</th>
+                    <th className="text-left py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Условие</th>
+                    <th className="text-right py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Партнёры</th>
+                    <th className="text-right py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Процент</th>
+                    <th className="text-right py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Начислено</th>
+                    <th className="text-right py-2 sm:py-3 px-2 font-medium text-xs sm:text-sm whitespace-nowrap">Статус</th>
                   </tr>
                 </thead>
                 <tbody>
                   {levels.map((level) => (
                     <tr key={level.id} className="border-b border-border/50 hover:bg-muted/50">
-                      <td className="py-3 px-2">
+                      <td className="py-2 sm:py-3 px-2">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(level.status || 'locked')}
-                          <span className="font-medium">L{level.level}</span>
+                          <span className="font-medium text-xs sm:text-sm">L{level.level}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-2">
+                      <td className="py-2 sm:py-3 px-2">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-1 cursor-help">
-                                <span className="text-sm">
+                                <span className="text-xs sm:text-sm">
                                   {level.unlock_requirement === 0 
                                     ? 'Всегда открыт' 
                                     : `${directReferrals}/${level.unlock_requirement}`}
@@ -119,15 +119,15 @@ export function SubscriptionStructure({
                           </Tooltip>
                         </TooltipProvider>
                       </td>
-                      <td className="py-3 px-2 text-right">
-                        <span className="text-sm">{level.partners_count || 0}</span>
+                      <td className="py-2 sm:py-3 px-2 text-right">
+                        <span className="text-xs sm:text-sm">{level.partners_count || 0}</span>
                       </td>
-                      <td className="py-3 px-2 text-right">
-                        <span className="text-sm font-medium">{level.percent}%</span>
+                      <td className="py-2 sm:py-3 px-2 text-right">
+                        <span className="text-xs sm:text-sm font-medium">{level.percent}%</span>
                       </td>
-                      <td className="py-3 px-2 text-right">
+                      <td className="py-2 sm:py-3 px-2 text-right">
                         <div className="flex flex-col items-end">
-                          <span className="font-medium text-success">
+                          <span className="font-medium text-success text-xs sm:text-sm">
                             {formatCents(level.earned || 0)}
                           </span>
                           {level.frozen && level.frozen > 0 && (
@@ -137,7 +137,7 @@ export function SubscriptionStructure({
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-right">
+                      <td className="py-2 sm:py-3 px-2 text-right">
                         {getStatusBadge(level.status || 'locked')}
                       </td>
                     </tr>
