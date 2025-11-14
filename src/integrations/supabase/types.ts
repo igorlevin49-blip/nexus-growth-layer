@@ -899,6 +899,42 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string | null
+          position: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          photo_url?: string | null
+          position: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo_url?: string | null
+          position?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount_cents: number
@@ -1091,6 +1127,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_backfill_sponsor_from_metadata: { Args: never; Returns: Json }
       admin_bind_sponsor: {
         Args: {
           p_admin_id: string
@@ -1342,6 +1379,7 @@ export type Database = {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
       }
+      validate_referral_code: { Args: { p_ref_code: string }; Returns: Json }
     }
     Enums: {
       app_role: "user" | "admin" | "superadmin"
