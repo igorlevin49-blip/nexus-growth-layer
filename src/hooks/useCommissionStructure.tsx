@@ -1,6 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Commission Structure Hook
+ * 
+ * Загружает правила комиссий из mlm_commission_rules и обогащает их данными о начислениях.
+ * 
+ * Абонентская структура (structure_type = 1):
+ * - 5 уровней, каждый уровень получает 10% от стоимости подписки
+ * - Проценты берутся из таблицы mlm_commission_rules (единый источник правды)
+ * 
+ * Товарная структура (structure_type = 2):
+ * - Проценты также берутся из mlm_commission_rules
+ */
+
 export interface MLMCommissionRule {
   id: string;
   structure_type: 1 | 2; // 1 = абонентская, 2 = товарная

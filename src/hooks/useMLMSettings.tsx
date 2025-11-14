@@ -52,6 +52,19 @@ export function useUpdateMLMSetting() {
   });
 }
 
+/**
+ * MLM Settings and Rules Management
+ * 
+ * ВАЖНО: Проценты комиссий - единый источник правды в mlm_commission_rules.
+ * 
+ * Абонентская структура (structure_type = 1):
+ * - 5 уровней, каждый получает 10% от стоимости подписки
+ * - Изменения процентов должны производиться ТОЛЬКО через эту таблицу
+ * 
+ * Товарная структура (structure_type = 2):
+ * - Проценты также управляются через mlm_commission_rules
+ */
+
 export function useUpdateMLMRule() {
   const queryClient = useQueryClient();
   
