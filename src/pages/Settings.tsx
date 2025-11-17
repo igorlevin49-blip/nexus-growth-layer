@@ -6,6 +6,7 @@ import { useSecurityActions } from "@/hooks/useSecurityActions";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useAutoWithdraw } from "@/hooks/useAutoWithdraw";
 import { PaymentMethodsDialog } from "@/components/Finances/PaymentMethodsDialog";
+import { ChangeEmailDialog } from "@/components/Auth/ChangeEmailDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function Settings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showChangeEmailDialog, setShowChangeEmailDialog] = useState(false);
 
   // Password change form
   const [passwordForm, setPasswordForm] = useState({
@@ -222,15 +224,29 @@ export default function Settings() {
                     onChange={(e) => setProfileForm(prev => ({ ...prev, last_name: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={profile.data?.email || ''} 
-                    disabled 
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile.data?.email || ''}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowChangeEmailDialog(true)}
+                        className="shrink-0"
+                      >
+                        Изменить
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Email используется для входа в систему
+                    </p>
+                  </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Телефон</Label>
                   <Input 
@@ -650,6 +666,12 @@ export default function Settings() {
       <PaymentMethodsDialog 
         open={showPaymentDialog} 
         onOpenChange={setShowPaymentDialog} 
+      />
+      
+      <ChangeEmailDialog
+        open={showChangeEmailDialog}
+        onOpenChange={setShowChangeEmailDialog}
+        currentEmail={profile.data?.email || ''}
       />
     </div>
   );
