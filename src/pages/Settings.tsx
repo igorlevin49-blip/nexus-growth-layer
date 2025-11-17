@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Settings() {
   const profile = useProfile();
@@ -87,6 +89,42 @@ export default function Settings() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile.data) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error('Пожалуйста, выберите изображение');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Размер файла не должен превышать 2MB');
+      return;
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.data.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      await profile.updateProfile.mutateAsync({ avatar_url: publicUrl });
+      toast.success('Фото профиля обновлено');
+    } catch (error: any) {
+      console.error('Avatar upload error:', error);
+      toast.error('Ошибка при загрузке фото');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -134,11 +172,33 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-bold text-2xl">ИИ</span>
-                </div>
+                {profile.data?.avatar_url ? (
+                  <img 
+                    src={profile.data.avatar_url} 
+                    alt="Avatar" 
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold text-2xl">
+                      {profile.data?.first_name?.[0]}{profile.data?.last_name?.[0]}
+                    </span>
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <Button variant="outline">Загрузить фото</Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
+                    Загрузить фото
+                  </Button>
                   <p className="text-xs text-muted-foreground">
                     JPG или PNG до 2MB
                   </p>

@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const { data: subscriptionSetting, error: settingError } = await supabase
       .from('mlm_settings')
       .select('value')
-      .eq('key', 'finance_subscription_usd')
+      .eq('key', 'subscription_price_usd')
       .single();
 
     if (settingError || !subscriptionSetting) {
@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const subscriptionUSD = parseFloat(subscriptionSetting.value);
+    const subscriptionUSD = typeof subscriptionSetting.value === 'number' 
+      ? subscriptionSetting.value 
+      : 100;
 
     if (isNaN(subscriptionUSD) || subscriptionUSD <= 0) {
       console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Invalid subscription price:', subscriptionUSD);
@@ -77,14 +79,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get exchange rate from mlm_settings
-    const { data: rateSetting, error: rateError } = await supabase
-      .from('mlm_settings')
-      .select('value')
-      .eq('key', 'finance_usd_kzt_rate')
+    // Get exchange rate from shop_settings
+    const { data: shopSettings, error: rateError } = await supabase
+      .from('shop_settings')
+      .select('rate_usd_kzt')
+      .eq('id', 1)
       .single();
 
-    if (rateError || !rateSetting) {
+    if (rateError || !shopSettings) {
       console.error('[SUBSCRIPTION_PAYMENT]', correlationId, 'Failed to fetch exchange rate:', rateError);
       return new Response(
         JSON.stringify({ 
@@ -96,7 +98,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const exchangeRate = parseFloat(rateSetting.value);
+    const exchangeRate = typeof shopSettings.rate_usd_kzt === 'number'
+      ? shopSettings.rate_usd_kzt
+      : 450;
     const subscriptionKZT = Math.round(subscriptionUSD * exchangeRate);
 
     // Parse request body (method can be "card", "kaspi", or undefined for backward compatibility)
