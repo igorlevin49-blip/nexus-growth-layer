@@ -5,10 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Loader2, Archive, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Archive, Trash2, CheckCircle2, XCircle, Edit2, Save, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,7 @@ type Order = {
 
 export default function AdminPayments() {
   const { userRole } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<Set<string>>(new Set());
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'subscription' | 'order' }>({ open: false, type: 'subscription' });
@@ -50,6 +51,9 @@ export default function AdminPayments() {
   const [approveProofUrl, setApproveProofUrl] = useState("");
   const [selectedRecordType, setSelectedRecordType] = useState<'subscription' | 'order'>('subscription');
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
+
+  // Comment editing states
+  const [editingComment, setEditingComment] = useState<{ type: 'subscription' | 'order'; id: string; comment: string } | null>(null);
 
   const { data: subscriptions, isLoading: isLoadingSubscriptions } = useSubscriptions(showArchived);
   const archiveRecords = useArchiveRecords();
@@ -148,6 +152,30 @@ export default function AdminPayments() {
       setRejectDialogOpen(false);
     } catch (error) {
       console.error('Reject error:', error);
+    }
+  };
+
+  const handleSaveComment = async () => {
+    if (!editingComment) return;
+
+    try {
+      const table = editingComment.type === 'subscription' ? 'subscriptions' : 'orders';
+      const { error } = await supabase
+        .from(table)
+        .update({ 
+          approval_comment: editingComment.comment,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingComment.id);
+
+      if (error) throw error;
+
+      toast.success("Комментарий обновлён");
+      setEditingComment(null);
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при сохранении комментария");
     }
   };
 
@@ -357,9 +385,51 @@ export default function AdminPayments() {
                             {new Date(sub.created_at).toLocaleDateString('ru-RU')}
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {sub.approval_comment || '—'}
-                            </span>
+                            {editingComment?.type === 'subscription' && editingComment?.id === sub.id ? (
+                              <div className="flex items-center gap-2">
+                                <Textarea
+                                  value={editingComment.comment}
+                                  onChange={(e) => setEditingComment({ ...editingComment, comment: e.target.value })}
+                                  className="min-h-[60px] text-sm"
+                                  placeholder="Комментарий..."
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={handleSaveComment}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingComment(null)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-1">
+                                  {sub.approval_comment || '—'}
+                                </span>
+                                {sub.approval_comment && userRole === 'superadmin' && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingComment({
+                                      type: 'subscription',
+                                      id: sub.id,
+                                      comment: sub.approval_comment || ''
+                                    })}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             {sub.status === 'pending' && (
@@ -492,9 +562,51 @@ export default function AdminPayments() {
                             {new Date(order.created_at).toLocaleDateString('ru-RU')}
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {order.approval_comment || '—'}
-                            </span>
+                            {editingComment?.type === 'order' && editingComment?.id === order.id ? (
+                              <div className="flex items-center gap-2">
+                                <Textarea
+                                  value={editingComment.comment}
+                                  onChange={(e) => setEditingComment({ ...editingComment, comment: e.target.value })}
+                                  className="min-h-[60px] text-sm"
+                                  placeholder="Комментарий..."
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={handleSaveComment}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingComment(null)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-1">
+                                  {order.approval_comment || '—'}
+                                </span>
+                                {order.approval_comment && userRole === 'superadmin' && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingComment({
+                                      type: 'order',
+                                      id: order.id,
+                                      comment: order.approval_comment || ''
+                                    })}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             {order.status === 'pending' && (
