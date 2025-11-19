@@ -79,12 +79,22 @@ export default function AdminUsers() {
       // Поиск по email, имени, ID, referral_code
       if (searchQuery.trim()) {
         const search = searchQuery.trim();
-        query = query.or(
-          `email.ilike.%${search}%,` +
-          `full_name.ilike.%${search}%,` +
-          `id.eq.${search},` +
+        
+        // Проверка, является ли строка валидным UUID
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+        
+        // Строим фильтр OR с условием для UUID только если строка валидна
+        let orConditions = [
+          `email.ilike.%${search}%`,
+          `full_name.ilike.%${search}%`,
           `referral_code.ilike.%${search}%`
-        );
+        ];
+        
+        if (isValidUuid) {
+          orConditions.push(`id.eq.${search}`);
+        }
+        
+        query = query.or(orConditions.join(','));
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });

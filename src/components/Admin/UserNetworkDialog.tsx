@@ -1,9 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useNetworkTree } from "@/hooks/useNetworkTree";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { Loader2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { NetworkMember } from "@/hooks/useNetworkTree";
 
 interface UserNetworkDialogProps {
   open: boolean;
@@ -20,13 +22,22 @@ export function UserNetworkDialog({
   userName,
   userEmail 
 }: UserNetworkDialogProps) {
-  const { data: members, isLoading } = useNetworkTree(10);
-  
-  // Filter to show only members for this specific user
-  const userMembers = members?.filter(m => m.user_id === userId) || [];
+  const { data: members, isLoading } = useQuery({
+    queryKey: ['admin-network-tree', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_referral_network_from_table', {
+        root_user_id: userId,
+        max_level: 10
+      });
+
+      if (error) throw error;
+      return (data || []) as NetworkMember[];
+    },
+    enabled: open && !!userId,
+  });
   
   // Calculate statistics by level
-  const statsByLevel = userMembers.reduce((acc, member) => {
+  const statsByLevel = (members || []).reduce((acc, member) => {
     if (!acc[member.level]) {
       acc[member.level] = { count: 0, active: 0, frozen: 0 };
     }
@@ -39,7 +50,7 @@ export function UserNetworkDialog({
     return acc;
   }, {} as Record<number, { count: number; active: number; frozen: number }>);
 
-  const totalPartners = userMembers.length;
+  const totalPartners = (members || []).length;
   const maxLevel = Math.max(...Object.keys(statsByLevel).map(Number), 0);
 
   return (
@@ -107,12 +118,12 @@ export function UserNetworkDialog({
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : userMembers.length === 0 ? (
+            ) : !members || members.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 У пользователя пока нет партнёров
               </div>
             ) : (
-              <NetworkTree members={userMembers} />
+              <NetworkTree members={members} />
             )}
           </div>
         </div>
