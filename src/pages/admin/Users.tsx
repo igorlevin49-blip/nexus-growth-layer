@@ -5,10 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search } from "lucide-react";
 import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
 import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
+import { UserNetworkDialog } from "@/components/Admin/UserNetworkDialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 interface Profile {
   id: string;
@@ -36,17 +38,29 @@ export default function AdminUsers() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [bindSponsorDialog, setBindSponsorDialog] = useState<{ open: boolean; userId: string; userName: string }>({
     open: false,
     userId: "",
     userName: ""
+  });
+  const [networkDialog, setNetworkDialog] = useState<{ 
+    open: boolean; 
+    userId: string; 
+    userName: string; 
+    userEmail: string;
+  }>({
+    open: false,
+    userId: "",
+    userName: "",
+    userEmail: ""
   });
   const softDeleteUser = useSoftDeleteUser();
   const restoreUser = useRestoreUser();
 
   useEffect(() => {
     fetchProfiles();
-  }, [showArchived]);
+  }, [showArchived, searchQuery]);
 
   const fetchProfiles = async () => {
     try {
@@ -60,6 +74,17 @@ export default function AdminUsers() {
       // По умолчанию не показываем архивных
       if (!showArchived) {
         query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      // Поиск по email, имени, ID, referral_code
+      if (searchQuery.trim()) {
+        const search = searchQuery.trim();
+        query = query.or(
+          `email.ilike.%${search}%,` +
+          `full_name.ilike.%${search}%,` +
+          `id.eq.${search},` +
+          `referral_code.ilike.%${search}%`
+        );
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -242,6 +267,19 @@ export default function AdminUsers() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Search Bar */}
+          <div className="mb-4 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Поиск по email, имени, ID или реф.коду..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -251,9 +289,9 @@ export default function AdminUsers() {
                 <TableHead>Статус аккаунта</TableHead>
                 <TableHead>Статус подписки</TableHead>
                 <TableHead>Активация</TableHead>
-                <TableHead>Баланс</TableHead>
+                <TableHead>Баланс (USD)</TableHead>
                 <TableHead>Дата регистрации</TableHead>
-                <TableHead>Действия</TableHead>
+                <TableHead className="text-right">Действия</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -335,7 +373,20 @@ export default function AdminUsers() {
                   <TableCell>${profile.balance?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNetworkDialog({
+                          open: true,
+                          userId: profile.id,
+                          userName: profile.full_name || 'Пользователь',
+                          userEmail: profile.email || ''
+                        })}
+                        title="Посмотреть структуру"
+                      >
+                        <Network className="h-4 w-4" />
+                      </Button>
                       {!profile.sponsor_id && profile.is_active && (
                         <Button
                           variant="outline"
@@ -345,9 +396,9 @@ export default function AdminUsers() {
                             userId: profile.id,
                             userName: profile.full_name || 'Без имени'
                           })}
+                          title="Привязать спонсора"
                         >
-                          <UserPlus className="w-4 h-4 mr-1" />
-                          Привязать спонсора
+                          <UserPlus className="w-4 h-4" />
                         </Button>
                       )}
                       <Button
@@ -355,27 +406,27 @@ export default function AdminUsers() {
                         size="sm"
                         onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
                         disabled={!profile.is_active}
+                        title={profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
                       >
-                        <Ban className="w-4 h-4 mr-1" />
-                        {profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
+                        <Ban className="w-4 h-4" />
                       </Button>
                       {profile.is_active ? (
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteUser(profile.id)}
+                          title="Удалить"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Удалить
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       ) : (
                         <Button
                           variant="default"
                           size="sm"
                           onClick={() => handleRestoreUser(profile.id)}
+                          title="Восстановить"
                         >
-                          <RotateCcw className="w-4 h-4 mr-1" />
-                          Восстановить
+                          <RotateCcw className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
@@ -393,6 +444,14 @@ export default function AdminUsers() {
         open={bindSponsorDialog.open}
         onOpenChange={(open) => setBindSponsorDialog({ ...bindSponsorDialog, open })}
         onSuccess={() => fetchProfiles()}
+      />
+
+      <UserNetworkDialog
+        open={networkDialog.open}
+        onOpenChange={(open) => setNetworkDialog({ ...networkDialog, open })}
+        userId={networkDialog.userId}
+        userName={networkDialog.userName}
+        userEmail={networkDialog.userEmail}
       />
     </div>
   );
