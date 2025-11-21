@@ -4,11 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Loader2, Archive, Trash2, CheckCircle2, XCircle, Edit2, Save, X } from "lucide-react";
+import { Loader2, Archive, Trash2, CheckCircle2, XCircle, Edit2, Save, X, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useManualPayment } from "@/hooks/useManualPayment";
+import type { Subscription } from "@/hooks/useSubscriptions";
 
 type Order = {
   id: string;
@@ -42,6 +42,7 @@ export default function AdminPayments() {
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'subscription' | 'order' }>({ open: false, type: 'subscription' });
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Manual approval states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -55,14 +56,119 @@ export default function AdminPayments() {
   // Comment editing states
   const [editingComment, setEditingComment] = useState<{ type: 'subscription' | 'order'; id: string; comment: string } | null>(null);
 
-  const { data: subscriptions, isLoading: isLoadingSubscriptions } = useSubscriptions(showArchived);
   const archiveRecords = useArchiveRecords();
   const hardDeleteRecords = useArchiveRecords();
   const { approvePayment, rejectPayment } = useManualPayment();
 
-  const { data: orders, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['admin-orders', showArchived],
+  // Subscriptions with search
+  const { data: subscriptions, isLoading: isLoadingSubscriptions } = useQuery({
+    queryKey: ['admin-subscriptions', showArchived, searchQuery],
     queryFn: async () => {
+      const search = searchQuery.trim();
+      let userIds: string[] | null = null;
+
+      // If search query exists and is not a valid UUID, find matching user_ids first
+      if (search) {
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+        
+        if (!isValidUuid) {
+          // Search for matching users by email or full_name
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
+          
+          if (profileError) throw profileError;
+          userIds = profiles?.map(p => p.id) || [];
+          
+          // If no users found, return empty array
+          if (userIds.length === 0) return [];
+        }
+      }
+
+      let query = supabase
+        .from('subscriptions')
+        .select('*')
+        .limit(1000);
+
+      if (!showArchived) {
+        query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      // Apply search filters
+      if (search) {
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+        
+        if (isValidUuid) {
+          // Search by subscription ID or user ID
+          query = query.or(`id.eq.${search},user_id.eq.${search}`);
+        } else if (userIds && userIds.length > 0) {
+          // Search by user_ids found from profiles
+          query = query.in('user_id', userIds);
+        } else {
+          // No matches, return empty
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      // Fetch profiles separately
+      const subscriptionsWithProfiles = await Promise.all(
+        (data || []).map(async (sub) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', sub.user_id)
+            .single();
+          
+          return {
+            ...sub,
+            profiles: profile || { full_name: '', email: '' }
+          };
+        })
+      );
+      
+      // Sort: pending first, then active, then others
+      const sortedSubs = subscriptionsWithProfiles.sort((a, b) => {
+        const statusOrder = { pending: 0, active: 1, paid: 1, frozen: 2, cancelled: 3, declined: 3 };
+        const orderA = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
+        const orderB = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      return sortedSubs as Subscription[];
+    }
+  });
+
+  // Orders with search
+  const { data: orders, isLoading: isLoadingOrders } = useQuery({
+    queryKey: ['admin-orders', showArchived, searchQuery],
+    queryFn: async () => {
+      const search = searchQuery.trim();
+      let userIds: string[] | null = null;
+
+      // If search query exists and is not a valid UUID, find matching user_ids first
+      if (search) {
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+        
+        if (!isValidUuid) {
+          // Search for matching users by email or full_name
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
+          
+          if (profileError) throw profileError;
+          userIds = profiles?.map(p => p.id) || [];
+          
+          // If no users found, return empty array
+          if (userIds.length === 0) return [];
+        }
+      }
+
       let query = supabase
         .from('orders')
         .select('*')
@@ -70,6 +176,22 @@ export default function AdminPayments() {
 
       if (!showArchived) {
         query = query.or('is_archived.is.null,is_archived.eq.false');
+      }
+
+      // Apply search filters
+      if (search) {
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+        
+        if (isValidUuid) {
+          // Search by order ID or user ID
+          query = query.or(`id.eq.${search},user_id.eq.${search}`);
+        } else if (userIds && userIds.length > 0) {
+          // Search by user_ids found from profiles
+          query = query.in('user_id', userIds);
+        } else {
+          // No matches, return empty
+          return [];
+        }
       }
 
       const { data, error } = await query;
@@ -172,7 +294,7 @@ export default function AdminPayments() {
 
       toast.success("Комментарий обновлён");
       setEditingComment(null);
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
     } catch (error: any) {
       toast.error(error.message || "Ошибка при сохранении комментария");
@@ -269,13 +391,25 @@ export default function AdminPayments() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Switch
-            id="show-archived"
-            checked={showArchived}
-            onCheckedChange={setShowArchived}
-          />
-          <Label htmlFor="show-archived">Показывать архивные</Label>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-archived"
+              checked={showArchived}
+              onCheckedChange={setShowArchived}
+            />
+            <Label htmlFor="show-archived">Показывать архивные</Label>
+          </div>
+
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по email, имени, ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         <Tabs defaultValue="subscriptions" className="space-y-4">
