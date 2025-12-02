@@ -331,35 +331,35 @@ export default function MarketingAccess() {
       </Card>
 
       {/* User Details */}
-      {userDetails && (
+      {selectedUser && (
         <Card>
           <CardHeader>
             <CardTitle>
-              {userDetails.full_name}
-              {userDetails.has_reversals && (
+              {selectedUser.full_name}
+              {userDetails?.has_reversals && (
                 <Badge variant="outline" className="ml-2">
                   Обнулено
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>{userDetails.email}</CardDescription>
+            <CardDescription>{selectedUser.email}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Subscription Info */}
-            {userDetails.subscription && (
+            {selectedUser.subscription && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-base">Подписка</Label>
                     <p className="text-sm text-muted-foreground">
-                      {userDetails.subscription.status === 'active' ? 'Активна' : 'Неактивна'}
-                      {userDetails.subscription.expires_at && 
-                        ` до ${new Date(userDetails.subscription.expires_at).toLocaleDateString('ru-RU')}`
+                      {selectedUser.subscription.status === 'active' ? 'Активна' : 'Неактивна'}
+                      {selectedUser.subscription.expires_at && 
+                        ` до ${new Date(selectedUser.subscription.expires_at).toLocaleDateString('ru-RU')}`
                       }
                     </p>
                   </div>
-                  <Badge variant={userDetails.subscription.status === 'active' ? 'default' : 'secondary'}>
-                    {formatCents(userDetails.subscription.amount_usd * 100)}
+                  <Badge variant={selectedUser.subscription.status === 'active' ? 'default' : 'secondary'}>
+                    {formatCents(selectedUser.subscription.amount_usd * 100)}
                   </Badge>
                 </div>
 
@@ -375,10 +375,10 @@ export default function MarketingAccess() {
                   </div>
                   <Switch
                     id="marketing-access"
-                    checked={userDetails.subscription.is_marketing_free_access}
+                    checked={selectedUser.subscription.is_marketing_free_access}
                     onCheckedChange={(checked) =>
                       toggleMarketingAccessMutation.mutate({
-                        subscriptionId: userDetails.subscription!.id,
+                        subscriptionId: selectedUser.subscription!.id,
                         value: checked,
                       })
                     }
@@ -389,20 +389,24 @@ export default function MarketingAccess() {
                 {/* S1 Commissions Info */}
                 <div className="space-y-2">
                   <Label className="text-base">Начисления S1 от этого пользователя</Label>
-                  <div className="flex gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Сумма:</span>{" "}
-                      <span className="font-medium">{formatCents(userDetails.s1_commissions_total * 100)}</span>
+                  {isLoadingDetails ? (
+                    <p className="text-sm text-muted-foreground">Загрузка данных о комиссиях...</p>
+                  ) : (
+                    <div className="flex gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Сумма:</span>{" "}
+                        <span className="font-medium">{formatCents((userDetails?.s1_commissions_total || 0) * 100)}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Транзакций:</span>{" "}
+                        <span className="font-medium">{userDetails?.s1_commissions_count || 0}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Транзакций:</span>{" "}
-                      <span className="font-medium">{userDetails.s1_commissions_count}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Reverse Button */}
-                {!userDetails.has_reversals && userDetails.s1_commissions_count > 0 && (
+                {!isLoadingDetails && !userDetails?.has_reversals && (userDetails?.s1_commissions_count || 0) > 0 && (
                   <div className="space-y-4 p-4 border border-destructive/50 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
@@ -424,7 +428,7 @@ export default function MarketingAccess() {
                   </div>
                 )}
 
-                {userDetails.has_reversals && (
+                {userDetails?.has_reversals && (
                   <div className="p-4 border border-green-500/50 rounded-lg bg-green-500/10">
                     <p className="text-sm text-green-700 dark:text-green-300">
                       ✓ Начисления по этому пользователю уже были обнулены
