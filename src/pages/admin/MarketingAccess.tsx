@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Search, Gift, AlertTriangle, Settings } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -56,6 +57,7 @@ export default function MarketingAccess() {
   const { disableAutoLoader, enableAutoLoader } = useLoader();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithSubscription | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [showReverseDialog, setShowReverseDialog] = useState(false);
   const [reverseComment, setReverseComment] = useState("");
 
@@ -215,6 +217,7 @@ export default function MarketingAccess() {
       s1_commissions_count: 0,
       has_reversals: false,
     });
+    setDialogOpen(true);
   };
 
   const handleReverse = () => {
@@ -330,116 +333,112 @@ export default function MarketingAccess() {
         </CardContent>
       </Card>
 
-      {/* User Details */}
-      {selectedUser && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedUser.full_name}
+      {/* User Details Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedUser?.full_name}
               {userDetails?.has_reversals && (
-                <Badge variant="outline" className="ml-2">
-                  Обнулено
-                </Badge>
+                <Badge variant="outline">Обнулено</Badge>
               )}
-            </CardTitle>
-            <CardDescription>{selectedUser.email}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Subscription Info */}
-            {selectedUser.subscription && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base">Подписка</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedUser.subscription.status === 'active' ? 'Активна' : 'Неактивна'}
-                      {selectedUser.subscription.expires_at && 
-                        ` до ${new Date(selectedUser.subscription.expires_at).toLocaleDateString('ru-RU')}`
-                      }
-                    </p>
-                  </div>
-                  <Badge variant={selectedUser.subscription.status === 'active' ? 'default' : 'secondary'}>
-                    {formatCents(selectedUser.subscription.amount_usd * 100)}
-                  </Badge>
-                </div>
-
-                {/* Marketing Free Access Toggle */}
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-accent/50">
-                  <div className="space-y-1">
-                    <Label htmlFor="marketing-access" className="text-base">
-                      Бесплатный маркетинговый доступ
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Не начислять комиссии S1 по этой подписке
-                    </p>
-                  </div>
-                  <Switch
-                    id="marketing-access"
-                    checked={selectedUser.subscription.is_marketing_free_access}
-                    onCheckedChange={(checked) =>
-                      toggleMarketingAccessMutation.mutate({
-                        subscriptionId: selectedUser.subscription!.id,
-                        value: checked,
-                      })
+            </DialogTitle>
+            <DialogDescription>{selectedUser?.email}</DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser?.subscription && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base">Подписка</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedUser.subscription.status === 'active' ? 'Активна' : 'Неактивна'}
+                    {selectedUser.subscription.expires_at && 
+                      ` до ${new Date(selectedUser.subscription.expires_at).toLocaleDateString('ru-RU')}`
                     }
-                    disabled={toggleMarketingAccessMutation.isPending}
-                  />
+                  </p>
                 </div>
+                <Badge variant={selectedUser.subscription.status === 'active' ? 'default' : 'secondary'}>
+                  {formatCents(selectedUser.subscription.amount_usd * 100)}
+                </Badge>
+              </div>
 
-                {/* S1 Commissions Info */}
-                <div className="space-y-2">
-                  <Label className="text-base">Начисления S1 от этого пользователя</Label>
-                  {isLoadingDetails ? (
-                    <p className="text-sm text-muted-foreground">Загрузка данных о комиссиях...</p>
-                  ) : (
-                    <div className="flex gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Сумма:</span>{" "}
-                        <span className="font-medium">{formatCents((userDetails?.s1_commissions_total || 0) * 100)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Транзакций:</span>{" "}
-                        <span className="font-medium">{userDetails?.s1_commissions_count || 0}</span>
-                      </div>
-                    </div>
-                  )}
+              {/* Marketing Free Access Toggle */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-accent/50">
+                <div className="space-y-1">
+                  <Label htmlFor="marketing-access" className="text-base">
+                    Бесплатный маркетинговый доступ
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Не начислять комиссии S1 по этой подписке
+                  </p>
                 </div>
+                <Switch
+                  id="marketing-access"
+                  checked={selectedUser.subscription.is_marketing_free_access}
+                  onCheckedChange={(checked) =>
+                    toggleMarketingAccessMutation.mutate({
+                      subscriptionId: selectedUser.subscription!.id,
+                      value: checked,
+                    })
+                  }
+                  disabled={toggleMarketingAccessMutation.isPending}
+                />
+              </div>
 
-                {/* Reverse Button */}
-                {!isLoadingDetails && !userDetails?.has_reversals && (userDetails?.s1_commissions_count || 0) > 0 && (
-                  <div className="space-y-4 p-4 border border-destructive/50 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
-                      <div className="space-y-2 flex-1">
-                        <Label className="text-base text-destructive">Обнуление начислений S1</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Все начисления по структуре 1 от этого пользователя будут обнулены через корректирующие записи.
-                          Это действие нельзя отменить.
-                        </p>
-                        <Button
-                          variant="destructive"
-                          onClick={() => setShowReverseDialog(true)}
-                          disabled={reverseCommissionsMutation.isPending}
-                        >
-                          Обнулить начисления S1
-                        </Button>
-                      </div>
+              {/* S1 Commissions Info */}
+              <div className="space-y-2">
+                <Label className="text-base">Начисления S1 от этого пользователя</Label>
+                {isLoadingDetails ? (
+                  <p className="text-sm text-muted-foreground">Загрузка данных о комиссиях...</p>
+                ) : (
+                  <div className="flex gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Сумма:</span>{" "}
+                      <span className="font-medium">{formatCents((userDetails?.s1_commissions_total || 0) * 100)}</span>
                     </div>
-                  </div>
-                )}
-
-                {userDetails?.has_reversals && (
-                  <div className="p-4 border border-green-500/50 rounded-lg bg-green-500/10">
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      ✓ Начисления по этому пользователю уже были обнулены
-                    </p>
+                    <div>
+                      <span className="text-muted-foreground">Транзакций:</span>{" "}
+                      <span className="font-medium">{userDetails?.s1_commissions_count || 0}</span>
+                    </div>
                   </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
+              {/* Reverse Button */}
+              {!isLoadingDetails && !userDetails?.has_reversals && (userDetails?.s1_commissions_count || 0) > 0 && (
+                <div className="space-y-4 p-4 border border-destructive/50 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+                    <div className="space-y-2 flex-1">
+                      <Label className="text-base text-destructive">Обнуление начислений S1</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Все начисления по структуре 1 от этого пользователя будут обнулены через корректирующие записи.
+                        Это действие нельзя отменить.
+                      </p>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setShowReverseDialog(true)}
+                        disabled={reverseCommissionsMutation.isPending}
+                      >
+                        Обнулить начисления S1
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {userDetails?.has_reversals && (
+                <div className="p-4 border border-green-500/50 rounded-lg bg-green-500/10">
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    ✓ Начисления по этому пользователю уже были обнулены
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Reverse Confirmation Dialog */}
       <AlertDialog open={showReverseDialog} onOpenChange={setShowReverseDialog}>
