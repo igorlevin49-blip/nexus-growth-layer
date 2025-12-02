@@ -36,7 +36,7 @@
 }
 
 .cup__steam {
-  background-color: hsl(var(--muted));
+  background-color: hsl(var(--primary) / 0.3);
   transform: translateY(calc(-100vh / 4));
   position: absolute;
   border-radius: calc(100vh / 7.2) calc(100vh / 14.4);
