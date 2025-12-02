@@ -112,6 +112,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       auto_withdraw_rules: {
         Row: {
           created_at: string
@@ -1068,6 +1101,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_status_achievements: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          id: string
+          level: number
+          shown: boolean
+          status_name: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          level: number
+          shown?: boolean
+          status_name: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          id?: string
+          level?: number
+          shown?: boolean
+          status_name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       withdrawals: {
         Row: {
