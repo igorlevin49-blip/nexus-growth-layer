@@ -16,6 +16,7 @@ interface Profile {
   id: string;
   full_name: string | null;
   email: string | null;
+  phone: string | null;
   subscription_status: string;
   balance: number;
   created_at: string;
@@ -295,6 +296,7 @@ export default function AdminUsers() {
               <TableRow>
                 <TableHead>Имя</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Телефон</TableHead>
                 <TableHead>Пригласивший</TableHead>
                 <TableHead>Статус аккаунта</TableHead>
                 <TableHead>Статус подписки</TableHead>
@@ -309,6 +311,7 @@ export default function AdminUsers() {
                 <TableRow key={profile.id} className={profile.deleted_at ? 'opacity-50' : ''}>
                   <TableCell>{profile.full_name || 'Не указано'}</TableCell>
                   <TableCell>{profile.email}</TableCell>
+                  <TableCell>{profile.phone || '—'}</TableCell>
                   <TableCell>
                     {(() => {
                       // Check if sponsor exists and is active

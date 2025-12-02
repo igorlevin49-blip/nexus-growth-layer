@@ -254,8 +254,11 @@ export default function Settings() {
                     type="tel" 
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+7 (999) 123-45-67"
+                    placeholder="Например: +77001234567, +996555123456"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Международный формат (E.164)
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telegram">Telegram</Label>

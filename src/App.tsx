@@ -27,6 +27,7 @@ import ShopSettings from "./pages/admin/ShopSettings";
 import MLMSettings from "./pages/admin/MLMSettings";
 import LandingSettings from "./pages/admin/LandingSettings";
 import AdminPayments from "./pages/admin/Payments";
+import AdminPayouts from "./pages/admin/Payouts";
 import ShopCart from "./pages/ShopCart";
 import ShopCheckout from "./pages/ShopCheckout";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,7 @@ function AppContent() {
           <Route path="admin/shop-settings" element={<ProtectedRoute requireSuperAdmin><ShopSettings /></ProtectedRoute>} />
           <Route path="admin/mlm-settings" element={<ProtectedRoute requireSuperAdmin><MLMSettings /></ProtectedRoute>} />
           <Route path="admin/payments" element={<ProtectedRoute requireAdmin><AdminPayments /></ProtectedRoute>} />
+          <Route path="admin/payouts" element={<ProtectedRoute requireAdmin><AdminPayouts /></ProtectedRoute>} />
           <Route path="shop/cart" element={<ShopCart />} />
           <Route path="shop/checkout" element={<ShopCheckout />} />
           <Route path="admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />

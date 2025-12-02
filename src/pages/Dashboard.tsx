@@ -54,6 +54,11 @@ export default function Dashboard() {
       return user.user_metadata.full_name;
     }
     
+    // Prioritize profile.email (fresh from DB) over user.email (cached in auth)
+    if (profile?.email) {
+      return profile.email.split('@')[0];
+    }
+    
     if (user?.email) {
       return user.email.split('@')[0];
     }

@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { APP_CONFIG } from "@/config/constants";
 import { setCookie, getCookie, deleteCookie } from "@/utils/cookies";
-import InputMask from "react-input-mask";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -61,10 +60,11 @@ export function RegisterForm() {
   };
 
   const validatePhone = (phone: string): boolean => {
+    if (!phone) return true; // Optional field
     // Remove all non-digit characters
     const cleaned = phone.replace(/\D/g, '');
-    // Check if it's a valid phone number (11 digits with country code 7)
-    return cleaned.length === 11 && cleaned.startsWith('7');
+    // E.164 format: 7-15 digits (without +)
+    return cleaned.length >= 7 && cleaned.length <= 15;
   };
 
   const normalizePhone = (phone: string): string => {
@@ -99,7 +99,7 @@ export function RegisterForm() {
 
     // Validate phone if provided
     if (phone && !validatePhone(phone)) {
-      toast.error("Неверный формат телефона");
+      toast.error("Введите номер телефона в международном формате (например, +7XXXXXXXXXX или +996XXXXXXXXX)");
       return;
     }
 
@@ -263,21 +263,16 @@ export function RegisterForm() {
               {/* Phone (optional) */}
               <div className="space-y-2">
                 <Label htmlFor="phone">Телефон (опционально)</Label>
-                <InputMask
-                  mask="+7 (999) 999-99-99"
+                <Input
+                  id="phone"
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  maskChar="_"
-                >
-                  {(inputProps: any) => (
-                    <Input
-                      {...inputProps}
-                      id="phone"
-                      type="tel"
-                      placeholder="+7 (___) ___-__-__"
-                    />
-                  )}
-                </InputMask>
+                  placeholder="Введите номер в международном формате +XXX..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Например: +77001234567, +996555123456
+                </p>
               </div>
 
               {/* Password */}
