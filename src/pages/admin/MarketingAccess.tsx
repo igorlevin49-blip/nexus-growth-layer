@@ -313,7 +313,7 @@ export default function MarketingAccess() {
                         <TableCell className="text-right">
                           <Button 
                             size="sm" 
-                            variant="outline"
+                            variant="default"
                             onClick={() => handleSelectUser(sub)}
                           >
                             <Settings className="h-4 w-4 mr-1" />
