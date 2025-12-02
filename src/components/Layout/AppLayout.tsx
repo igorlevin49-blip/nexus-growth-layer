@@ -13,7 +13,8 @@ import {
   Shield,
   Package,
   FileText,
-  Trash2
+  Trash2,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ export function AppLayout() {
     { name: "Товары", href: "/admin/products", icon: Package },
     { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
     { name: "Оплаты", href: "/admin/payments", icon: FileText },
+    { name: "Выплаты", href: "/admin/payouts", icon: DollarSign },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
     { name: "Управление лендингом", href: "/admin/landing-settings", icon: Globe },
