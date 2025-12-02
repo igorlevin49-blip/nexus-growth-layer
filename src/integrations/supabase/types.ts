@@ -866,6 +866,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_archived: boolean | null
+          is_marketing_free_access: boolean | null
           is_test: boolean | null
           paid_at: string | null
           payment_confirmed_at: string | null
@@ -891,6 +892,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_archived?: boolean | null
+          is_marketing_free_access?: boolean | null
           is_test?: boolean | null
           paid_at?: string | null
           payment_confirmed_at?: string | null
@@ -916,6 +918,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_archived?: boolean | null
+          is_marketing_free_access?: boolean | null
           is_test?: boolean | null
           paid_at?: string | null
           payment_confirmed_at?: string | null
@@ -1436,6 +1439,14 @@ export type Database = {
       }
       restore_user: {
         Args: { p_admin_id: string; p_user_id: string }
+        Returns: Json
+      }
+      reverse_marketing_free_commissions: {
+        Args: {
+          p_admin_id: string
+          p_comment?: string
+          p_source_user_id: string
+        }
         Returns: Json
       }
       soft_delete_user: {

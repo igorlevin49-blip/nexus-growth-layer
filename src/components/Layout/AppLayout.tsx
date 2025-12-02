@@ -14,7 +14,8 @@ import {
   Package,
   FileText,
   Trash2,
-  DollarSign
+  DollarSign,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function AppLayout() {
     { name: "Выплаты", href: "/admin/payouts", icon: DollarSign },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
+    { name: "Маркетинг доступ", href: "/admin/marketing-access", icon: Gift },
     { name: "Управление лендингом", href: "/admin/landing-settings", icon: Globe },
   ];
 
