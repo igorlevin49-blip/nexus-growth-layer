@@ -1313,6 +1313,24 @@ export type Database = {
           transactions_count: number
         }[]
       }
+      get_commission_structure_stats: {
+        Args: {
+          p_end_date?: string
+          p_start_date?: string
+          p_structure_type: number
+          p_user_id: string
+        }
+        Returns: {
+          earned_cents: number
+          frozen_cents: number
+          level: number
+          partners_count: number
+          percent: number
+          status: string
+          unlock_requirement: string
+          volume_cents: number
+        }[]
+      }
       get_network_stats: {
         Args: { user_id_param: string }
         Returns: {
@@ -1426,6 +1444,10 @@ export type Database = {
       }
       purge_test_data: {
         Args: { p_confirmation_phrase?: string; p_dry_run?: boolean }
+        Returns: Json
+      }
+      recalculate_all_s1_commissions: {
+        Args: { p_admin_id: string }
         Returns: Json
       }
       reject_payment: {
