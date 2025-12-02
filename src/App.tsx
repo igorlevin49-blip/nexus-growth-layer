@@ -5,8 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import { AuthProvider } from "@/hooks/useAuth";
+import { LoaderProvider, useLoader } from "@/contexts/LoaderContext";
+import { Loader } from "@/components/ui/loader";
 import { useReferralBind } from "@/hooks/useReferralBind";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StatusCelebration } from "@/components/Celebrations/StatusCelebration";
 import { useStatusCelebration } from "@/hooks/useStatusCelebration";
@@ -45,6 +48,7 @@ const queryClient = new QueryClient();
 function AppContent() {
   useReferralCapture(); // Capture ?ref= from any route
   useReferralBind(); // Auto-bind referral from cookie on first login
+  useGlobalLoader(); // Auto-show loader for React Query requests
   const { celebration, closeCelebration } = useStatusCelebration();
   
   return (
@@ -92,15 +96,26 @@ function AppContent() {
   );
 }
 
+function GlobalLoader() {
+  const { isLoading } = useLoader();
+  
+  if (!isLoading) return null;
+  
+  return <Loader />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <LoaderProvider>
+          <AuthProvider>
+            <GlobalLoader />
+            <AppContent />
+          </AuthProvider>
+        </LoaderProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
