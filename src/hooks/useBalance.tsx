@@ -29,6 +29,8 @@ export function useBalance() {
       };
 
       return balance as Balance;
-    }
+    },
+    staleTime: 30000,
+    refetchOnMount: 'always'
   });
 }

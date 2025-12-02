@@ -38,7 +38,8 @@ export function useAdminGlobalStats(startDate?: Date, endDate?: Date, showArchiv
         frozen_users_count: 0
       };
     },
-    staleTime: 60000 // кеш на 1 минуту
+    staleTime: 60000,
+    refetchOnMount: 'always'
   });
 }
 
@@ -59,6 +60,7 @@ export function useAdminStructureStats(
       if (error) throw error;
       return (data || []) as AdminStructureStats[];
     },
-    staleTime: 60000
+    staleTime: 60000,
+    refetchOnMount: 'always'
   });
 }

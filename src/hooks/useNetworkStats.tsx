@@ -35,6 +35,7 @@ export function useNetworkStats() {
         commissions_this_month: 0
       };
     },
-    staleTime: 30000
+    staleTime: 30000,
+    refetchOnMount: 'always'
   });
 }
