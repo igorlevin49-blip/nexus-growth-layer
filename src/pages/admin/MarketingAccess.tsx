@@ -12,9 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Search, Gift, AlertTriangle } from "lucide-react";
+import { Search, Gift, AlertTriangle, Settings } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatCents } from "@/utils/formatMoney";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface UserWithSubscription {
   id: string;
@@ -26,10 +28,26 @@ interface UserWithSubscription {
     is_marketing_free_access: boolean;
     expires_at: string | null;
     amount_usd: number;
+    created_at: string;
   } | null;
   s1_commissions_total: number;
   s1_commissions_count: number;
   has_reversals: boolean;
+}
+
+interface SubscriptionWithProfile {
+  id: string;
+  user_id: string;
+  status: string;
+  is_marketing_free_access: boolean | null;
+  expires_at: string | null;
+  amount_usd: number;
+  created_at: string;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+  } | null;
 }
 
 export default function MarketingAccess() {
@@ -47,45 +65,44 @@ export default function MarketingAccess() {
     return () => enableAutoLoader();
   }, [disableAutoLoader, enableAutoLoader]);
 
-  // Search users
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['marketing-access-search', searchQuery],
+  // Load all active subscriptions with profiles
+  const { data: allSubscriptions, isLoading: isLoadingAll } = useQuery({
+    queryKey: ['marketing-access-all'],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
+      // Get subscriptions
+      const { data: subscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('id, user_id, status, is_marketing_free_access, expires_at, amount_usd, created_at')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-      // Step 1: Find users
-      const { data: users, error: usersError } = await supabase
+      if (subError) throw subError;
+      if (!subscriptions || subscriptions.length === 0) return [];
+
+      // Get profiles for these users
+      const userIds = [...new Set(subscriptions.map(s => s.user_id))];
+      const { data: profiles, error: profError } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-        .limit(10);
+        .in('id', userIds);
 
-      if (usersError) throw usersError;
-      if (!users || users.length === 0) return [];
+      if (profError) throw profError;
 
-      // Step 2: Get their active subscriptions
-      const userIds = users.map(u => u.id);
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('subscriptions')
-        .select('id, user_id, status, is_marketing_free_access, expires_at, amount_usd')
-        .in('user_id', userIds)
-        .eq('status', 'active');
-
-      if (subsError) throw subsError;
-
-      // Step 3: Combine and filter
-      return users
-        .map(user => {
-          const subscription = subscriptions?.find(s => s.user_id === user.id);
-          if (!subscription) return null;
-          return {
-            ...user,
-            subscriptions: [subscription]
-          };
-        })
-        .filter(Boolean);
+      // Combine data
+      return subscriptions.map(sub => ({
+        ...sub,
+        profiles: profiles?.find(p => p.id === sub.user_id) || null,
+      })) as SubscriptionWithProfile[];
     },
-    enabled: searchQuery.length >= 2,
+  });
+
+  // Filter subscriptions by search query
+  const filteredSubscriptions = allSubscriptions?.filter((sub) => {
+    if (!searchQuery || searchQuery.length < 2) return true;
+    const query = searchQuery.toLowerCase();
+    const fullName = sub.profiles?.full_name?.toLowerCase() || '';
+    const email = sub.profiles?.email?.toLowerCase() || '';
+    return fullName.includes(query) || email.includes(query);
   });
 
   // Load detailed user info
@@ -138,7 +155,7 @@ export default function MarketingAccess() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['marketing-access-search'] });
+      queryClient.invalidateQueries({ queryKey: ['marketing-access-all'] });
       queryClient.invalidateQueries({ queryKey: ['marketing-access-details'] });
       toast.success("Статус маркетингового доступа обновлён");
     },
@@ -181,19 +198,19 @@ export default function MarketingAccess() {
     },
   });
 
-  const handleSelectUser = (user: any) => {
-    const subscription = user.subscriptions?.[0];
+  const handleSelectUser = (sub: SubscriptionWithProfile) => {
     setSelectedUser({
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      subscription: subscription ? {
-        id: subscription.id,
-        status: subscription.status,
-        is_marketing_free_access: subscription.is_marketing_free_access,
-        expires_at: subscription.expires_at,
-        amount_usd: subscription.amount_usd,
-      } : null,
+      id: sub.user_id,
+      full_name: sub.profiles?.full_name || 'Без имени',
+      email: sub.profiles?.email || '',
+      subscription: {
+        id: sub.id,
+        status: sub.status,
+        is_marketing_free_access: sub.is_marketing_free_access || false,
+        expires_at: sub.expires_at,
+        amount_usd: sub.amount_usd,
+        created_at: sub.created_at,
+      },
       s1_commissions_total: 0,
       s1_commissions_count: 0,
       has_reversals: false,
@@ -223,44 +240,92 @@ export default function MarketingAccess() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Поиск пользователя</CardTitle>
-          <CardDescription>Найдите пользователя по имени или email</CardDescription>
+          <CardTitle>Пользователи с активными подписками</CardTitle>
+          <CardDescription>
+            Всего: {allSubscriptions?.length || 0} активных подписок
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Введите имя или email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по имени или email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
 
-          {isSearching && <p className="text-sm text-muted-foreground mt-2">Поиск...</p>}
-
-          {searchResults && searchResults.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {searchResults.map((user: any) => (
-                <div
-                  key={user.id}
-                  onClick={() => handleSelectUser(user)}
-                  className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                >
-                  <div className="font-medium">{user.full_name}</div>
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
-                </div>
-              ))}
+          {isLoadingAll ? (
+            <p className="text-sm text-muted-foreground">Загрузка...</p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Пользователь</TableHead>
+                    <TableHead>Сумма</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>Маркетинг</TableHead>
+                    <TableHead>Дата</TableHead>
+                    <TableHead className="text-right">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSubscriptions?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        {searchQuery.length >= 2 ? 'Пользователи не найдены' : 'Нет активных подписок'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredSubscriptions?.map((sub) => (
+                      <TableRow 
+                        key={sub.id} 
+                        className={selectedUser?.subscription?.id === sub.id ? 'bg-accent' : ''}
+                      >
+                        <TableCell>
+                          <div className="font-medium">{sub.profiles?.full_name || 'Без имени'}</div>
+                          <div className="text-xs text-muted-foreground">{sub.profiles?.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-medium">${sub.amount_usd}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">Активна</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {sub.is_marketing_free_access ? (
+                            <Badge variant="secondary">Бесплатный</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(sub.created_at), 'dd.MM.yyyy', { locale: ru })}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleSelectUser(sub)}
+                          >
+                            <Settings className="h-4 w-4 mr-1" />
+                            Управлять
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          )}
-
-          {searchQuery.length >= 2 && !isSearching && searchResults?.length === 0 && (
-            <p className="text-sm text-muted-foreground mt-2">Пользователи не найдены</p>
           )}
         </CardContent>
       </Card>
