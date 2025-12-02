@@ -30,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Archive, Trash2 } from "lucide-react";
+import { Eye, Archive, Trash2, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useArchiveRecords, useHardDeleteRecords } from "@/hooks/useArchiveRecords";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,8 @@ type Order = {
   profiles?: {
     full_name: string | null;
     email: string | null;
+    first_name: string | null;
+    last_name: string | null;
   } | null;
 };
 
@@ -62,6 +65,7 @@ type OrderItem = {
 
 export default function AdminOrders() {
   const { userRole } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -82,18 +86,41 @@ export default function AdminOrders() {
 
   const fetchOrders = async () => {
     try {
-      let query = supabase
+      // Fetch orders first
+      let orderQuery = supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (!showArchived) {
-        query = query.or('is_archived.is.null,is_archived.eq.false');
+        orderQuery = orderQuery.or('is_archived.is.null,is_archived.eq.false');
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setOrders(data || []);
+      const { data: ordersData, error: ordersError } = await orderQuery;
+      if (ordersError) throw ordersError;
+
+      // Fetch profiles for all user_ids
+      const userIds = [...new Set(ordersData?.map(o => o.user_id).filter(Boolean) || [])];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, first_name, last_name')
+          .in('id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Map profiles to orders
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        const ordersWithProfiles = ordersData?.map(order => ({
+          ...order,
+          profiles: profilesMap.get(order.user_id) || null
+        })) || [];
+
+        setOrders(ordersWithProfiles as Order[]);
+      } else {
+        setOrders(ordersData as Order[] || []);
+      }
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast({
@@ -332,7 +359,18 @@ export default function AdminOrders() {
                     {order.id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
-                    {order.user_id.slice(0, 8)}
+                    <button
+                      onClick={() => navigate(`/admin/users?userId=${order.user_id}`)}
+                      className="flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <span>
+                        {order.profiles?.full_name || 
+                         (order.profiles?.first_name && order.profiles?.last_name 
+                           ? `${order.profiles.first_name} ${order.profiles.last_name}`
+                           : order.profiles?.email || 'Пользователь без имени')}
+                      </span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
                   </TableCell>
                   <TableCell>
                     <div>
