@@ -56,6 +56,7 @@ export function useCommissionStructure(options: UseCommissionStructureOptions = 
         unlock_requirement: level.unlock_requirement
       })) as CommissionLevel[];
     },
-    staleTime: 30000
+    staleTime: 30000,
+    refetchOnMount: 'always'
   });
 }

@@ -3,20 +3,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Users, ShoppingCart, Download, Loader2 } from "lucide-react";
+import { DollarSign, TrendingUp, Users, ShoppingCart, Download, Loader2, RefreshCw } from "lucide-react";
 import { useAdminGlobalStats, useAdminStructureStats } from "@/hooks/useAdminStats";
 import { formatCents } from "@/utils/formatMoney";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { downloadCSV } from "@/utils/exportCSV";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminReports() {
   const [showArchived, setShowArchived] = useState(false);
-  const [dateRange] = useState({
+  const queryClient = useQueryClient();
+  
+  // useMemo с пустым массивом зависимостей - создаёт новый объект при каждом монтировании
+  const dateRange = useMemo(() => ({
     start: new Date(new Date().setDate(1)), // начало месяца
-    end: new Date()
-  });
+    end: new Date() // текущая дата
+  }), []);
 
   const { data: globalStats, isLoading: globalLoading } = useAdminGlobalStats(
     dateRange.start,
@@ -54,6 +58,11 @@ export default function AdminReports() {
     },
   ];
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-global-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-structure-stats'] });
+  };
+
   const handleExportStructure = (structureType: 1 | 2) => {
     const data = structureType === 1 ? structure1Stats : structure2Stats;
     if (!data) return;
@@ -85,7 +94,16 @@ export default function AdminReports() {
     <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Финансовые отчеты</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={globalLoading || s1Loading || s2Loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${(globalLoading || s1Loading || s2Loading) ? 'animate-spin' : ''}`} />
+            Обновить
+          </Button>
           <Switch
             checked={showArchived}
             onCheckedChange={setShowArchived}

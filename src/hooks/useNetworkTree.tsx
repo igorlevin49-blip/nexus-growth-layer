@@ -33,6 +33,7 @@ export function useNetworkTree(maxLevel: number = 10) {
       return (data || []) as NetworkMember[];
     },
     staleTime: 30000,
-    placeholderData: []
+    placeholderData: [],
+    refetchOnMount: 'always'
   });
 }
