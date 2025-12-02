@@ -89,7 +89,7 @@ export function SubscriptionStructure({
                 </thead>
                 <tbody>
                   {levels.map((level) => (
-                    <tr key={level.id} className="border-b border-border/50 hover:bg-muted/50">
+                    <tr key={level.level} className="border-b border-border/50 hover:bg-muted/50">
                       <td className="py-2 sm:py-3 px-2">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(level.status || 'locked')}
@@ -102,18 +102,14 @@ export function SubscriptionStructure({
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-1 cursor-help">
                                 <span className="text-xs sm:text-sm">
-                                  {level.unlock_requirement === 0 
-                                    ? 'Всегда открыт' 
-                                    : `${directReferrals}/${level.unlock_requirement}`}
+                                  {level.unlock_requirement ? level.unlock_requirement : 'Всегда открыт'}
                                 </span>
                                 <Info className="h-3 w-3 text-muted-foreground" />
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p className="text-xs">
-                                {level.unlock_requirement === 0 
-                                  ? 'Первый уровень доступен сразу'
-                                  : `Для открытия уровня ${level.level} нужно ${level.unlock_requirement} лично приглашённых`}
+                                {level.unlock_requirement || 'Первый уровень доступен сразу'}
                               </p>
                             </TooltipContent>
                           </Tooltip>

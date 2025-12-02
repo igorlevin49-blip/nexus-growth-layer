@@ -97,7 +97,7 @@ export function ProductStructure({
             <h4 className="font-medium mb-3">Комиссионные уровни</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {levels.map((level) => (
-                <div key={level.id} className="p-3 border border-border rounded-lg text-center">
+                <div key={level.level} className="p-3 border border-border rounded-lg text-center">
                   <div className="text-xs text-muted-foreground mb-1">L{level.level}</div>
                   <div className="text-lg font-bold text-primary">{level.percent}%</div>
                   <div className="text-xs text-success mt-1">
