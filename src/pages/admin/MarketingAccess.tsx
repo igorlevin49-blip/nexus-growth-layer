@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLoader } from "@/contexts/LoaderContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,10 +35,17 @@ interface UserWithSubscription {
 export default function MarketingAccess() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { disableAutoLoader, enableAutoLoader } = useLoader();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithSubscription | null>(null);
   const [showReverseDialog, setShowReverseDialog] = useState(false);
   const [reverseComment, setReverseComment] = useState("");
+
+  // Disable global preloader on this page
+  useEffect(() => {
+    disableAutoLoader();
+    return () => enableAutoLoader();
+  }, [disableAutoLoader, enableAutoLoader]);
 
   // Search users
   const { data: searchResults, isLoading: isSearching } = useQuery({
@@ -45,26 +53,37 @@ export default function MarketingAccess() {
     queryFn: async () => {
       if (!searchQuery || searchQuery.length < 2) return [];
 
-      const { data, error } = await supabase
+      // Step 1: Find users
+      const { data: users, error: usersError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          full_name,
-          email,
-          subscriptions!inner(
-            id,
-            status,
-            is_marketing_free_access,
-            expires_at,
-            amount_usd
-          )
-        `)
+        .select('id, full_name, email')
         .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-        .eq('subscriptions.status', 'active')
         .limit(10);
 
-      if (error) throw error;
-      return data || [];
+      if (usersError) throw usersError;
+      if (!users || users.length === 0) return [];
+
+      // Step 2: Get their active subscriptions
+      const userIds = users.map(u => u.id);
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('subscriptions')
+        .select('id, user_id, status, is_marketing_free_access, expires_at, amount_usd')
+        .in('user_id', userIds)
+        .eq('status', 'active');
+
+      if (subsError) throw subsError;
+
+      // Step 3: Combine and filter
+      return users
+        .map(user => {
+          const subscription = subscriptions?.find(s => s.user_id === user.id);
+          if (!subscription) return null;
+          return {
+            ...user,
+            subscriptions: [subscription]
+          };
+        })
+        .filter(Boolean);
     },
     enabled: searchQuery.length >= 2,
   });
