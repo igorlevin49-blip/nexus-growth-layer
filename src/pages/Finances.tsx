@@ -15,6 +15,7 @@ import { PaymentMethodsDialog } from "@/components/Finances/PaymentMethodsDialog
 import { AutoWithdrawDialog } from "@/components/Finances/AutoWithdrawDialog";
 import { SubscriptionStructure } from "@/components/Finances/SubscriptionStructure";
 import { ProductStructure } from "@/components/Finances/ProductStructure";
+import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
 
 export default function Finances() {
   const [period, setPeriod] = useState("month");
@@ -261,10 +262,14 @@ export default function Finances() {
 
       {/* Tabs */}
       <Tabs defaultValue="transactions" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
           <TabsTrigger value="transactions" className="text-xs sm:text-sm px-2 py-2">
             <span className="hidden sm:inline">История</span>
             <span className="sm:hidden">История</span>
+          </TabsTrigger>
+          <TabsTrigger value="withdrawals" className="text-xs sm:text-sm px-2 py-2">
+            <span className="hidden sm:inline">Выплаты</span>
+            <span className="sm:hidden">Выплаты</span>
           </TabsTrigger>
           <TabsTrigger value="structure1" className="text-xs sm:text-sm px-2 py-2">
             <span className="hidden sm:inline">Абонентская</span>
@@ -346,6 +351,10 @@ export default function Finances() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="withdrawals" className="space-y-6">
+          <WithdrawalsHistory />
         </TabsContent>
 
         <TabsContent value="structure1" className="space-y-6">
