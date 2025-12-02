@@ -36,6 +36,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useArchiveRecords, useHardDeleteRecords } from "@/hooks/useArchiveRecords";
 import { Input } from "@/components/ui/input";
 
+type OrderProfile = {
+  full_name: string | null;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+};
+
 type Order = {
   id: string;
   user_id: string;
@@ -43,12 +50,7 @@ type Order = {
   total_kzt: number;
   status: "draft" | "pending" | "paid" | "cancelled";
   created_at: string;
-  profiles?: {
-    full_name: string | null;
-    email: string | null;
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
+  profiles?: OrderProfile | null;
 };
 
 type OrderItem = {
@@ -81,12 +83,13 @@ export default function AdminOrders() {
   const hardDeleteRecords = useHardDeleteRecords();
 
   useEffect(() => {
-    fetchOrders();
+    loadOrders();
   }, [showArchived]);
 
-  const fetchOrders = async () => {
+  const loadOrders = async () => {
+    setLoading(true);
     try {
-      // Fetch orders first
+      // Step 1: Fetch orders
       let orderQuery = supabase
         .from("orders")
         .select("*")
@@ -97,37 +100,69 @@ export default function AdminOrders() {
       }
 
       const { data: ordersData, error: ordersError } = await orderQuery;
-      if (ordersError) throw ordersError;
-
-      // Fetch profiles for all user_ids
-      const userIds = [...new Set(ordersData?.map(o => o.user_id).filter(Boolean) || [])];
       
-      if (userIds.length > 0) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, first_name, last_name')
-          .in('id', userIds);
-
-        if (profilesError) throw profilesError;
-
-        // Map profiles to orders
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-        const ordersWithProfiles = ordersData?.map(order => ({
-          ...order,
-          profiles: profilesMap.get(order.user_id) || null
-        })) || [];
-
-        setOrders(ordersWithProfiles as Order[]);
-      } else {
-        setOrders(ordersData as Order[] || []);
+      if (ordersError) {
+        console.error("Error fetching orders:", ordersError);
+        throw ordersError;
       }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
+
+      if (!ordersData || ordersData.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch profiles for all user_ids in one batch
+      const userIds = [...new Set(ordersData.map(o => o.user_id).filter(Boolean))];
+      
+      if (userIds.length === 0) {
+        setOrders(ordersData.map(o => ({ ...o, profiles: null })));
+        setLoading(false);
+        return;
+      }
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, first_name, last_name')
+        .in('id', userIds);
+
+      // Don't throw on profile errors, just log them
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+      }
+
+      // Step 3: Map profiles to orders
+      const profilesMap = new Map<string, OrderProfile>();
+      if (profilesData) {
+        profilesData.forEach(p => {
+          profilesMap.set(p.id, {
+            full_name: p.full_name,
+            email: p.email,
+            first_name: p.first_name,
+            last_name: p.last_name
+          });
+        });
+      }
+
+      const ordersWithProfiles: Order[] = ordersData.map(order => ({
+        id: order.id,
+        user_id: order.user_id,
+        total_usd: order.total_usd,
+        total_kzt: order.total_kzt,
+        status: order.status as "draft" | "pending" | "paid" | "cancelled",
+        created_at: order.created_at,
+        profiles: profilesMap.get(order.user_id) || null
+      }));
+
+      setOrders(ordersWithProfiles);
+    } catch (error: any) {
+      console.error("Error in loadOrders:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить заказы",
         variant: "destructive",
       });
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -176,7 +211,7 @@ export default function AdminOrders() {
 
       if (error) throw error;
       toast({ title: "Статус обновлен" });
-      fetchOrders();
+      loadOrders();
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status });
       }
@@ -222,7 +257,7 @@ export default function AdminOrders() {
     }, {
       onSuccess: () => {
         setSelectedOrders(new Set());
-        fetchOrders();
+        loadOrders();
       }
     });
   };
@@ -246,9 +281,18 @@ export default function AdminOrders() {
         setDeleteDialog(false);
         setConfirmationPhrase('');
         setSelectedOrders(new Set());
-        fetchOrders();
+        loadOrders();
       }
     });
+  };
+
+  const getUserDisplayName = (profile: OrderProfile | null | undefined): string => {
+    if (!profile) return 'Пользователь не найден';
+    
+    if (profile.full_name) return profile.full_name;
+    if (profile.first_name && profile.last_name) return `${profile.first_name} ${profile.last_name}`;
+    if (profile.email) return profile.email;
+    return 'Пользователь без имени';
   };
 
   let filteredOrders = orders;
@@ -359,18 +403,17 @@ export default function AdminOrders() {
                     {order.id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => navigate(`/admin/users?userId=${order.user_id}`)}
-                      className="flex items-center gap-2 text-primary hover:underline"
-                    >
-                      <span>
-                        {order.profiles?.full_name || 
-                         (order.profiles?.first_name && order.profiles?.last_name 
-                           ? `${order.profiles.first_name} ${order.profiles.last_name}`
-                           : order.profiles?.email || 'Пользователь без имени')}
-                      </span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
+                    {order.user_id ? (
+                      <button
+                        onClick={() => navigate(`/admin/users?userId=${order.user_id}`)}
+                        className="flex items-center gap-2 text-primary hover:underline"
+                      >
+                        <span>{getUserDisplayName(order.profiles)}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    ) : (
+                      <span className="text-muted-foreground">Пользователь не указан</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div>
@@ -413,9 +456,12 @@ export default function AdminOrders() {
                   <p className="font-mono text-xs">{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">ID Покупателя</p>
-                  <p className="font-mono text-xs">
-                    {selectedOrder.user_id.slice(0, 8)}
+                  <p className="text-sm text-muted-foreground">Покупатель</p>
+                  <p className="font-medium">
+                    {getUserDisplayName(selectedOrder.profiles)}
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    ID: {selectedOrder.user_id.slice(0, 8)}
                   </p>
                 </div>
                 <div>
