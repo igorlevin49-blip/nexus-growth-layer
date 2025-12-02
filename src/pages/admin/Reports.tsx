@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Users, ShoppingCart, Download, Loader2, RefreshCw } from "lucide-react";
+import { DollarSign, TrendingUp, Users, ShoppingCart, Download, Loader2, RefreshCw, CalendarIcon } from "lucide-react";
 import { useAdminGlobalStats, useAdminStructureStats } from "@/hooks/useAdminStats";
 import { formatCents } from "@/utils/formatMoney";
 import { useState, useMemo } from "react";
@@ -11,16 +11,60 @@ import { downloadCSV } from "@/utils/exportCSV";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useQueryClient } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+
+type PeriodType = 'current_month' | 'last_month' | 'quarter' | 'half_year' | 'year' | 'all';
+
+const periodLabels: Record<PeriodType, string> = {
+  current_month: 'Текущий месяц',
+  last_month: 'Прошлый месяц',
+  quarter: 'За квартал',
+  half_year: 'За полгода',
+  year: 'За год',
+  all: 'Весь период'
+};
 
 export default function AdminReports() {
   const [showArchived, setShowArchived] = useState(false);
+  const [period, setPeriod] = useState<PeriodType>('current_month');
   const queryClient = useQueryClient();
   
-  // useMemo с пустым массивом зависимостей - создаёт новый объект при каждом монтировании
-  const dateRange = useMemo(() => ({
-    start: new Date(new Date().setDate(1)), // начало месяца
-    end: new Date() // текущая дата
-  }), []);
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    let start = new Date();
+    let end = now;
+    
+    switch (period) {
+      case 'current_month':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'last_month':
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case 'quarter':
+        start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case 'half_year':
+        start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        break;
+      case 'year':
+        start = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+        break;
+      case 'all':
+        start = new Date(2020, 0, 1);
+        break;
+    }
+    
+    return { start, end };
+  }, [period]);
+
+  const periodLabel = useMemo(() => {
+    if (period === 'all') return 'за всё время';
+    return `${format(dateRange.start, 'd MMM', { locale: ru })} - ${format(dateRange.end, 'd MMM yyyy', { locale: ru })}`;
+  }, [period, dateRange]);
 
   const { data: globalStats, isLoading: globalLoading } = useAdminGlobalStats(
     dateRange.start,
@@ -35,7 +79,7 @@ export default function AdminReports() {
     {
       title: "Общий доход",
       value: formatCents(globalStats?.total_revenue_cents || 0),
-      change: "за текущий месяц",
+      change: periodLabel,
       icon: DollarSign,
     },
     {
@@ -94,7 +138,18 @@ export default function AdminReports() {
     <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Финансовые отчеты</h1>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodType)}>
+            <SelectTrigger className="w-[160px]">
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Период" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(periodLabels).map(([key, label]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
@@ -104,12 +159,14 @@ export default function AdminReports() {
             <RefreshCw className={`h-4 w-4 mr-2 ${(globalLoading || s1Loading || s2Loading) ? 'animate-spin' : ''}`} />
             Обновить
           </Button>
-          <Switch
-            checked={showArchived}
-            onCheckedChange={setShowArchived}
-            id="show-archived-reports"
-          />
-          <Label htmlFor="show-archived-reports" className="text-sm">Показывать архивные</Label>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showArchived}
+              onCheckedChange={setShowArchived}
+              id="show-archived-reports"
+            />
+            <Label htmlFor="show-archived-reports" className="text-sm">Архив</Label>
+          </div>
         </div>
       </div>
 
