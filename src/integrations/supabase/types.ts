@@ -1332,19 +1332,33 @@ export type Database = {
           volume_cents: number
         }[]
       }
-      get_network_stats: {
-        Args: { user_id_param: string }
-        Returns: {
-          activations_this_month: number
-          active_partners: number
-          commissions_this_month: number
-          frozen_partners: number
-          max_level: number
-          new_this_month: number
-          total_partners: number
-          volume_this_month: number
-        }[]
-      }
+      get_network_stats:
+        | {
+            Args: { p_structure_type?: number; user_id_param: string }
+            Returns: {
+              activations_this_month: number
+              active_partners: number
+              commissions_this_month: number
+              frozen_partners: number
+              max_level: number
+              new_this_month: number
+              total_partners: number
+              volume_this_month: number
+            }[]
+          }
+        | {
+            Args: { user_id_param: string }
+            Returns: {
+              activations_this_month: number
+              active_partners: number
+              commissions_this_month: number
+              frozen_partners: number
+              max_level: number
+              new_this_month: number
+              total_partners: number
+              volume_this_month: number
+            }[]
+          }
       get_network_tree: {
         Args: { max_level?: number; root_user_id: string }
         Returns: {

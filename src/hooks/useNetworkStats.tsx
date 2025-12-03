@@ -12,15 +12,16 @@ export interface NetworkStats {
   commissions_this_month: number;
 }
 
-export function useNetworkStats() {
+export function useNetworkStats(structureType: 1 | 2 = 1) {
   return useQuery({
-    queryKey: ['network-stats'],
+    queryKey: ['network-stats', structureType],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase.rpc('get_network_stats', {
-        user_id_param: user.id
+        user_id_param: user.id,
+        p_structure_type: structureType
       });
 
       if (error) throw error;

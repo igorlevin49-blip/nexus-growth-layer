@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NetworkMember } from "@/hooks/useNetworkTree";
 
 interface UserNetworkDialogProps {
@@ -22,12 +24,18 @@ export function UserNetworkDialog({
   userName,
   userEmail 
 }: UserNetworkDialogProps) {
+  const [structureType, setStructureType] = useState<1 | 2>(1);
+  
+  // Dynamic max levels based on structure type
+  const maxLevelForStructure = structureType === 1 ? 5 : 10;
+
   const { data: members, isLoading } = useQuery({
-    queryKey: ['admin-network-tree', userId],
+    queryKey: ['admin-network-tree', userId, structureType],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: userId,
-        max_level: 10
+        max_level: maxLevelForStructure,
+        p_structure_type: structureType
       });
 
       if (error) throw error;
@@ -51,7 +59,7 @@ export function UserNetworkDialog({
   }, {} as Record<number, { count: number; active: number; frozen: number }>);
 
   const totalPartners = (members || []).length;
-  const maxLevel = Math.max(...Object.keys(statsByLevel).map(Number), 0);
+  const displayLevels = Math.min(Math.max(...Object.keys(statsByLevel).map(Number), 0), maxLevelForStructure);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,6 +69,20 @@ export function UserNetworkDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Structure Selector */}
+          <Tabs value={structureType.toString()} onValueChange={(v) => setStructureType(parseInt(v) as 1 | 2)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="1" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>Структура 1 (L1-L5)</span>
+              </TabsTrigger>
+              <TabsTrigger value="2" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                <span>Структура 2 (L1-L10)</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           {/* User Info */}
           <Card>
             <CardContent className="pt-6">
@@ -75,19 +97,21 @@ export function UserNetworkDialog({
                     <Users className="h-6 w-6" />
                     {totalPartners}
                   </div>
-                  <p className="text-sm text-muted-foreground">Всего партнёров</p>
+                  <p className="text-sm text-muted-foreground">
+                    Партнёров (L1-L{maxLevelForStructure})
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Statistics by Level */}
-          {maxLevel > 0 && (
+          {displayLevels > 0 && (
             <Card>
               <CardContent className="pt-6">
-                <h4 className="font-semibold mb-4">Статистика по уровням</h4>
+                <h4 className="font-semibold mb-4">Статистика по уровням (L1-L{maxLevelForStructure})</h4>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {Array.from({ length: maxLevel }, (_, i) => i + 1).map(level => {
+                  {Array.from({ length: maxLevelForStructure }, (_, i) => i + 1).map(level => {
                     const stats = statsByLevel[level] || { count: 0, active: 0, frozen: 0 };
                     return (
                       <div key={level} className="border rounded-lg p-3">
@@ -120,7 +144,7 @@ export function UserNetworkDialog({
               </div>
             ) : !members || members.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                У пользователя пока нет партнёров
+                У пользователя пока нет партнёров в этой структуре
               </div>
             ) : (
               <NetworkTree members={members} />
