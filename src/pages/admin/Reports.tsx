@@ -115,8 +115,9 @@ export default function AdminReports() {
       'Уровень': `L${row.level}`,
       'Процент': `${row.percent}%`,
       'Транзакций': row.transactions_count,
-      'Выплачено (USD)': (row.total_amount_cents / 100).toFixed(2),
+      'Начислено (USD)': (row.total_amount_cents / 100).toFixed(2),
       'Заморожено (USD)': (row.frozen_amount_cents / 100).toFixed(2),
+      'Доступно (USD)': ((row.available_amount_cents || 0) / 100).toFixed(2),
       'Pass-up': row.pass_up_count
     }));
 
@@ -232,8 +233,9 @@ export default function AdminReports() {
                             <TableHead className="whitespace-nowrap text-xs sm:text-sm">Уровень</TableHead>
                             <TableHead className="whitespace-nowrap text-xs sm:text-sm">Процент</TableHead>
                             <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Транзакций</TableHead>
-                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Выплачено</TableHead>
+                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Начислено</TableHead>
                             <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Заморожено</TableHead>
+                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Доступно</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -244,11 +246,14 @@ export default function AdminReports() {
                               </TableCell>
                               <TableCell className="text-xs sm:text-sm font-medium">{row.percent}%</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm">{row.transactions_count}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
+                              <TableCell className="text-right text-xs sm:text-sm font-medium">
                                 {formatCents(row.total_amount_cents)}
                               </TableCell>
                               <TableCell className="text-right text-xs sm:text-sm text-warning">
                                 {formatCents(row.frozen_amount_cents)}
+                              </TableCell>
+                              <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
+                                {formatCents(row.available_amount_cents || 0)}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -291,8 +296,9 @@ export default function AdminReports() {
                             <TableHead className="whitespace-nowrap text-xs sm:text-sm">Уровень</TableHead>
                             <TableHead className="whitespace-nowrap text-xs sm:text-sm">Процент</TableHead>
                             <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Транзакций</TableHead>
-                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Выплачено</TableHead>
-                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Pass-up</TableHead>
+                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Начислено</TableHead>
+                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Заморожено</TableHead>
+                            <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Доступно</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -303,11 +309,14 @@ export default function AdminReports() {
                               </TableCell>
                               <TableCell className="text-xs sm:text-sm font-medium">{row.percent}%</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm">{row.transactions_count}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
+                              <TableCell className="text-right text-xs sm:text-sm font-medium">
                                 {formatCents(row.total_amount_cents)}
                               </TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm text-muted-foreground">
-                                {row.pass_up_count}
+                              <TableCell className="text-right text-xs sm:text-sm text-warning">
+                                {formatCents(row.frozen_amount_cents)}
+                              </TableCell>
+                              <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
+                                {formatCents(row.available_amount_cents || 0)}
                               </TableCell>
                             </TableRow>
                           ))}

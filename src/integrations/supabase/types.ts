@@ -1305,6 +1305,7 @@ export type Database = {
           structure_type_param: number
         }
         Returns: {
+          available_amount_cents: number
           frozen_amount_cents: number
           level: number
           pass_up_count: number
