@@ -63,7 +63,7 @@ export default function Network() {
   const maxLevelsForStructure = structureType === 1 ? 5 : 10;
   const maxLevel = filterLevel === 'all' ? maxLevelsForStructure : parseInt(filterLevel);
   
-  const { data: stats, isLoading: statsLoading } = useNetworkStats();
+  const { data: stats, isLoading: statsLoading } = useNetworkStats(structureType);
   const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevel, structureType);
   const { data: activities = [], isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
   const { data: profile } = useProfile();
