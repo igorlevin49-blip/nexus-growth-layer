@@ -3,14 +3,13 @@ import { Users, UserPlus, Share2, Copy, Download, TrendingUp, AlertCircle, Clock
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { StructureSelector } from "@/components/Network/StructureSelector";
 import { CommissionBreakdown } from "@/components/Network/CommissionBreakdown";
+import { SimpleTabs, SimpleTabsList, SimpleTabsTrigger, SimpleTabsContent } from "@/components/Network/SimpleTabs";
 import { useNetworkStats } from "@/hooks/useNetworkStats";
 import { useNetworkTree, NetworkMember } from "@/hooks/useNetworkTree";
 import { useNetworkActivity } from "@/hooks/useNetworkActivity";
@@ -223,97 +222,112 @@ export default function Network() {
         <CommissionBreakdown structureType={structureType} />
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <Card>
-          <CardHeader className="pb-4">
-            <TabsList className="grid w-full grid-cols-3 h-auto">
-              <TabsTrigger value="tree" className="text-xs sm:text-sm px-2 py-2">
-                <span className="hidden sm:inline">Дерево структуры</span>
-                <span className="sm:hidden">Дерево</span>
-              </TabsTrigger>
-              <TabsTrigger value="list" className="text-xs sm:text-sm px-2 py-2">
-                <span className="hidden sm:inline">Список партнёров</span>
-                <span className="sm:hidden">Список</span>
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs sm:text-sm px-2 py-2">
-                Активность
-              </TabsTrigger>
-            </TabsList>
-          </CardHeader>
-          <CardContent>
-            <TabsContent value="tree" className="space-y-4 mt-0">
-              <div className="grid gap-4 md:grid-cols-3">
-                <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                <Select value={filterLevel} onValueChange={setFilterLevel}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все уровни</SelectItem>
-                    {levelOptions.map(l => (
-                      <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все</SelectItem>
-                    <SelectItem value="active">Активные</SelectItem>
-                    <SelectItem value="frozen">Замороженные</SelectItem>
-                    <SelectItem value="inactive">Неактивные</SelectItem>
-                  </SelectContent>
-                </Select>
+      <Card>
+        <CardHeader className="pb-4">
+          <SimpleTabsList className="grid grid-cols-3">
+            <SimpleTabsTrigger 
+              value="tree" 
+              isActive={tab === 'tree'} 
+              onClick={() => setTab('tree')} 
+              className="text-xs sm:text-sm px-2 py-2"
+            >
+              <span className="hidden sm:inline">Дерево структуры</span>
+              <span className="sm:hidden">Дерево</span>
+            </SimpleTabsTrigger>
+            <SimpleTabsTrigger 
+              value="list" 
+              isActive={tab === 'list'} 
+              onClick={() => setTab('list')} 
+              className="text-xs sm:text-sm px-2 py-2"
+            >
+              <span className="hidden sm:inline">Список партнёров</span>
+              <span className="sm:hidden">Список</span>
+            </SimpleTabsTrigger>
+            <SimpleTabsTrigger 
+              value="activity" 
+              isActive={tab === 'activity'} 
+              onClick={() => setTab('activity')} 
+              className="text-xs sm:text-sm px-2 py-2"
+            >
+              Активность
+            </SimpleTabsTrigger>
+          </SimpleTabsList>
+        </CardHeader>
+        <CardContent>
+          <SimpleTabsContent value="tree" activeValue={tab} className="space-y-4 mt-0">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <select
+                value={filterLevel}
+                onChange={(e) => setFilterLevel(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">Все уровни</option>
+                {levelOptions.map(l => (
+                  <option key={l} value={l.toString()}>{l} уровень</option>
+                ))}
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">Все</option>
+                <option value="active">Активные</option>
+                <option value="frozen">Замороженные</option>
+                <option value="inactive">Неактивные</option>
+              </select>
+            </div>
+            {membersLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-20" />
+                <Skeleton className="h-20" />
+                <Skeleton className="h-20" />
               </div>
-              {membersLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-20" />
-                  <Skeleton className="h-20" />
-                  <Skeleton className="h-20" />
-                </div>
-              ) : (
-                <NetworkTree members={filteredMembers} />
-              )}
-            </TabsContent>
+            ) : (
+              <NetworkTree members={filteredMembers} />
+            )}
+          </SimpleTabsContent>
 
-            <TabsContent value="list" className="mt-0">
-              {membersLoading ? (
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16" />
-                  ))}
+          <SimpleTabsContent value="list" activeValue={tab} className="mt-0">
+            {membersLoading ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16" />
+                ))}
+              </div>
+            ) : filteredMembers.length === 0 ? (
+              <div className="text-center py-12"><Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Партнёры не найдены</p></div>
+            ) : (
+              <div className="space-y-2">{filteredMembers.map(m => (
+                <div key={m.partner_id} className="network-node active p-4 flex justify-between">
+                  <div><p className="font-medium">{m.full_name || 'Без имени'}</p><p className="text-sm text-muted-foreground">{m.email}</p></div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedMember(m)}><Eye className="h-4 w-4" /></Button>
                 </div>
-              ) : filteredMembers.length === 0 ? (
-                <div className="text-center py-12"><Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Партнёры не найдены</p></div>
-              ) : (
-                <div className="space-y-2">{filteredMembers.map(m => (
-                  <div key={m.partner_id} className="network-node active p-4 flex justify-between">
-                    <div><p className="font-medium">{m.full_name || 'Без имени'}</p><p className="text-sm text-muted-foreground">{m.email}</p></div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedMember(m)}><Eye className="h-4 w-4" /></Button>
-                  </div>
-                ))}</div>
-              )}
-            </TabsContent>
+              ))}</div>
+            )}
+          </SimpleTabsContent>
 
-            <TabsContent value="activity" className="mt-0">
-              {activitiesLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16" />
-                  ))}
+          <SimpleTabsContent value="activity" activeValue={tab} className="mt-0">
+            {activitiesLoading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16" />
+                ))}
+              </div>
+            ) : activities.length === 0 ? (
+              <div className="text-center py-12"><Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Нет активности</p></div>
+            ) : (
+              <div className="space-y-4">{activities.map(a => (
+                <div key={a.id} className="flex items-start gap-4 p-4 border rounded">
+                  {getActivityIcon(a.type)}
+                  <div className="flex-1"><p className="font-medium">{a.user_name || a.user_email}</p><p className="text-sm text-muted-foreground">{getActivityText(a.type, a.payload)}</p></div>
                 </div>
-              ) : activities.length === 0 ? (
-                <div className="text-center py-12"><Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" /><p>Нет активности</p></div>
-              ) : (
-                <div className="space-y-4">{activities.map(a => (
-                  <div key={a.id} className="flex items-start gap-4 p-4 border rounded">
-                    {getActivityIcon(a.type)}
-                    <div className="flex-1"><p className="font-medium">{a.user_name || a.user_email}</p><p className="text-sm text-muted-foreground">{getActivityText(a.type, a.payload)}</p></div>
-                  </div>
-                ))}</div>
-              )}
-            </TabsContent>
-          </CardContent>
-        </Card>
-      </Tabs>
+              ))}</div>
+            )}
+          </SimpleTabsContent>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-4 sm:p-6">
