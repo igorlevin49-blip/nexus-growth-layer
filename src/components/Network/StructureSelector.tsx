@@ -1,5 +1,5 @@
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Users, ShoppingBag } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StructureSelectorProps {
   value: 1 | 2;
@@ -8,22 +8,35 @@ interface StructureSelectorProps {
 
 export function StructureSelector({ value, onChange }: StructureSelectorProps) {
   return (
-    <ToggleGroup 
-      type="single" 
-      value={value.toString()} 
-      onValueChange={(v) => v && onChange(parseInt(v) as 1 | 2)}
-      className="justify-start"
-    >
-      <ToggleGroupItem value="1" className="flex items-center gap-2">
+    <div className="inline-flex items-center rounded-md border border-input bg-background p-1 gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(1)}
+        className={cn(
+          "inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
+          value === 1
+            ? "bg-primary text-primary-foreground"
+            : "hover:bg-muted text-muted-foreground"
+        )}
+      >
         <Users className="h-4 w-4" />
         <span className="hidden sm:inline">Структура 1</span>
         <span className="sm:hidden">Стр. 1</span>
-      </ToggleGroupItem>
-      <ToggleGroupItem value="2" className="flex items-center gap-2">
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(2)}
+        className={cn(
+          "inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
+          value === 2
+            ? "bg-primary text-primary-foreground"
+            : "hover:bg-muted text-muted-foreground"
+        )}
+      >
         <ShoppingBag className="h-4 w-4" />
         <span className="hidden sm:inline">Структура 2</span>
         <span className="sm:hidden">Стр. 2</span>
-      </ToggleGroupItem>
-    </ToggleGroup>
+      </button>
+    </div>
   );
 }
