@@ -16,6 +16,7 @@ export interface AdminStructureStats {
   transactions_count: number;
   total_amount_cents: number;
   frozen_amount_cents: number;
+  available_amount_cents: number;
   pass_up_count: number;
 }
 
