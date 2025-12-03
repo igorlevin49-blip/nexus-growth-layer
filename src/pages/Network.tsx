@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
+import { StructureSelector } from "@/components/Network/StructureSelector";
+import { CommissionBreakdown } from "@/components/Network/CommissionBreakdown";
 import { useNetworkStats } from "@/hooks/useNetworkStats";
 import { useNetworkTree, NetworkMember } from "@/hooks/useNetworkTree";
 import { useNetworkActivity } from "@/hooks/useNetworkActivity";
@@ -55,11 +57,14 @@ export default function Network() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [structureType, setStructureType] = useState<1 | 2>(1);
   
-  const maxLevel = filterLevel === 'all' ? 10 : parseInt(filterLevel);
+  // Dynamic max levels based on structure type
+  const maxLevelsForStructure = structureType === 1 ? 5 : 10;
+  const maxLevel = filterLevel === 'all' ? maxLevelsForStructure : parseInt(filterLevel);
   
   const { data: stats, isLoading: statsLoading } = useNetworkStats();
-  const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevel);
+  const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevel, structureType);
   const { data: activities = [], isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
   const { data: profile } = useProfile();
 
@@ -80,6 +85,13 @@ export default function Network() {
       return matchesSearch && matchesLevel && matchesStatus;
     });
   }, [networkMembers, searchQuery, filterLevel, filterStatus]);
+
+  // Calculate level stats
+  const levelStats = useMemo(() => {
+    const l1Count = networkMembers.filter(m => m.level === 1).length;
+    const deepCount = networkMembers.filter(m => m.level > 1).length;
+    return { l1Count, deepCount };
+  }, [networkMembers]);
 
   const handleCopyLink = () => {
     const refCode = (profile as any)?.referral_code;
@@ -121,6 +133,12 @@ export default function Network() {
     toast.success("Данные экспортированы в CSV");
   };
 
+  // Reset filter level when structure type changes
+  const handleStructureChange = (newType: 1 | 2) => {
+    setStructureType(newType);
+    setFilterLevel('all');
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -140,6 +158,12 @@ export default function Network() {
         </div>
       </div>
 
+      {/* Structure Selector */}
+      <div className="mb-4">
+        <StructureSelector value={structureType} onChange={handleStructureChange} />
+      </div>
+
+      {/* Stats row 1 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card><CardContent className="p-6">
           {statsLoading ? <Skeleton className="h-20" /> : (
@@ -147,25 +171,36 @@ export default function Network() {
           )}
         </CardContent></Card>
         <Card><CardContent className="p-6">
-          {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Активных</p><p className="text-2xl font-bold text-success">{stats?.active_partners || 0}</p></>
+          {membersLoading ? <Skeleton className="h-20" /> : (
+            <>
+              <p className="text-sm text-muted-foreground">Прямые (L1)</p>
+              <p className="text-2xl font-bold">{levelStats.l1Count}</p>
+            </>
+          )}
+        </CardContent></Card>
+        <Card><CardContent className="p-6">
+          {membersLoading ? <Skeleton className="h-20" /> : (
+            <>
+              <p className="text-sm text-muted-foreground">В глубине (L2-L{maxLevelsForStructure})</p>
+              <p className="text-2xl font-bold">{levelStats.deepCount}</p>
+            </>
           )}
         </CardContent></Card>
         <Card><CardContent className="p-6">
           {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Заморожено</p><p className="text-2xl font-bold text-warning">{stats?.frozen_partners || 0}</p></>
-          )}
-        </CardContent></Card>
-        <Card><CardContent className="p-6">
-          {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Уровней</p><p className="text-2xl font-bold">{stats?.max_level || 0}</p></>
+            <>
+              <p className="text-sm text-muted-foreground">Активных</p>
+              <p className="text-2xl font-bold text-success">{stats?.active_partners || 0}</p>
+            </>
           )}
         </CardContent></Card>
       </div>
+
+      {/* Stats row 2 with commission breakdown */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card><CardContent className="p-6">
           {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Новые партнёры</p><p className="text-2xl font-bold">{stats?.new_this_month || 0}</p></>
+            <><p className="text-sm text-muted-foreground">Новые за месяц</p><p className="text-2xl font-bold">{stats?.new_this_month || 0}</p></>
           )}
         </CardContent></Card>
         <Card><CardContent className="p-6">
@@ -175,14 +210,11 @@ export default function Network() {
         </CardContent></Card>
         <Card><CardContent className="p-6">
           {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">${stats?.volume_this_month.toFixed(0) || 0}</p></>
+            <><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">${stats?.volume_this_month?.toFixed(0) || 0}</p></>
           )}
         </CardContent></Card>
-        <Card><CardContent className="p-6">
-          {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Комиссии</p><p className="text-2xl font-bold">${stats?.commissions_this_month.toFixed(0) || 0}</p></>
-          )}
-        </CardContent></Card>
+        {/* Commission breakdown card */}
+        <CommissionBreakdown structureType={structureType} />
       </div>
 
       <Card>
@@ -209,7 +241,9 @@ export default function Network() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все уровни</SelectItem>
-                    {[1,2,3,4,5,6,7,8,9,10].map(l => <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>)}
+                    {Array.from({ length: maxLevelsForStructure }, (_, i) => i + 1).map(l => (
+                      <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
