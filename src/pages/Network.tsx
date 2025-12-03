@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Users, UserPlus, Share2, Copy, Download, TrendingUp, AlertCircle, Clock, DollarSign, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,11 +133,17 @@ export default function Network() {
     toast.success("Данные экспортированы в CSV");
   };
 
+  // Memoize level options to prevent re-renders
+  const levelOptions = useMemo(() => 
+    Array.from({ length: maxLevelsForStructure }, (_, i) => i + 1),
+    [maxLevelsForStructure]
+  );
+
   // Reset filter level when structure type changes
-  const handleStructureChange = (newType: 1 | 2) => {
+  const handleStructureChange = useCallback((newType: 1 | 2) => {
     setStructureType(newType);
     setFilterLevel('all');
-  };
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -238,11 +244,11 @@ export default function Network() {
             <TabsContent value="tree" className="space-y-4 mt-0">
               <div className="grid gap-4 md:grid-cols-3">
                 <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                <Select key={`level-filter-${structureType}`} value={filterLevel} onValueChange={setFilterLevel}>
+                <Select value={filterLevel} onValueChange={setFilterLevel}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все уровни</SelectItem>
-                    {Array.from({ length: maxLevelsForStructure }, (_, i) => i + 1).map(l => (
+                    {levelOptions.map(l => (
                       <SelectItem key={l} value={l.toString()}>{l} уровень</SelectItem>
                     ))}
                   </SelectContent>
