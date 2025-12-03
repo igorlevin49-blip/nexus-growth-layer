@@ -217,9 +217,9 @@ export default function Network() {
         <CommissionBreakdown structureType={structureType} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={setTab}>
+        <Card>
+          <CardHeader className="pb-4">
             <TabsList className="grid w-full grid-cols-3 h-auto">
               <TabsTrigger value="tree" className="text-xs sm:text-sm px-2 py-2">
                 <span className="hidden sm:inline">Дерево структуры</span>
@@ -233,8 +233,9 @@ export default function Network() {
                 Активность
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="tree" className="space-y-4">
+          </CardHeader>
+          <CardContent>
+            <TabsContent value="tree" className="space-y-4 mt-0">
               <div className="grid gap-4 md:grid-cols-3">
                 <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 <Select key={`level-filter-${structureType}`} value={filterLevel} onValueChange={setFilterLevel}>
@@ -267,7 +268,7 @@ export default function Network() {
               )}
             </TabsContent>
 
-            <TabsContent value="list">
+            <TabsContent value="list" className="mt-0">
               {membersLoading ? (
                 <div className="space-y-2">
                   {[...Array(5)].map((_, i) => (
@@ -286,7 +287,7 @@ export default function Network() {
               )}
             </TabsContent>
 
-            <TabsContent value="activity">
+            <TabsContent value="activity" className="mt-0">
               {activitiesLoading ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
@@ -304,9 +305,9 @@ export default function Network() {
                 ))}</div>
               )}
             </TabsContent>
-          </Tabs>
-        </CardHeader>
-      </Card>
+          </CardContent>
+        </Card>
+      </Tabs>
 
       <Card>
         <CardContent className="p-4 sm:p-6">
