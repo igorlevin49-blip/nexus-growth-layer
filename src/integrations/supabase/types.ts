@@ -1382,24 +1382,47 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_referral_network_from_table: {
-        Args: { max_level?: number; root_user_id: string }
-        Returns: {
-          avatar_url: string
-          created_at: string
-          direct_referrals: number
-          email: string
-          full_name: string
-          level: number
-          monthly_activation_met: boolean
-          monthly_volume: number
-          partner_id: string
-          referral_code: string
-          subscription_status: string
-          total_team: number
-          user_id: string
-        }[]
-      }
+      get_referral_network_from_table:
+        | {
+            Args: { max_level?: number; root_user_id: string }
+            Returns: {
+              avatar_url: string
+              created_at: string
+              direct_referrals: number
+              email: string
+              full_name: string
+              level: number
+              monthly_activation_met: boolean
+              monthly_volume: number
+              partner_id: string
+              referral_code: string
+              subscription_status: string
+              total_team: number
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              max_level?: number
+              p_structure_type?: number
+              root_user_id: string
+            }
+            Returns: {
+              avatar_url: string
+              created_at: string
+              direct_referrals: number
+              email: string
+              full_name: string
+              level: number
+              monthly_activation_met: boolean
+              monthly_volume: number
+              partner_id: string
+              referral_code: string
+              subscription_status: string
+              total_team: number
+              user_id: string
+            }[]
+          }
       get_user_balance: {
         Args: { p_user_id: string }
         Returns: {

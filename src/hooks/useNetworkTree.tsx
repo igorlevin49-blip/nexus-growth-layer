@@ -17,16 +17,17 @@ export interface NetworkMember {
   monthly_volume: number;
 }
 
-export function useNetworkTree(maxLevel: number = 10) {
+export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) {
   return useQuery({
-    queryKey: ['network-tree', maxLevel],
+    queryKey: ['network-tree', maxLevel, structureType],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
-        max_level: maxLevel
+        max_level: maxLevel,
+        p_structure_type: structureType
       });
 
       if (error) throw error;
