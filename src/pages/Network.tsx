@@ -237,7 +237,7 @@ export default function Network() {
             <TabsContent value="tree" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                <Select value={filterLevel} onValueChange={setFilterLevel}>
+                <Select key={`level-filter-${structureType}`} value={filterLevel} onValueChange={setFilterLevel}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все уровни</SelectItem>
