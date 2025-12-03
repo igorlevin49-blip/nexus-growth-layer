@@ -190,6 +190,81 @@ export default function AdminReports() {
         ))}
       </div>
 
+      {/* Structure Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* S1 Summary */}
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Структура 1 — Абонентская (L1-L5)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {s1Loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Транзакций</p>
+                  <p className="text-xl font-bold">
+                    {(structure1Stats || []).reduce((sum, r) => sum + r.transactions_count, 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Начислено</p>
+                  <p className="text-xl font-bold text-success">
+                    {formatCents((structure1Stats || []).reduce((sum, r) => sum + r.total_amount_cents, 0))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Заморожено</p>
+                  <p className="text-xl font-bold text-warning">
+                    {formatCents((structure1Stats || []).reduce((sum, r) => sum + r.frozen_amount_cents, 0))}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* S2 Summary */}
+        <Card className="border-l-4 border-l-secondary">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Структура 2 — Товарная (L1-L10)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {s2Loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Транзакций</p>
+                  <p className="text-xl font-bold">
+                    {(structure2Stats || []).reduce((sum, r) => sum + r.transactions_count, 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Начислено</p>
+                  <p className="text-xl font-bold text-success">
+                    {formatCents((structure2Stats || []).reduce((sum, r) => sum + r.total_amount_cents, 0))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Заморожено</p>
+                  <p className="text-xl font-bold text-warning">
+                    {formatCents((structure2Stats || []).reduce((sum, r) => sum + r.frozen_amount_cents, 0))}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Детальные отчеты</CardTitle>
