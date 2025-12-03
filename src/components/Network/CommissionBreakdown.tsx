@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommissionStructure, CommissionLevel } from "@/hooks/useCommissionStructure";
@@ -9,14 +10,18 @@ interface CommissionBreakdownProps {
 }
 
 export function CommissionBreakdown({ structureType }: CommissionBreakdownProps) {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  // Memoize dates to prevent infinite re-renders
+  const { startDate, endDate } = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    return { startDate: start, endDate: new Date() };
+  }, []);
 
   const { data: levels = [], isLoading } = useCommissionStructure({
     structureType,
-    startDate: startOfMonth,
-    endDate: new Date()
+    startDate,
+    endDate
   });
 
   const totalEarned = levels.reduce((sum, l) => sum + l.earned, 0);
