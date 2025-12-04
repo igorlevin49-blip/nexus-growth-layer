@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Lock, Snowflake, Info } from "lucide-react";
-import { formatCents } from "@/utils/formatMoney";
 import { CommissionLevel } from "@/hooks/useCommissionStructure";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -121,14 +120,14 @@ export function SubscriptionStructure({
                       <td className="py-2 sm:py-3 px-2 text-right">
                         <span className="text-xs sm:text-sm font-medium">{level.percent}%</span>
                       </td>
-                      <td className="py-2 sm:py-3 px-2 text-right">
+                        <td className="py-2 sm:py-3 px-2 text-right">
                         <div className="flex flex-col items-end">
                           <span className="font-medium text-success text-xs sm:text-sm">
-                            {formatCents(level.earned || 0)}
+                            ${(level.earned || 0).toFixed(2)}
                           </span>
                           {level.frozen && level.frozen > 0 && (
                             <span className="text-xs text-muted-foreground">
-                              {formatCents(level.frozen)} заморожено
+                              ${level.frozen.toFixed(2)} заморожено
                             </span>
                           )}
                         </div>

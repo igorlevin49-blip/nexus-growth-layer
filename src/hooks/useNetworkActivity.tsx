@@ -28,6 +28,19 @@ export function useNetworkActivity(options: UseNetworkActivityOptions = {}) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // First get user's network member IDs
+      const { data: networkData } = await supabase.rpc('get_referral_network_from_table', {
+        root_user_id: user.id,
+        max_level: 10
+      });
+      
+      const networkUserIds = (networkData || []).map((m: any) => m.user_id);
+      
+      // If user has no network, return empty array
+      if (networkUserIds.length === 0) {
+        return [] as ActivityLog[];
+      }
+
       let query = supabase
         .from('activity_log')
         .select(`
@@ -38,6 +51,7 @@ export function useNetworkActivity(options: UseNetworkActivityOptions = {}) {
           created_at,
           profiles!inner(full_name, email)
         `)
+        .in('user_id', networkUserIds)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
