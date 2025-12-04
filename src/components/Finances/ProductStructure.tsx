@@ -101,7 +101,7 @@ export function ProductStructure({
                   <div className="text-xs text-muted-foreground mb-1">L{level.level}</div>
                   <div className="text-lg font-bold text-primary">{level.percent}%</div>
                   <div className="text-xs text-success mt-1">
-                    {formatCents(level.earned || 0)}
+                    ${(level.earned || 0).toFixed(2)}
                   </div>
                 </div>
               ))}
