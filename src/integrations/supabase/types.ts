@@ -1520,7 +1520,7 @@ export type Database = {
       auto_withdraw_schedule: "daily" | "weekly" | "monthly"
       currency_type: "USD" | "KZT"
       order_status: "draft" | "pending" | "paid" | "cancelled"
-      payment_method_type: "card" | "bank" | "crypto" | "other"
+      payment_method_type: "card" | "bank" | "crypto" | "other" | "cash"
       structure_type: "primary" | "secondary"
       transaction_status:
         | "pending"
@@ -1671,7 +1671,7 @@ export const Constants = {
       auto_withdraw_schedule: ["daily", "weekly", "monthly"],
       currency_type: ["USD", "KZT"],
       order_status: ["draft", "pending", "paid", "cancelled"],
-      payment_method_type: ["card", "bank", "crypto", "other"],
+      payment_method_type: ["card", "bank", "crypto", "other", "cash"],
       structure_type: ["primary", "secondary"],
       transaction_status: [
         "pending",

@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, CreditCard, Building2, Wallet, Banknote } from "lucide-react";
 
 type Product = {
   id: string;
@@ -30,6 +32,7 @@ export default function ShopCheckout() {
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [currency, setCurrency] = useState<"USD" | "KZT">("USD");
+  const [paymentType, setPaymentType] = useState<"online" | "manual" | "cash">("online");
 
   useEffect(() => {
     if (!user) {
@@ -93,7 +96,7 @@ export default function ShopCheckout() {
 
       const totalKzt = totalUsd * rate;
 
-      // Create order (status will be pending by default)
+      // Create order with selected payment type
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -101,7 +104,7 @@ export default function ShopCheckout() {
           total_usd: totalUsd,
           total_kzt: totalKzt,
           status: "pending",
-          payment_type: "online"
+          payment_type: paymentType
         })
         .select()
         .single();
@@ -129,9 +132,15 @@ export default function ShopCheckout() {
 
       setOrderId(order.id);
       
-      // Show pending status
+      // Show appropriate message based on payment type
+      const messages = {
+        online: "Ожидается оплата онлайн",
+        manual: "Загрузите чек после оплаты переводом",
+        cash: "Оплатите наличными в кассе офиса"
+      };
+      
       toast.info("Заказ создан", {
-        description: "Заявка отправлена. Ожидает подтверждения администратором.",
+        description: messages[paymentType],
       });
 
       // Clear cart and show success
@@ -170,13 +179,19 @@ export default function ShopCheckout() {
   const secondaryCurrency = currency === "USD" ? "₸" : "$";
 
   if (orderCompleted) {
+    const completionMessages = {
+      online: "Ожидается оплата. После оплаты заказ будет обработан.",
+      manual: "Оплатите заказ переводом и загрузите чек в личном кабинете для подтверждения.",
+      cash: "Оплатите заказ наличными в кассе нашего офиса. После оплаты заказ будет обработан."
+    };
+
     return (
       <div className="container mx-auto p-8">
         <Card className="max-w-2xl mx-auto p-8 text-center">
           <CheckCircle className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
           <h2 className="text-2xl font-bold mb-2">Заказ создан!</h2>
           <p className="text-muted-foreground mb-6">
-            Ваша заявка отправлена и ожидает подтверждения администратором
+            {completionMessages[paymentType]}
           </p>
           {activationTotal > 0 && (
             <p className="mb-6 text-lg">
@@ -201,7 +216,7 @@ export default function ShopCheckout() {
       <h1 className="text-3xl font-bold mb-6">Оформление заказа</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Товары в заказе</CardTitle>
@@ -242,6 +257,43 @@ export default function ShopCheckout() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Payment Method Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Способ оплаты</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={paymentType} onValueChange={(v) => setPaymentType(v as any)} className="space-y-3">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50" onClick={() => setPaymentType("online")}>
+                  <RadioGroupItem value="online" id="online" />
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <Label htmlFor="online" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Оплата онлайн</div>
+                    <div className="text-sm text-muted-foreground">Банковской картой через платёжную систему</div>
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50" onClick={() => setPaymentType("manual")}>
+                  <RadioGroupItem value="manual" id="manual" />
+                  <Building2 className="h-5 w-5 text-primary" />
+                  <Label htmlFor="manual" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Перевод на реквизиты</div>
+                    <div className="text-sm text-muted-foreground">Банковский перевод с загрузкой чека</div>
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50" onClick={() => setPaymentType("cash")}>
+                  <RadioGroupItem value="cash" id="cash" />
+                  <Banknote className="h-5 w-5 text-primary" />
+                  <Label htmlFor="cash" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Наличными в кассе</div>
+                    <div className="text-sm text-muted-foreground">Оплата наличными в офисе компании</div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
         </div>
 
         <div>
@@ -275,7 +327,7 @@ export default function ShopCheckout() {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? "Обработка..." : "Оплатить заказ"}
+                  {loading ? "Обработка..." : "Оформить заказ"}
                 </Button>
                 <Button
                   variant="outline"

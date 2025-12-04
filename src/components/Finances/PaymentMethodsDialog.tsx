@@ -15,7 +15,7 @@ interface PaymentMethodsDialogProps {
 
 export function PaymentMethodsDialog({ open, onOpenChange }: PaymentMethodsDialogProps) {
   const [showAdd, setShowAdd] = useState(false);
-  const [type, setType] = useState<'card' | 'bank' | 'crypto' | 'other'>('card');
+  const [type, setType] = useState<string>('card');
   const [masked, setMasked] = useState("");
   
   const { data: methods, addMethod, removeMethod, setDefault } = usePaymentMethods();
@@ -26,7 +26,7 @@ export function PaymentMethodsDialog({ open, onOpenChange }: PaymentMethodsDialo
     if (!masked) return;
 
     await addMethod.mutateAsync({
-      type,
+      type: type as any,
       masked,
       meta: {},
       is_default: !methods || methods.length === 0
@@ -40,6 +40,7 @@ export function PaymentMethodsDialog({ open, onOpenChange }: PaymentMethodsDialo
     card: 'Карта',
     bank: 'Банк',
     crypto: 'Крипто',
+    cash: 'Наличные в кассе',
     other: 'Другое'
   };
 
@@ -109,6 +110,7 @@ export function PaymentMethodsDialog({ open, onOpenChange }: PaymentMethodsDialo
                     <SelectItem value="card">Карта</SelectItem>
                     <SelectItem value="bank">Банк</SelectItem>
                     <SelectItem value="crypto">Крипто</SelectItem>
+                    <SelectItem value="cash">Наличные в кассе</SelectItem>
                     <SelectItem value="other">Другое</SelectItem>
                   </SelectContent>
                 </Select>
