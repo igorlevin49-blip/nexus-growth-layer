@@ -33,6 +33,8 @@ interface Profile {
     deleted_at: string | null;
     is_archived: boolean;
   } | null;
+  // Real balance from transactions
+  realBalance?: number;
 }
 
 export default function AdminUsers() {
@@ -101,7 +103,20 @@ export default function AdminUsers() {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProfiles(data || []);
+      
+      // Fetch real balances for all users in one query
+      const { data: balancesData } = await supabase.rpc('get_all_user_balances');
+      const balancesMap = new Map<string, number>();
+      (balancesData || []).forEach((b: any) => {
+        balancesMap.set(b.user_id, (b.available_cents || 0) / 100);
+      });
+      
+      const profilesWithBalances = (data || []).map(profile => ({
+        ...profile,
+        realBalance: balancesMap.get(profile.id) ?? 0
+      }));
+      
+      setProfiles(profilesWithBalances);
     } catch (error) {
       console.error('Error fetching profiles:', error);
       toast({
@@ -383,7 +398,7 @@ export default function AdminUsers() {
                       {profile.monthly_activation_completed ? 'Выполнена' : 'Не выполнена'}
                     </Badge>
                   </TableCell>
-                  <TableCell>${profile.balance?.toFixed(2) || '0.00'}</TableCell>
+                  <TableCell>${(profile.realBalance ?? profile.balance ?? 0).toFixed(2)}</TableCell>
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
                     <div className="flex gap-2 justify-end">

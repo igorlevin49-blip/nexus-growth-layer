@@ -1314,6 +1314,16 @@ export type Database = {
           transactions_count: number
         }[]
       }
+      get_all_user_balances: {
+        Args: never
+        Returns: {
+          available_cents: number
+          frozen_cents: number
+          pending_cents: number
+          user_id: string
+          withdrawn_cents: number
+        }[]
+      }
       get_commission_structure_stats: {
         Args: {
           p_end_date?: string
