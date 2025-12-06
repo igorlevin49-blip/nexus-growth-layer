@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, Gift, AlertTriangle, Settings } from "lucide-react";
+import { Search, Gift, AlertTriangle, Settings, Download } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatCents } from "@/utils/formatMoney";
 import { format } from "date-fns";
@@ -231,6 +231,88 @@ export default function MarketingAccess() {
     });
   };
 
+  const handleExportCSV = async () => {
+    try {
+      // Get all subscriptions with marketing free access
+      const { data: subscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('id, user_id, status, is_marketing_free_access, expires_at, amount_usd, started_at, created_at')
+        .eq('is_marketing_free_access', true)
+        .order('created_at', { ascending: false });
+
+      if (subError) throw subError;
+      if (!subscriptions || subscriptions.length === 0) {
+        toast.info("Нет пользователей с маркетинговым доступом");
+        return;
+      }
+
+      // Get profiles for these users
+      const userIds = [...new Set(subscriptions.map(s => s.user_id))];
+      const { data: profiles, error: profError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, telegram_username, referral_code, created_at, sponsor_id')
+        .in('id', userIds);
+
+      if (profError) throw profError;
+
+      // Get sponsor info
+      const sponsorIds = [...new Set(profiles?.map(p => p.sponsor_id).filter(Boolean) || [])];
+      let sponsors: { id: string; full_name: string | null; email: string | null }[] = [];
+      if (sponsorIds.length > 0) {
+        const { data: sponsorData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', sponsorIds);
+        sponsors = sponsorData || [];
+      }
+
+      // Build CSV data
+      const csvData = subscriptions.map(sub => {
+        const profile = profiles?.find(p => p.id === sub.user_id);
+        const sponsor = sponsors.find(s => s.id === profile?.sponsor_id);
+        return {
+          'ФИО': profile?.full_name || 'Без имени',
+          'Email': profile?.email || '',
+          'Телефон': profile?.phone || '',
+          'Telegram': profile?.telegram_username || '',
+          'Реферальный код': profile?.referral_code || '',
+          'Дата регистрации': profile?.created_at ? format(new Date(profile.created_at), 'dd.MM.yyyy', { locale: ru }) : '',
+          'Дата начала подписки': sub.started_at ? format(new Date(sub.started_at), 'dd.MM.yyyy', { locale: ru }) : '',
+          'Дата окончания подписки': sub.expires_at ? format(new Date(sub.expires_at), 'dd.MM.yyyy', { locale: ru }) : '',
+          'Сумма USD': sub.amount_usd,
+          'Статус подписки': sub.status,
+          'Спонсор ФИО': sponsor?.full_name || '',
+          'Спонсор Email': sponsor?.email || '',
+        };
+      });
+
+      // Generate CSV
+      const headers = Object.keys(csvData[0]);
+      const rows = csvData.map(row => headers.map(h => row[h as keyof typeof row]));
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell ?? ''}"`).join(','))
+      ].join('\n');
+
+      // Download
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `marketing-free-users-${dateStr}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Экспортировано ${csvData.length} записей`);
+    } catch (error: any) {
+      toast.error(`Ошибка экспорта: ${error.message}`);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-2">
@@ -245,11 +327,17 @@ export default function MarketingAccess() {
 
       {/* Users Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Пользователи с активными подписками</CardTitle>
-          <CardDescription>
-            Всего: {allSubscriptions?.length || 0} активных подписок
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle>Пользователи с активными подписками</CardTitle>
+            <CardDescription>
+              Всего: {allSubscriptions?.length || 0} активных подписок
+            </CardDescription>
+          </div>
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Экспорт бесплатников
+          </Button>
         </CardHeader>
         <CardContent>
           {/* Search */}
