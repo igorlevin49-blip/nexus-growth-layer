@@ -284,7 +284,40 @@ export default function Network() {
                 <Skeleton className="h-20" />
                 <Skeleton className="h-20" />
               </div>
+            ) : filterLevel !== 'all' ? (
+              /* При фильтре по конкретному уровню - показываем плоский список */
+              filteredMembers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p>Нет партнёров на уровне {filterLevel}</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredMembers.map(m => (
+                    <div key={m.partner_id} className="network-node active p-4 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          m.subscription_status === 'active' || m.monthly_activation_met 
+                            ? 'bg-success' 
+                            : m.subscription_status === 'frozen' 
+                            ? 'bg-warning' 
+                            : 'bg-muted'
+                        }`} />
+                        <div>
+                          <p className="font-medium">{m.full_name || 'Без имени'}</p>
+                          <p className="text-sm text-muted-foreground">{m.email}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">${m.monthly_volume.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground">Команда: {m.total_team}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
+              /* При "Все уровни" - показываем дерево с полными данными */
               <NetworkTree members={filteredMembers} />
             )}
           </SimpleTabsContent>

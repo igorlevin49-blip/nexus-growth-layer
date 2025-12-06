@@ -33,8 +33,7 @@ export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) 
 
       if (error) throw error;
       
-      // Map the data to include parent_partner_id
-      return ((data || []) as Array<{
+      const members = (data || []) as Array<{
         user_id: string;
         partner_id: string;
         level: number;
@@ -49,10 +48,16 @@ export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) 
         total_team: number;
         monthly_volume: number;
         parent_partner_id: string | null;
-      }>);
+      }>;
+      
+      // Debug log to verify data
+      console.log(`[NetworkTree] Structure ${structureType}, loaded ${members.length} members`);
+      
+      return members;
     },
-    staleTime: 30000,
+    staleTime: 10000, // Reduce stale time for fresher data
     placeholderData: [],
-    refetchOnMount: 'always'
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true
   });
 }
