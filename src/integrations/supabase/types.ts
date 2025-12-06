@@ -1423,6 +1423,7 @@ export type Database = {
           monthly_volume: number
           partner_id: string
           referral_code: string
+          referrer_id: string
           subscription_status: string
           total_team: number
           user_id: string

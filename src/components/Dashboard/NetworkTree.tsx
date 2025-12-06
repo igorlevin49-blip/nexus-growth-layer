@@ -22,23 +22,21 @@ function buildTree(members: NetworkMember[]): NetworkNode[] {
     nodeMap.set(member.partner_id, { ...member, children: [] });
   });
 
-  // Second pass: build tree structure based on levels
+  // Second pass: build tree structure using referrer_id
   members.forEach(member => {
     const node = nodeMap.get(member.partner_id)!;
     
     if (member.level === 1) {
+      // Level 1 members are direct referrals of root user
       rootNodes.push(node);
-    } else {
-      // Find parent (first member with level - 1)
-      const parent = members.find(m => 
-        m.level === member.level - 1 && 
-        m.partner_id !== member.partner_id
-      );
-      if (parent) {
-        const parentNode = nodeMap.get(parent.partner_id);
-        if (parentNode) {
-          parentNode.children.push(node);
-        }
+    } else if (member.referrer_id) {
+      // Use actual referrer_id for proper parent-child relationship
+      const parentNode = nodeMap.get(member.referrer_id);
+      if (parentNode) {
+        parentNode.children.push(node);
+      } else {
+        // If referrer not in current view, treat as root
+        rootNodes.push(node);
       }
     }
   });
