@@ -15,6 +15,7 @@ export interface NetworkMember {
   direct_referrals: number;
   total_team: number;
   monthly_volume: number;
+  referrer_id: string | null;
 }
 
 export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) {
