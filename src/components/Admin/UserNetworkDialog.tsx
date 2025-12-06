@@ -39,7 +39,24 @@ export function UserNetworkDialog({
       });
 
       if (error) throw error;
-      return (data || []) as NetworkMember[];
+      
+      // Map the data to include parent_partner_id
+      return ((data || []) as Array<{
+        user_id: string;
+        partner_id: string;
+        level: number;
+        full_name: string | null;
+        email: string | null;
+        avatar_url: string | null;
+        subscription_status: string | null;
+        monthly_activation_met: boolean | null;
+        referral_code: string;
+        created_at: string;
+        direct_referrals: number;
+        total_team: number;
+        monthly_volume: number;
+        parent_partner_id: string | null;
+      }>) as NetworkMember[];
     },
     enabled: open && !!userId,
   });

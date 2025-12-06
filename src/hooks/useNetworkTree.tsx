@@ -15,7 +15,7 @@ export interface NetworkMember {
   direct_referrals: number;
   total_team: number;
   monthly_volume: number;
-  referrer_id: string | null;
+  parent_partner_id: string | null;
 }
 
 export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) {
@@ -32,7 +32,24 @@ export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) 
       });
 
       if (error) throw error;
-      return (data || []) as NetworkMember[];
+      
+      // Map the data to include parent_partner_id
+      return ((data || []) as Array<{
+        user_id: string;
+        partner_id: string;
+        level: number;
+        full_name: string | null;
+        email: string | null;
+        avatar_url: string | null;
+        subscription_status: string | null;
+        monthly_activation_met: boolean | null;
+        referral_code: string;
+        created_at: string;
+        direct_referrals: number;
+        total_team: number;
+        monthly_volume: number;
+        parent_partner_id: string | null;
+      }>);
     },
     staleTime: 30000,
     placeholderData: [],
