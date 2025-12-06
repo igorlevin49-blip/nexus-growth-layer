@@ -290,8 +290,8 @@ export default function MarketingAccess() {
       const headers = Object.keys(csvData[0]);
       const rows = csvData.map(row => headers.map(h => row[h as keyof typeof row]));
       const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell ?? ''}"`).join(','))
+        headers.join(';'),
+        ...rows.map(row => row.map(cell => `"${cell ?? ''}"`).join(';'))
       ].join('\n');
 
       // Download
