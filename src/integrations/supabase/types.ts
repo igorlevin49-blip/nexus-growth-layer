@@ -1421,9 +1421,9 @@ export type Database = {
           level: number
           monthly_activation_met: boolean
           monthly_volume: number
+          parent_partner_id: string
           partner_id: string
           referral_code: string
-          referrer_id: string
           subscription_status: string
           total_team: number
           user_id: string
