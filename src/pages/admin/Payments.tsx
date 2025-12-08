@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,6 +43,15 @@ export default function AdminPayments() {
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   // Manual approval states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -62,9 +71,9 @@ export default function AdminPayments() {
 
   // Subscriptions with search
   const { data: subscriptions, isLoading: isLoadingSubscriptions } = useQuery({
-    queryKey: ['admin-subscriptions', showArchived, searchQuery],
+    queryKey: ['admin-subscriptions', showArchived, debouncedSearchQuery],
     queryFn: async () => {
-      const search = searchQuery.trim();
+      const search = debouncedSearchQuery.trim();
       let userIds: string[] | null = null;
 
       // If search query exists and is not a valid UUID, find matching user_ids first
@@ -145,9 +154,9 @@ export default function AdminPayments() {
 
   // Orders with search
   const { data: orders, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['admin-orders', showArchived, searchQuery],
+    queryKey: ['admin-orders', showArchived, debouncedSearchQuery],
     queryFn: async () => {
-      const search = searchQuery.trim();
+      const search = debouncedSearchQuery.trim();
       let userIds: string[] | null = null;
 
       // If search query exists and is not a valid UUID, find matching user_ids first
