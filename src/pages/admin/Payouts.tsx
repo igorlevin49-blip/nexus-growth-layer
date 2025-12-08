@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ export default function AdminPayouts() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [payoutDialog, setPayoutDialog] = useState<{
     open: boolean;
     partner: Partner | null;
@@ -40,9 +41,26 @@ export default function AdminPayouts() {
   });
   const [processing, setProcessing] = useState(false);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     fetchPartners();
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
+
+  // Calculate totals
+  const totals = partners.reduce(
+    (acc, p) => ({
+      available: acc.available + p.available_cents,
+      frozen: acc.frozen + p.frozen_cents,
+    }),
+    { available: 0, frozen: 0 }
+  );
 
   const fetchPartners = async () => {
     try {
@@ -55,8 +73,8 @@ export default function AdminPayouts() {
         .eq('is_active', true)
         .or('is_archived.is.null,is_archived.eq.false');
 
-      if (searchQuery.trim()) {
-        const search = searchQuery.trim();
+      if (debouncedSearchQuery.trim()) {
+        const search = debouncedSearchQuery.trim();
         query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
       }
 
@@ -287,6 +305,24 @@ export default function AdminPayouts() {
                 ))
               )}
             </TableBody>
+            {partners.length > 0 && (
+              <TableFooter>
+                <TableRow className="bg-muted/50 font-semibold">
+                  <TableCell colSpan={3}>Итого</TableCell>
+                  <TableCell>
+                    <Badge variant="default" className="font-mono">
+                      {formatCents(totals.available, 'USD')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-mono">
+                      {formatCents(totals.frozen, 'USD')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </CardContent>
       </Card>
