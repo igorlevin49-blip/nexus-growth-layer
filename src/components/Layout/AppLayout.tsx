@@ -160,8 +160,8 @@ export function AppLayout() {
                       <div className="relative">
                         <Icon className="h-4 w-4" />
                         {showOrdersBadge && (
-                          <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3 items-center justify-center">
-                            <AlertCircle className="h-3 w-3 text-destructive" />
+                          <span className="absolute -top-2 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-pulse">
+                            {pendingOrdersCount > 9 ? '9+' : pendingOrdersCount}
                           </span>
                         )}
                       </div>

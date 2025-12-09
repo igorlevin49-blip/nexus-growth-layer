@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAdminNotifications, markNotificationAsRead, AdminNotification } from "@/hooks/useAdminNotifications";
+import { usePendingOrdersCount } from "@/hooks/usePendingOrdersCount";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -16,9 +17,19 @@ import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { NavLink } from "react-router-dom";
 
+const getDeclension = (n: number, forms: [string, string, string]) => {
+  const abs = Math.abs(n) % 100;
+  const n1 = abs % 10;
+  if (abs > 10 && abs < 20) return forms[2];
+  if (n1 > 1 && n1 < 5) return forms[1];
+  if (n1 === 1) return forms[0];
+  return forms[2];
+};
+
 export function AdminNotificationsIndicator() {
   const { userRole, user } = useAuth();
   const { data: notifications, isLoading } = useAdminNotifications();
+  const { data: pendingOrdersCount = 0 } = usePendingOrdersCount();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -28,6 +39,7 @@ export function AdminNotificationsIndicator() {
   }
 
   const unreadCount = (notifications || []).filter(n => !n.read).length;
+  const totalBadgeCount = unreadCount + (pendingOrdersCount > 0 ? 1 : 0);
 
   const handleMarkAsRead = async (notification: AdminNotification) => {
     if (!notification.read) {
@@ -62,12 +74,12 @@ export function AdminNotificationsIndicator() {
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
+          {totalBadgeCount > 0 && (
             <Badge 
               variant="destructive" 
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {totalBadgeCount > 9 ? '9+' : totalBadgeCount}
             </Badge>
           )}
         </Button>
@@ -87,15 +99,37 @@ export function AdminNotificationsIndicator() {
           )}
         </div>
         <ScrollArea className="h-80">
+          {/* Pending orders section */}
+          {pendingOrdersCount > 0 && (
+            <NavLink to="/admin/orders" onClick={() => setOpen(false)}>
+              <div className="p-3 hover:bg-orange-500/20 cursor-pointer bg-orange-500/10 border-b transition-colors">
+                <div className="flex gap-2 items-center">
+                  <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Новые заказы</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pendingOrdersCount} {getDeclension(pendingOrdersCount, ['заказ', 'заказа', 'заказов'])} ожидают обработки
+                    </p>
+                  </div>
+                  <Badge variant="destructive" className="h-5 px-1.5">
+                    {pendingOrdersCount}
+                  </Badge>
+                </div>
+              </div>
+            </NavLink>
+          )}
+          
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Загрузка...
             </div>
-          ) : !notifications?.length ? (
+          ) : !notifications?.length && pendingOrdersCount === 0 ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Нет уведомлений
             </div>
-          ) : (
+          ) : notifications?.length ? (
             <div className="divide-y">
               {notifications.slice(0, 20).map((notification) => (
                 <div
@@ -133,7 +167,7 @@ export function AdminNotificationsIndicator() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </ScrollArea>
         {userRole === 'superadmin' && (
           <div className="p-2 border-t">
