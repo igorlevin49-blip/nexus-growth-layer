@@ -5,6 +5,7 @@ import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
 import { SubscriptionCard } from "@/components/Dashboard/SubscriptionCard";
 import { SponsorInfo } from "@/components/Dashboard/SponsorInfo";
 import { ActivationReminderDialog } from "@/components/Dashboard/ActivationReminderDialog";
+import { SystemNotificationModal } from "@/components/Dashboard/SystemNotificationModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -107,6 +108,7 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       <ActivationReminderDialog />
+      <SystemNotificationModal />
       {/* Welcome Section */}
       <div className="hero-gradient rounded-lg p-4 sm:p-6 text-white">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

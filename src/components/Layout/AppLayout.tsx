@@ -17,7 +17,8 @@ import {
   Trash2,
   DollarSign,
   Gift,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,7 @@ export function AppLayout() {
   ];
 
   const superAdminNavigation = [
+    { name: "Уведомления", href: "/admin/notifications", icon: Bell },
     { name: "Логи безопасности", href: "/admin/security-logs", icon: ShieldAlert },
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },
     { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },

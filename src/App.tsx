@@ -42,6 +42,7 @@ import ProductDetail from "./pages/ProductDetail";
 import MarketingAccess from "./pages/admin/MarketingAccess";
 import RecalculateCommissions from "./pages/admin/RecalculateCommissions";
 import SecurityLogs from "./pages/admin/SecurityLogs";
+import AdminNotifications from "./pages/admin/Notifications";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -94,6 +95,7 @@ function AppContent() {
           <Route path="admin/recalculate-commissions" element={<ProtectedRoute requireAdmin><RecalculateCommissions /></ProtectedRoute>} />
           <Route path="admin/test-data-cleanup" element={<ProtectedRoute requireSuperAdmin><TestDataCleanup /></ProtectedRoute>} />
           <Route path="admin/security-logs" element={<ProtectedRoute requireSuperAdmin><SecurityLogs /></ProtectedRoute>} />
+          <Route path="admin/notifications" element={<ProtectedRoute requireSuperAdmin><AdminNotifications /></ProtectedRoute>} />
         </Route>
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
