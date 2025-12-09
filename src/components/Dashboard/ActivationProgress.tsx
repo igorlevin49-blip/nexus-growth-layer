@@ -3,13 +3,64 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Calendar } from "lucide-react";
+import { ShoppingCart, Calendar, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { PayActivationButton } from "./PayActivationButton";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+// Helper function for Russian day declension
+const getDaysText = (days: number): string => {
+  const absD = Math.abs(days);
+  const lastTwo = absD % 100;
+  const lastOne = absD % 10;
+  
+  if (lastTwo >= 11 && lastTwo <= 14) return `${days} дней`;
+  if (lastOne === 1) return `${days} день`;
+  if (lastOne >= 2 && lastOne <= 4) return `${days} дня`;
+  return `${days} дней`;
+};
+
+// Get urgency colors based on days remaining
+const getUrgencyStyles = (days: number) => {
+  if (days <= 2) {
+    return {
+      border: "border-red-500/50",
+      bg: "bg-red-500/5",
+      badgeClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30",
+      textClass: "text-red-600 dark:text-red-400",
+      pulse: true
+    };
+  }
+  if (days <= 5) {
+    return {
+      border: "border-orange-500/50",
+      bg: "bg-orange-500/5",
+      badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30",
+      textClass: "text-orange-600 dark:text-orange-400",
+      pulse: false
+    };
+  }
+  if (days <= 10) {
+    return {
+      border: "border-blue-500/50",
+      bg: "bg-blue-500/5",
+      badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
+      textClass: "text-blue-600 dark:text-blue-400",
+      pulse: false
+    };
+  }
+  return {
+    border: "border-green-500/50",
+    bg: "bg-green-500/5",
+    badgeClass: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30",
+    textClass: "text-green-600 dark:text-green-400",
+    pulse: false
+  };
+};
 
 export function ActivationProgress() {
   const { user } = useAuth();
@@ -133,29 +184,47 @@ export function ActivationProgress() {
   const progress = Math.min((currentAmount / requiredAmount) * 100, 100);
   const remaining = Math.max(requiredAmount - currentAmount, 0);
 
-  // If activation is not yet required, show info message
-  if (!isActivationRequired && activationDueFrom) {
+  // Calculate days until activation is required
+  const now = new Date();
+  const daysUntilDue = activationDueFrom 
+    ? Math.ceil((activationDueFrom.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  // If activation is not yet required, show countdown with urgency colors
+  if (!isActivationRequired && activationDueFrom && daysUntilDue !== null) {
+    const urgency = getUrgencyStyles(daysUntilDue);
+    
     return (
-      <Card className="border-blue-500/50 bg-blue-500/5">
+      <Card className={cn(urgency.border, urgency.bg)}>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Месячная активация</span>
-            <Badge variant="outline" className="bg-blue-500/10">
-              <Calendar className="w-3 h-3 mr-1" />
-              Не требуется
+            <Badge 
+              variant="outline" 
+              className={cn(
+                urgency.badgeClass,
+                urgency.pulse && "animate-pulse"
+              )}
+            >
+              {daysUntilDue <= 2 && <AlertTriangle className="w-3 h-3 mr-1" />}
+              {daysUntilDue > 2 && <Calendar className="w-3 h-3 mr-1" />}
+              Через {getDaysText(daysUntilDue)}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="text-sm">
-            <p className="font-medium mb-2">Первая месячная активация не требуется до:</p>
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            <p className="font-medium mb-2">Первая месячная активация начинается:</p>
+            <p className={cn("text-lg font-bold", urgency.textClass)}>
               {format(activationDueFrom, "dd MMMM yyyy", { locale: ru })}
             </p>
           </div>
           <div className="pt-3 border-t">
             <p className="text-xs text-muted-foreground">
-              После оплаты годовой подписки первая ежемесячная активация становится требуемой только со второго месяца. Сейчас ничего делать не нужно.
+              {daysUntilDue <= 5 
+                ? "Скоро начнётся период активации. Рекомендуем заранее приобрести активационные товары."
+                : "После оплаты годовой подписки первая ежемесячная активация становится требуемой только со второго месяца."
+              }
             </p>
           </div>
           <Button
