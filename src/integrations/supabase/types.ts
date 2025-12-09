@@ -1488,6 +1488,21 @@ export type Database = {
           volume_cents: number
         }[]
       }
+      get_network_profiles: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          direct_referrals_count: number
+          full_name: string
+          id: string
+          is_active: boolean
+          monthly_activation_completed: boolean
+          referral_code: string
+          sponsor_id: string
+          subscription_status: string
+        }[]
+      }
       get_network_stats:
         | {
             Args: { p_structure_type?: number; user_id_param: string }
