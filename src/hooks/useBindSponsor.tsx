@@ -26,7 +26,9 @@ export function useBindSponsor() {
           'UNAUTHORIZED': 'Недостаточно прав',
           'SPONSOR_NOT_FOUND': 'Спонсор с таким кодом не найден',
           'SELF_REFERRAL': 'Нельзя указать себя в качестве спонсора',
-          'ALREADY_HAS_SPONSOR': 'У пользователя уже есть спонсор'
+          'ALREADY_HAS_SPONSOR': 'У пользователя уже есть спонсор',
+          'USER_IS_SPONSOR': 'Пользователь уже является спонсором для других',
+          'SPONSOR_REGISTERED_LATER': 'Спонсор зарегистрирован позже пользователя'
         };
         throw new Error(errorMessages[result?.error || ''] || 'Ошибка привязки спонсора');
       }
