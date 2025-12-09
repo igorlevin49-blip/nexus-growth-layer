@@ -8,15 +8,29 @@ export function usePendingOrdersCount() {
   const { userRole } = useAuth();
   const queryClient = useQueryClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const notificationPermissionRef = useRef<NotificationPermission>('default');
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
-  // Initialize audio
+  // Initialize audio and request notification permission
   useEffect(() => {
-    if (isAdmin && typeof window !== 'undefined') {
-      audioRef.current = new Audio('/sounds/new-order.mp3');
-      audioRef.current.volume = 0.5;
+    if (!isAdmin || typeof window === 'undefined') return;
+
+    // Initialize audio
+    audioRef.current = new Audio('/sounds/new-order.mp3');
+    audioRef.current.volume = 0.5;
+
+    // Request notification permission
+    if ('Notification' in window) {
+      notificationPermissionRef.current = Notification.permission;
+      
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          notificationPermissionRef.current = permission;
+        });
+      }
     }
+
     return () => {
       audioRef.current = null;
     };
@@ -29,6 +43,29 @@ export function usePendingOrdersCount() {
       audioRef.current.play().catch(err => {
         console.log('Audio play failed:', err);
       });
+    }
+  }, []);
+
+  // Show desktop notification
+  const showDesktopNotification = useCallback((orderId: string) => {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'granted') {
+      const notification = new Notification('Новый заказ!', {
+        body: 'Получен новый заказ на обработку',
+        icon: '/favicon.ico',
+        tag: `order-${orderId}`,
+        requireInteraction: true,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = '/admin/orders';
+        notification.close();
+      };
+
+      // Auto close after 10 seconds
+      setTimeout(() => notification.close(), 10000);
     }
   }, []);
 
@@ -49,11 +86,18 @@ export function usePendingOrdersCount() {
           // Invalidate cache to get updated count
           queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] });
           
-          // If this is a new pending order - play sound and show toast
+          // If this is a new pending order - play sound, show toast and desktop notification
           if (payload.eventType === 'INSERT') {
-            const newOrder = payload.new as { status?: string; is_archived?: boolean };
+            const newOrder = payload.new as { id?: string; status?: string; is_archived?: boolean };
             if (newOrder.status === 'pending' && !newOrder.is_archived) {
               playNotificationSound();
+              
+              // Show desktop notification
+              if (newOrder.id) {
+                showDesktopNotification(newOrder.id);
+              }
+              
+              // Show toast notification
               toast.info("Новый заказ!", {
                 description: "Получен новый заказ на обработку",
                 action: {
@@ -70,7 +114,7 @@ export function usePendingOrdersCount() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAdmin, queryClient, playNotificationSound]);
+  }, [isAdmin, queryClient, playNotificationSound, showDesktopNotification]);
 
   return useQuery({
     queryKey: ['pending-orders-count'],
@@ -85,6 +129,6 @@ export function usePendingOrdersCount() {
       return count || 0;
     },
     enabled: isAdmin,
-    refetchInterval: 60000, // Increased interval since we have realtime
+    refetchInterval: 60000,
   });
 }
