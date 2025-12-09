@@ -10,6 +10,7 @@ export interface NotificationSettings {
   email_commissions: boolean;
   email_system: boolean;
   email_newsletter: boolean;
+  email_activation_reminder: boolean;
   sms_enabled: boolean;
   telegram_enabled: boolean;
 }
@@ -19,6 +20,7 @@ const defaultSettings: Omit<NotificationSettings, 'id' | 'user_id'> = {
   email_commissions: true,
   email_system: false,
   email_newsletter: false,
+  email_activation_reminder: true,
   sms_enabled: false,
   telegram_enabled: true
 };

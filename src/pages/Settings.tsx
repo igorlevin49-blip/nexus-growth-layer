@@ -437,6 +437,7 @@ export default function Settings() {
                 {[
                   { key: "email_new_partner", label: "Новые партнёры", description: "Уведомления о регистрации новых партнёров" },
                   { key: "email_commissions", label: "Начисления", description: "Информация о комиссиях и бонусах" },
+                  { key: "email_activation_reminder", label: "Напоминания об активации", description: "Напоминания о необходимости ежемесячной активации" },
                   { key: "email_system", label: "Обновления системы", description: "Технические уведомления и обновления" },
                   { key: "email_newsletter", label: "Новостная рассылка", description: "Еженедельная сводка и новости компании" }
                 ].map((item) => (
@@ -446,7 +447,7 @@ export default function Settings() {
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
                     <Switch 
-                      checked={Boolean(notificationSettings.data?.[item.key as 'email_new_partner' | 'email_commissions' | 'email_system' | 'email_newsletter'])}
+                      checked={Boolean(notificationSettings.data?.[item.key as 'email_new_partner' | 'email_commissions' | 'email_activation_reminder' | 'email_system' | 'email_newsletter'])}
                       onCheckedChange={(checked) => handleNotificationChange(item.key, checked)}
                     />
                   </div>
