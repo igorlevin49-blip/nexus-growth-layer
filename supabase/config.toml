@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.freedompay-callback]
 verify_jwt = false
+
+[functions.send-activation-reminder]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
