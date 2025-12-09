@@ -16,13 +16,15 @@ import {
   FileText,
   Trash2,
   DollarSign,
-  Gift
+  Gift,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { SubscriptionStatus } from "./SubscriptionStatus";
 import { AdminNotificationsIndicator } from "./AdminNotificationsIndicator";
+import { usePendingOrdersCount } from "@/hooks/usePendingOrdersCount";
 
 const navigation = [
   { name: "Панель управления", href: "/dashboard", icon: Home },
@@ -43,6 +45,7 @@ export function AppLayout() {
   const [currentLang, setCurrentLang] = useState("ru");
   const location = useLocation();
   const { userRole, signOut, user } = useAuth();
+  const { data: pendingOrdersCount = 0 } = usePendingOrdersCount();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -140,6 +143,7 @@ export function AppLayout() {
                 </div>
                 {adminNavigation.map((item) => {
                   const Icon = item.icon;
+                  const showOrdersBadge = item.name === "Заказы" && pendingOrdersCount > 0;
                   return (
                     <NavLink
                       key={item.name}
@@ -151,7 +155,14 @@ export function AppLayout() {
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
-                      <Icon className="h-4 w-4" />
+                      <div className="relative">
+                        <Icon className="h-4 w-4" />
+                        {showOrdersBadge && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3 items-center justify-center">
+                            <AlertCircle className="h-3 w-3 text-destructive" />
+                          </span>
+                        )}
+                      </div>
                       <span>{item.name}</span>
                     </NavLink>
                   );
