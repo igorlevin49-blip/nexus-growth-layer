@@ -55,7 +55,6 @@ export function AppLayout() {
     { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
     { name: "Оплаты", href: "/admin/payments", icon: FileText },
     { name: "Выплаты", href: "/admin/payouts", icon: DollarSign },
-    { name: "Логи безопасности", href: "/admin/security-logs", icon: ShieldAlert },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
     { name: "Маркетинг доступ", href: "/admin/marketing-access", icon: Gift },
@@ -63,6 +62,7 @@ export function AppLayout() {
   ];
 
   const superAdminNavigation = [
+    { name: "Логи безопасности", href: "/admin/security-logs", icon: ShieldAlert },
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },
     { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },
     { name: "MLM-настройки", href: "/admin/mlm-settings", icon: Settings },
