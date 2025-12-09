@@ -93,7 +93,7 @@ function AppContent() {
           <Route path="admin/marketing-access" element={<ProtectedRoute requireAdmin><MarketingAccess /></ProtectedRoute>} />
           <Route path="admin/recalculate-commissions" element={<ProtectedRoute requireAdmin><RecalculateCommissions /></ProtectedRoute>} />
           <Route path="admin/test-data-cleanup" element={<ProtectedRoute requireSuperAdmin><TestDataCleanup /></ProtectedRoute>} />
-          <Route path="admin/security-logs" element={<ProtectedRoute requireAdmin><SecurityLogs /></ProtectedRoute>} />
+          <Route path="admin/security-logs" element={<ProtectedRoute requireSuperAdmin><SecurityLogs /></ProtectedRoute>} />
         </Route>
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

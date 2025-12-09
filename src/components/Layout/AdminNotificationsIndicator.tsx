@@ -135,13 +135,15 @@ export function AdminNotificationsIndicator() {
             </div>
           )}
         </ScrollArea>
-        <div className="p-2 border-t">
-          <NavLink to="/admin/security-logs" onClick={() => setOpen(false)}>
-            <Button variant="ghost" size="sm" className="w-full text-xs">
-              Открыть логи безопасности
-            </Button>
-          </NavLink>
-        </div>
+        {userRole === 'superadmin' && (
+          <div className="p-2 border-t">
+            <NavLink to="/admin/security-logs" onClick={() => setOpen(false)}>
+              <Button variant="ghost" size="sm" className="w-full text-xs">
+                Открыть логи безопасности
+              </Button>
+            </NavLink>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
