@@ -83,6 +83,12 @@ export function useReferralBind() {
             console.warn('Invalid referral code:', refCode);
           } else if (errorCode === 'self_referral') {
             clearReferralCode(); // Clear self-referral attempt
+          } else if (errorCode === 'already_sponsor') {
+            clearReferralCode(); // User is already a sponsor, cannot be bound
+            console.warn('User is already a sponsor, cannot bind:', refCode);
+          } else if (errorCode === 'sponsor_registered_later') {
+            clearReferralCode(); // Sponsor registered after user
+            console.warn('Sponsor registered later than user:', refCode);
           } else {
             // Retry on unknown errors
             setAttemptCount(prev => prev + 1);
