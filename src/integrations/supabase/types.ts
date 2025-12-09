@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       admin_actions: {
@@ -253,6 +260,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "legal_document_versions_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
@@ -406,6 +420,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_network_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -748,6 +769,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       referrals: {
@@ -790,10 +818,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "referrals_referrer_id_fkey"
             columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -826,6 +868,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1074,6 +1123,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_consents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1103,7 +1159,44 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      user_sensitive_data: {
+        Row: {
+          bank_account: string | null
+          card_last_four: string | null
+          created_at: string
+          id: string
+          payment_details_encrypted: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          id?: string
+          payment_details_encrypted?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          id?: string
+          payment_details_encrypted?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_status_achievements: {
         Row: {
@@ -1190,7 +1283,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_network_safe: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          direct_referrals_count: number | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          monthly_activation_completed: boolean | null
+          referral_code: string | null
+          sponsor_id: string | null
+          subscription_status: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          direct_referrals_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          monthly_activation_completed?: boolean | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          subscription_status?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          direct_referrals_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          monthly_activation_completed?: boolean | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          subscription_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_backfill_sponsor_from_metadata: { Args: never; Returns: Json }
