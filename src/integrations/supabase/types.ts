@@ -1044,6 +1044,95 @@ export type Database = {
         }
         Relationships: []
       }
+      system_notification_logs: {
+        Row: {
+          channel: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          recipient: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          recipient: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          recipient?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_notification_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "system_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_notifications: {
+        Row: {
+          channels: string[]
+          created_at: string | null
+          created_by: string | null
+          id: string
+          message: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          target_audience: string
+          target_user_ids: string[] | null
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          message: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          target_user_ids?: string[] | null
+          title: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          message?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          target_user_ids?: string[] | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           created_at: string
@@ -1188,6 +1277,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_modal_notifications: {
+        Row: {
+          created_at: string | null
+          dismissed: boolean | null
+          id: string
+          message: string
+          notification_id: string | null
+          read: boolean | null
+          show_after: string | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          message: string
+          notification_id?: string | null
+          read?: boolean | null
+          show_after?: string | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          message?: string
+          notification_id?: string | null
+          read?: boolean | null
+          show_after?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_modal_notifications_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "system_notifications"
             referencedColumns: ["id"]
           },
         ]
