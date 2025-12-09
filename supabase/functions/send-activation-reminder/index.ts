@@ -25,7 +25,7 @@ interface UserForReminder {
 }
 
 interface NotificationSettings {
-  email_system: boolean;
+  email_activation_reminder: boolean;
   telegram_enabled: boolean;
 }
 
@@ -228,12 +228,12 @@ serve(async (req) => {
       // Get user notification settings
       const { data: settings } = await supabase
         .from('notification_settings')
-        .select('email_system, telegram_enabled')
+        .select('email_activation_reminder, telegram_enabled')
         .eq('user_id', user.id)
         .single();
       
       const notificationSettings: NotificationSettings = settings || {
-        email_system: false,
+        email_activation_reminder: true,
         telegram_enabled: true,
       };
       
@@ -302,7 +302,7 @@ serve(async (req) => {
       }
       
       // Send Email notification
-      if (notificationSettings.email_system && user.email) {
+      if (notificationSettings.email_activation_reminder && user.email) {
         if (emailLog && emailLog.length > 0) {
           results.email.skipped++;
           console.log(`Email already sent to ${user.id} for ${daysUntil} days`);

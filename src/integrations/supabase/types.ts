@@ -434,6 +434,7 @@ export type Database = {
       notification_settings: {
         Row: {
           created_at: string | null
+          email_activation_reminder: boolean | null
           email_commissions: boolean | null
           email_new_partner: boolean | null
           email_newsletter: boolean | null
@@ -446,6 +447,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          email_activation_reminder?: boolean | null
           email_commissions?: boolean | null
           email_new_partner?: boolean | null
           email_newsletter?: boolean | null
@@ -458,6 +460,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          email_activation_reminder?: boolean | null
           email_commissions?: boolean | null
           email_new_partner?: boolean | null
           email_newsletter?: boolean | null
