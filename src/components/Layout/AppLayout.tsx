@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { SubscriptionStatus } from "./SubscriptionStatus";
+import { AdminNotificationsIndicator } from "./AdminNotificationsIndicator";
 
 const navigation = [
   { name: "Панель управления", href: "/dashboard", icon: Home },
@@ -251,7 +252,10 @@ export function AppLayout() {
             <Menu className="h-4 w-4" />
           </Button>
           
-          <SubscriptionStatus />
+          <div className="flex items-center gap-2">
+            <AdminNotificationsIndicator />
+            <SubscriptionStatus />
+          </div>
         </header>
 
         {/* Page content */}
