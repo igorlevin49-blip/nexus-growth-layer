@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_reminder_logs: {
+        Row: {
+          channel: string
+          created_at: string | null
+          days_before: number
+          error_message: string | null
+          id: string
+          recipient: string
+          sent_at: string | null
+          sent_date: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          days_before: number
+          error_message?: string | null
+          id?: string
+          recipient: string
+          sent_at?: string | null
+          sent_date?: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          days_before?: number
+          error_message?: string | null
+          id?: string
+          recipient?: string
+          sent_at?: string | null
+          sent_date?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_reminder_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_reminder_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           created_at: string
@@ -691,6 +745,7 @@ export type Database = {
           subscription_active: boolean | null
           subscription_expires_at: string | null
           subscription_status: string | null
+          telegram_chat_id: string | null
           telegram_username: string | null
           timezone: string | null
           updated_at: string | null
@@ -724,6 +779,7 @@ export type Database = {
           subscription_active?: boolean | null
           subscription_expires_at?: string | null
           subscription_status?: string | null
+          telegram_chat_id?: string | null
           telegram_username?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -757,6 +813,7 @@ export type Database = {
           subscription_active?: boolean | null
           subscription_expires_at?: string | null
           subscription_status?: string | null
+          telegram_chat_id?: string | null
           telegram_username?: string | null
           timezone?: string | null
           updated_at?: string | null
