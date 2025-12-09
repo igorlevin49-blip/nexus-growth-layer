@@ -6,30 +6,28 @@ import { CommissionLevel } from "@/hooks/useCommissionStructure";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-
 interface ProductStructureProps {
   levels: CommissionLevel[];
   isLoading: boolean;
   subscriptionActive: boolean;
   monthlyActivationMet: boolean;
 }
-
-export function ProductStructure({ 
-  levels, 
+export function ProductStructure({
+  levels,
   isLoading,
   subscriptionActive,
   monthlyActivationMet
 }: ProductStructureProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const { data: transactions, isLoading: transactionsLoading } = useTransactions({
+  const {
+    data: transactions,
+    isLoading: transactionsLoading
+  } = useTransactions({
     type: ['commission']
   });
 
   // Фильтруем транзакции товарной структуры (structure_type = 'secondary' или через payload)
-  const productTransactions = (transactions || []).filter(t => 
-    t.structure_type === 'secondary' || t.payload?.structure === 2
-  );
-
+  const productTransactions = (transactions || []).filter(t => t.structure_type === 'secondary' || t.payload?.structure === 2);
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -42,42 +40,31 @@ export function ProductStructure({
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
   if (isLoading) {
-    return (
-      <Card className="financial-card">
+    return <Card className="financial-card">
         <CardHeader>
           <CardTitle>Товарная структура (10 уровней)</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground">Загрузка...</p>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   const canParticipate = subscriptionActive && monthlyActivationMet;
-
-  return (
-    <Card className="financial-card">
+  return <Card className="financial-card">
       <CardHeader>
         <div className="space-y-2">
           <CardTitle>Товарная структура (10 уровней)</CardTitle>
           <div className="flex items-center gap-2 text-sm">
-            {canParticipate ? (
-              <Badge className="profit-indicator">
+            {canParticipate ? <Badge className="profit-indicator">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 Участие активно
-              </Badge>
-            ) : (
-              <Badge variant="outline">
+              </Badge> : <Badge variant="outline">
                 <Lock className="h-3 w-3 mr-1" />
                 Требуется активация
-              </Badge>
-            )}
+              </Badge>}
           </div>
-          {!canParticipate && (
-            <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg">
+          {!canParticipate && <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg">
               <Info className="h-4 w-4 text-warning mt-0.5" />
               <div className="text-xs text-muted-foreground">
                 <p>Для участия в товарной структуре необходимо:</p>
@@ -86,8 +73,7 @@ export function ProductStructure({
                   <li>Ежемесячная покупка на сумму ≥40 USD</li>
                 </ul>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
       </CardHeader>
       <CardContent>
@@ -96,15 +82,13 @@ export function ProductStructure({
           <div>
             <h4 className="font-medium mb-3">Комиссионные уровни</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-              {levels.map((level) => (
-                <div key={level.level} className="p-3 border border-border rounded-lg text-center">
+              {levels.map(level => <div key={level.level} className="p-3 border border-border rounded-lg text-center">
                   <div className="text-xs text-muted-foreground mb-1">L{level.level}</div>
                   <div className="text-lg font-bold text-primary">{level.percent}%</div>
                   <div className="text-xs text-success mt-1">
                     ${(level.earned || 0).toFixed(2)}
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
 
@@ -126,12 +110,7 @@ export function ProductStructure({
             </div>
 
             <div className="overflow-x-auto">
-              {transactionsLoading ? (
-                <p className="text-center text-muted-foreground py-4">Загрузка...</p>
-              ) : !productTransactions || productTransactions.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">Нет транзакций</p>
-              ) : (
-                <table className="w-full text-sm">
+              {transactionsLoading ? <p className="text-center text-muted-foreground py-4">Загрузка...</p> : !productTransactions || productTransactions.length === 0 ? <p className="text-center text-muted-foreground py-4">Нет транзакций</p> : <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-2 px-2">Дата</th>
@@ -144,15 +123,11 @@ export function ProductStructure({
                     </tr>
                   </thead>
                   <tbody>
-                    {productTransactions
-                      .filter(t => statusFilter === 'all' || t.status === statusFilter)
-                      .map((trans: Transaction) => {
-                        const purchaseAmount = trans.payload?.purchase_amount || 0;
-                        const percent = trans.payload?.percent || 0;
-                        const partnerName = trans.payload?.partner_name || 'Неизвестно';
-                        
-                        return (
-                          <tr key={trans.id} className="border-b border-border/50 hover:bg-muted/50">
+                    {productTransactions.filter(t => statusFilter === 'all' || t.status === statusFilter).map((trans: Transaction) => {
+                  const purchaseAmount = trans.payload?.purchase_amount || 0;
+                  const percent = trans.payload?.percent || 0;
+                  const partnerName = trans.payload?.partner_name || 'Неизвестно';
+                  return <tr key={trans.id} className="border-b border-border/50 hover:bg-muted/50">
                             <td className="py-2 px-2">
                               {new Date(trans.created_at).toLocaleDateString('ru-RU')}
                             </td>
@@ -170,12 +145,10 @@ export function ProductStructure({
                             <td className="py-2 px-2 text-right">
                               {getStatusBadge(trans.status)}
                             </td>
-                          </tr>
-                        );
-                      })}
+                          </tr>;
+                })}
                   </tbody>
-                </table>
-              )}
+                </table>}
             </div>
           </div>
 
@@ -187,11 +160,9 @@ export function ProductStructure({
               <li>• 10-й уровень — 10%</li>
             </ul>
             <p className="text-xs text-muted-foreground mt-2">
-              Если участник на уровне не активен, его доля переходит вверх к ближайшему активному спонсору.
-            </p>
+          </p>
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
