@@ -1701,7 +1701,7 @@ export type Database = {
       }
       get_network_stats:
         | {
-            Args: { p_structure_type?: number; user_id_param: string }
+            Args: { user_id_param: string }
             Returns: {
               activations_this_month: number
               active_partners: number
@@ -1714,7 +1714,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: { user_id_param: string }
+            Args: { p_structure_type?: number; user_id_param: string }
             Returns: {
               activations_this_month: number
               active_partners: number
@@ -1816,6 +1816,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      process_manual_payout: {
+        Args: { p_amount_cents: number; p_comment: string; p_user_id: string }
+        Returns: Json
       }
       process_payment_completion: {
         Args: {
