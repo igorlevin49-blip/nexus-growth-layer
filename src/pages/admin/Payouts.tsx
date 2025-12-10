@@ -173,44 +173,24 @@ export default function AdminPayouts() {
     setProcessing(true);
 
     try {
-      // Create withdrawal transaction
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: payoutDialog.partner.id,
-          type: 'withdrawal',
-          amount_cents: amountCents,
-          status: 'completed',
-          currency: 'USD',
-          payload: {
-            manual_payout: true,
-            admin_id: user.id,
-            comment: payoutForm.comment.trim(),
-            processed_at: new Date().toISOString(),
-          }
-        });
+      // Call RPC function to process manual payout (bypasses RLS)
+      const { data, error } = await supabase.rpc('process_manual_payout', {
+        p_user_id: payoutDialog.partner.id,
+        p_amount_cents: amountCents,
+        p_comment: payoutForm.comment.trim()
+      });
 
-      if (transactionError) throw transactionError;
+      if (error) throw error;
 
-      // Log admin action
-      const { error: auditError } = await supabase
-        .from('admin_audit')
-        .insert({
-          admin_id: user.id,
-          action_type: 'manual_payout',
-          target_type: 'user',
-          target_id: payoutDialog.partner.id,
-          comment: payoutForm.comment.trim(),
-          metadata: {
-            amount_cents: amountCents,
-            partner_name: payoutDialog.partner.full_name,
-            partner_email: payoutDialog.partner.email,
-          }
-        });
+      const result = data as { success: boolean; error?: string; transaction_id?: string };
 
-      if (auditError) {
-        console.error('Audit log error:', auditError);
-        // Don't block the operation
+      if (!result.success) {
+        const errorMessages: Record<string, string> = {
+          'UNAUTHORIZED': 'Недостаточно прав для выполнения операции',
+          'INVALID_AMOUNT': 'Некорректная сумма',
+          'INSUFFICIENT_BALANCE': 'Недостаточно средств на балансе партнёра'
+        };
+        throw new Error(errorMessages[result.error || ''] || result.error);
       }
 
       toast({
