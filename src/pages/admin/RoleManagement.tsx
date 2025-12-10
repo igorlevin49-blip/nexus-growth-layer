@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Shield } from "lucide-react";
+import { Trash2, Shield, Eye } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UserWithRole {
   id: string;
@@ -20,6 +22,8 @@ interface UserWithRole {
 export default function RoleManagement() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
 
   useEffect(() => {
     fetchUsers();
@@ -159,6 +163,14 @@ export default function RoleManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {!isSuperAdmin && (
+            <Alert className="mb-4">
+              <Eye className="h-4 w-4" />
+              <AlertDescription>
+                Вы находитесь в режиме просмотра. Изменение ролей доступно только суперадминистраторам.
+              </AlertDescription>
+            </Alert>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
@@ -166,7 +178,7 @@ export default function RoleManagement() {
                 <TableHead>Email</TableHead>
                 <TableHead>Роль</TableHead>
                 <TableHead>Дата регистрации</TableHead>
-                <TableHead>Действия</TableHead>
+                {isSuperAdmin && <TableHead>Действия</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,50 +187,58 @@ export default function RoleManagement() {
                   <TableCell>{user.full_name || 'Не указано'}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Select
-                      value={user.role}
-                      onValueChange={(value) => handleRoleChange(user.id, value as any)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue>
-                          <Badge variant={getRoleBadgeVariant(user.role)}>
-                            {getRoleLabel(user.role)}
-                          </Badge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">Пользователь</SelectItem>
-                        <SelectItem value="admin">Администратор</SelectItem>
-                        <SelectItem value="superadmin">Супер-админ</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {isSuperAdmin ? (
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) => handleRoleChange(user.id, value as any)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue>
+                            <Badge variant={getRoleBadgeVariant(user.role)}>
+                              {getRoleLabel(user.role)}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Пользователь</SelectItem>
+                          <SelectItem value="admin">Администратор</SelectItem>
+                          <SelectItem value="superadmin">Супер-админ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant={getRoleBadgeVariant(user.role)}>
+                        {getRoleLabel(user.role)}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('ru-RU')}</TableCell>
-                  <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Удалить
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Подтверждение удаления</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Вы уверены, что хотите удалить пользователя {user.full_name || user.email}? 
-                            Это действие нельзя отменить.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Отмена</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                  {isSuperAdmin && (
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Trash2 className="w-4 h-4 mr-1" />
                             Удалить
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Подтверждение удаления</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Вы уверены, что хотите удалить пользователя {user.full_name || user.email}? 
+                              Это действие нельзя отменить.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Отмена</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                              Удалить
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
