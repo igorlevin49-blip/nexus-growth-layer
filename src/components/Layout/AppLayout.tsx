@@ -59,10 +59,10 @@ export function AppLayout() {
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
     { name: "Маркетинг доступ", href: "/admin/marketing-access", icon: Gift },
-    { name: "Управление лендингом", href: "/admin/landing-settings", icon: Globe },
   ];
 
   const superAdminNavigation = [
+    { name: "Управление лендингом", href: "/admin/landing-settings", icon: Globe },
     { name: "Уведомления", href: "/admin/notifications", icon: Bell },
     { name: "Логи безопасности", href: "/admin/security-logs", icon: ShieldAlert },
     { name: "Управление ролями", href: "/admin/roles", icon: Shield },

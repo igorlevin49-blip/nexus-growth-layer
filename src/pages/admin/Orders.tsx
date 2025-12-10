@@ -67,6 +67,7 @@ type OrderItem = {
 
 export default function AdminOrders() {
   const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -335,17 +336,17 @@ export default function AdminOrders() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Список заказов</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleArchiveSelected}
-              disabled={selectedOrders.size === 0 || archiveRecords.isPending}
-            >
-              <Archive className="h-4 w-4 mr-2" />
-              Скрыть ({selectedOrders.size})
-            </Button>
-            {userRole === 'superadmin' && (
+          {isSuperAdmin && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleArchiveSelected}
+                disabled={selectedOrders.size === 0 || archiveRecords.isPending}
+              >
+                <Archive className="h-4 w-4 mr-2" />
+                Скрыть ({selectedOrders.size})
+              </Button>
               <Button
                 variant="destructive"
                 size="sm"
@@ -355,25 +356,27 @@ export default function AdminOrders() {
                 <Trash2 className="h-4 w-4 mr-2" />
                 Удалить ({selectedOrders.size})
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={filteredOrders.length > 0 && selectedOrders.size === filteredOrders.length}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
-                      } else {
-                        setSelectedOrders(new Set());
-                      }
-                    }}
-                  />
-                </TableHead>
+                {isSuperAdmin && (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={filteredOrders.length > 0 && selectedOrders.size === filteredOrders.length}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
+                        } else {
+                          setSelectedOrders(new Set());
+                        }
+                      }}
+                    />
+                  </TableHead>
+                )}
                 <TableHead>ID заказа</TableHead>
                 <TableHead>Покупатель</TableHead>
                 <TableHead>Сумма</TableHead>
@@ -385,20 +388,22 @@ export default function AdminOrders() {
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedOrders.has(order.id)}
-                      onCheckedChange={(checked) => {
-                        const newSet = new Set(selectedOrders);
-                        if (checked) {
-                          newSet.add(order.id);
-                        } else {
-                          newSet.delete(order.id);
-                        }
-                        setSelectedOrders(newSet);
-                      }}
-                    />
-                  </TableCell>
+                  {isSuperAdmin && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedOrders.has(order.id)}
+                        onCheckedChange={(checked) => {
+                          const newSet = new Set(selectedOrders);
+                          if (checked) {
+                            newSet.add(order.id);
+                          } else {
+                            newSet.delete(order.id);
+                          }
+                          setSelectedOrders(newSet);
+                        }}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono text-xs">
                     {order.id.slice(0, 8)}
                   </TableCell>

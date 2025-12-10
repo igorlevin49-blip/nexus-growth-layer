@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRecalculateS1Commissions } from "@/hooks/useRecalculateS1Commissions";
 import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function RecalculateCommissions() {
+  const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const [showConfirmation, setShowConfirmation] = useState(false);
   const recalculateMutation = useRecalculateS1Commissions();
 
@@ -45,7 +48,14 @@ export default function RecalculateCommissions() {
             </AlertDescription>
           </Alert>
 
-          {!showConfirmation ? (
+          {!isSuperAdmin ? (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Только суперадминистратор может выполнять пересчёт комиссий
+              </AlertDescription>
+            </Alert>
+          ) : !showConfirmation ? (
             <Button 
               onClick={() => setShowConfirmation(true)}
               disabled={recalculateMutation.isPending}
