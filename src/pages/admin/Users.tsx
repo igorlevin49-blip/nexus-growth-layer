@@ -11,6 +11,7 @@ import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
 import { UserNetworkDialog } from "@/components/Admin/UserNetworkDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Profile {
   id: string;
@@ -38,6 +39,8 @@ interface Profile {
 }
 
 export default function AdminUsers() {
+  const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
@@ -259,28 +262,32 @@ export default function AdminUsers() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Управление пользователями</CardTitle>
           <div className="flex items-center gap-2">
-            <Button
-              onClick={runDiagnose}
-              variant="outline"
-              size="sm"
-            >
-              Диагностика
-            </Button>
-            <Button
-              onClick={runBackfill}
-              variant="outline"
-              size="sm"
-            >
-              Восстановить связи
-            </Button>
-            <Button
-              onClick={runRecalculateCommissions}
-              disabled={isRecalculating}
-              variant="outline"
-              size="sm"
-            >
-              {isRecalculating ? "Пересчитываем..." : "Пересчитать комиссии"}
-            </Button>
+            {isSuperAdmin && (
+              <>
+                <Button
+                  onClick={runDiagnose}
+                  variant="outline"
+                  size="sm"
+                >
+                  Диагностика
+                </Button>
+                <Button
+                  onClick={runBackfill}
+                  variant="outline"
+                  size="sm"
+                >
+                  Восстановить связи
+                </Button>
+                <Button
+                  onClick={runRecalculateCommissions}
+                  disabled={isRecalculating}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isRecalculating ? "Пересчитываем..." : "Пересчитать комиссии"}
+                </Button>
+              </>
+            )}
             <label className="flex items-center gap-2 text-sm">
               <input 
                 type="checkbox" 
@@ -415,7 +422,7 @@ export default function AdminUsers() {
                       >
                         <Network className="h-4 w-4" />
                       </Button>
-                      {!profile.sponsor_id && profile.is_active && (
+                      {isSuperAdmin && !profile.sponsor_id && profile.is_active && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -429,16 +436,18 @@ export default function AdminUsers() {
                           <UserPlus className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
-                        disabled={!profile.is_active}
-                        title={profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
-                      >
-                        <Ban className="w-4 h-4" />
-                      </Button>
-                      {profile.is_active ? (
+                      {isSuperAdmin && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
+                          disabled={!profile.is_active}
+                          title={profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
+                        >
+                          <Ban className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {isSuperAdmin && profile.is_active && (
                         <Button
                           variant="destructive"
                           size="sm"
@@ -447,7 +456,8 @@ export default function AdminUsers() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                      ) : (
+                      )}
+                      {isSuperAdmin && !profile.is_active && (
                         <Button
                           variant="default"
                           size="sm"

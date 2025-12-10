@@ -270,15 +270,19 @@ export default function AdminPayouts() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openPayoutDialog(partner)}
-                      disabled={partner.available_cents <= 0}
-                    >
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      Выдать
-                    </Button>
+                    {isSuperAdmin ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openPayoutDialog(partner)}
+                        disabled={partner.available_cents <= 0}
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Выдать
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -75,7 +75,7 @@ function AppContent() {
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="shop" element={<Shop />} />
-          <Route path="admin/landing-settings" element={<LandingSettings />} />
+          <Route path="admin/landing-settings" element={<ProtectedRoute requireSuperAdmin><LandingSettings /></ProtectedRoute>} />
           <Route path="network" element={<Network />} />
           <Route path="finances" element={<Finances />} />
           <Route path="settings" element={<Settings />} />

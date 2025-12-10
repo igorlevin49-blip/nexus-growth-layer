@@ -52,7 +52,8 @@ interface SubscriptionWithProfile {
 }
 
 export default function MarketingAccess() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const queryClient = useQueryClient();
   const { disableAutoLoader, enableAutoLoader } = useLoader();
   const [searchQuery, setSearchQuery] = useState("");
@@ -402,14 +403,22 @@ export default function MarketingAccess() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            size="sm" 
-                            variant="default"
-                            onClick={() => handleSelectUser(sub)}
-                          >
-                            <Settings className="h-4 w-4 mr-1" />
-                            Управлять
-                          </Button>
+                          {isSuperAdmin ? (
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              onClick={() => handleSelectUser(sub)}
+                            >
+                              <Settings className="h-4 w-4 mr-1" />
+                              Управлять
+                            </Button>
+                          ) : (
+                            sub.is_marketing_free_access ? (
+                              <Badge variant="secondary">Бесплатный</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

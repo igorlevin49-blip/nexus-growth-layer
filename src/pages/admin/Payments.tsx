@@ -36,6 +36,7 @@ type Order = {
 
 export default function AdminPayments() {
   const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const queryClient = useQueryClient();
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<Set<string>>(new Set());
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
@@ -434,17 +435,17 @@ export default function AdminPayments() {
                   <CardTitle>Подписки</CardTitle>
                   <CardDescription>Управление заявками на подписку</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleArchiveSelected('subscription')}
-                    disabled={selectedSubscriptions.size === 0 || archiveRecords.isPending}
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Скрыть ({selectedSubscriptions.size})
-                  </Button>
-                  {userRole === 'superadmin' && (
+                {isSuperAdmin && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleArchiveSelected('subscription')}
+                      disabled={selectedSubscriptions.size === 0 || archiveRecords.isPending}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Скрыть ({selectedSubscriptions.size})
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"
@@ -454,8 +455,8 @@ export default function AdminPayments() {
                       <Trash2 className="h-4 w-4 mr-2" />
                       Удалить ({selectedSubscriptions.size})
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingSubscriptions ? (
@@ -575,7 +576,7 @@ export default function AdminPayments() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {sub.status === 'pending' && (
+                            {sub.status === 'pending' && isSuperAdmin && (
                               <div className="flex gap-1">
                                 <Button
                                   size="sm"
@@ -611,17 +612,17 @@ export default function AdminPayments() {
                   <CardTitle>Заказы (Активации)</CardTitle>
                   <CardDescription>Управление заявками на активацию</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleArchiveSelected('order')}
-                    disabled={selectedOrders.size === 0 || archiveRecords.isPending}
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Скрыть ({selectedOrders.size})
-                  </Button>
-                  {userRole === 'superadmin' && (
+                {isSuperAdmin && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleArchiveSelected('order')}
+                      disabled={selectedOrders.size === 0 || archiveRecords.isPending}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Скрыть ({selectedOrders.size})
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"
@@ -631,8 +632,8 @@ export default function AdminPayments() {
                       <Trash2 className="h-4 w-4 mr-2" />
                       Удалить ({selectedOrders.size})
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingOrders ? (
@@ -752,7 +753,7 @@ export default function AdminPayments() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.status === 'pending' && (
+                            {order.status === 'pending' && isSuperAdmin && (
                               <div className="flex gap-1">
                                 <Button
                                   size="sm"

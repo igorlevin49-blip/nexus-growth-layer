@@ -9,8 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { CreateDocumentDialog } from '@/components/Admin/CreateDocumentDialog';
 import { EditDocumentDialog } from '@/components/Admin/EditDocumentDialog';
 import { DocumentVersionsDialog } from '@/components/Admin/DocumentVersionsDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Documents() {
+  const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   const { data: documents, isLoading } = useAdminLegalDocuments();
   const [createOpen, setCreateOpen] = useState(false);
   const [editDoc, setEditDoc] = useState<any>(null);
@@ -33,10 +36,12 @@ export default function Documents() {
             Управление договорами, политиками и документами
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Создать документ
-        </Button>
+        {isSuperAdmin && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Создать документ
+          </Button>
+        )}
       </div>
 
       {!documents || documents.length === 0 ? (
@@ -87,13 +92,15 @@ export default function Documents() {
                         <Eye className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditDoc(doc)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    {isSuperAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditDoc(doc)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
