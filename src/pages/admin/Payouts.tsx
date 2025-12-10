@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Search } from "lucide-react";
+import { DollarSign, Search, History } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCents } from "@/utils/formatMoney";
+import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
 
 interface Partner {
   id: string;
@@ -23,7 +25,9 @@ interface Partner {
 }
 
 export default function AdminPayouts() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
+  
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -212,100 +216,127 @@ export default function AdminPayouts() {
     }
   };
 
+  const PartnersTable = () => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Ручные выплаты</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Search Bar */}
+        <div className="mb-4 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по имени или email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Партнёр</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Телефон</TableHead>
+              <TableHead>Доступно</TableHead>
+              <TableHead>Заморожено</TableHead>
+              <TableHead className="text-right">Действия</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {partners.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  Партнёры не найдены
+                </TableCell>
+              </TableRow>
+            ) : (
+              partners.map((partner) => (
+                <TableRow key={partner.id}>
+                  <TableCell>{partner.full_name || 'Без имени'}</TableCell>
+                  <TableCell>{partner.email || '—'}</TableCell>
+                  <TableCell>{partner.phone || '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant="default" className="font-mono">
+                      {formatCents(partner.available_cents, 'USD')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-mono">
+                      {formatCents(partner.frozen_cents, 'USD')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openPayoutDialog(partner)}
+                      disabled={partner.available_cents <= 0}
+                    >
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Выдать
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+          {partners.length > 0 && (
+            <TableFooter>
+              <TableRow className="bg-muted/50 font-semibold">
+                <TableCell colSpan={3}>Итого</TableCell>
+                <TableCell>
+                  <Badge variant="default" className="font-mono">
+                    {formatCents(totals.available, 'USD')}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="font-mono">
+                    {formatCents(totals.frozen, 'USD')}
+                  </Badge>
+                </TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableFooter>
+          )}
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
   if (loading) {
     return <div className="flex items-center justify-center h-96">Загрузка...</div>;
   }
 
   return (
     <div className="p-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Ручные выплаты</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Search Bar */}
-          <div className="mb-4 flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Поиск по имени или email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
+      <Tabs defaultValue="payouts" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="payouts">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Выплаты партнёрам
+          </TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              История выплат
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Партнёр</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Телефон</TableHead>
-                <TableHead>Доступно</TableHead>
-                <TableHead>Заморожено</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {partners.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    Партнёры не найдены
-                  </TableCell>
-                </TableRow>
-              ) : (
-                partners.map((partner) => (
-                  <TableRow key={partner.id}>
-                    <TableCell>{partner.full_name || 'Без имени'}</TableCell>
-                    <TableCell>{partner.email || '—'}</TableCell>
-                    <TableCell>{partner.phone || '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant="default" className="font-mono">
-                        {formatCents(partner.available_cents, 'USD')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono">
-                        {formatCents(partner.frozen_cents, 'USD')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openPayoutDialog(partner)}
-                        disabled={partner.available_cents <= 0}
-                      >
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        Выдать
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-            {partners.length > 0 && (
-              <TableFooter>
-                <TableRow className="bg-muted/50 font-semibold">
-                  <TableCell colSpan={3}>Итого</TableCell>
-                  <TableCell>
-                    <Badge variant="default" className="font-mono">
-                      {formatCents(totals.available, 'USD')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-mono">
-                      {formatCents(totals.frozen, 'USD')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              </TableFooter>
-            )}
-          </Table>
-        </CardContent>
-      </Card>
+        <TabsContent value="payouts">
+          <PartnersTable />
+        </TabsContent>
+
+        {isSuperAdmin && (
+          <TabsContent value="history">
+            <WithdrawalsHistory showExport showStats />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* Payout Dialog */}
       <Dialog open={payoutDialog.open} onOpenChange={(open) => !open && closePayoutDialog()}>
