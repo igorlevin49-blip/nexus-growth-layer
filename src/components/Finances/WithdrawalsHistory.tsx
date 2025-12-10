@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, Download } from "lucide-react";
 import { formatCents } from "@/utils/formatMoney";
 import { useAuth } from "@/hooks/useAuth";
+import { downloadCSV } from "@/utils/exportCSV";
 
 interface Withdrawal {
   id: string;
@@ -24,7 +25,12 @@ interface Withdrawal {
   };
 }
 
-export function WithdrawalsHistory() {
+interface WithdrawalsHistoryProps {
+  showExport?: boolean;
+  showStats?: boolean;
+}
+
+export function WithdrawalsHistory({ showExport = false, showStats = false }: WithdrawalsHistoryProps) {
   const { userRole } = useAuth();
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   
@@ -34,12 +40,22 @@ export function WithdrawalsHistory() {
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [methodFilter, setMethodFilter] = useState("all"); // all, online, manual
+  const [statusFilter, setStatusFilter] = useState("all"); // all, completed, processing, failed
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     fetchWithdrawals();
-  }, [searchQuery, methodFilter, startDate, endDate]);
+  }, [searchQuery, methodFilter, statusFilter, startDate, endDate]);
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalAmount = withdrawals.reduce((sum, w) => sum + w.amount_cents, 0);
+    return {
+      count: withdrawals.length,
+      totalAmount,
+    };
+  }, [withdrawals]);
 
   const fetchWithdrawals = async () => {
     try {
@@ -51,6 +67,11 @@ export function WithdrawalsHistory() {
         .select('*')
         .eq('type', 'withdrawal')
         .order('created_at', { ascending: false });
+
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter as 'completed' | 'processing' | 'failed' | 'pending' | 'frozen');
+      }
 
       // Apply date filters
       if (startDate) {
@@ -149,6 +170,26 @@ export function WithdrawalsHistory() {
     }
   };
 
+  const handleExport = () => {
+    const exportData = withdrawals.map(w => {
+      const payload = w.payload as any;
+      return {
+        'ID': w.id.substring(0, 8),
+        'Партнёр': w.user?.full_name || 'Без имени',
+        'Email': w.user?.email || '',
+        'Сумма': formatCents(w.amount_cents, w.currency),
+        'Способ': payload?.manual_payout ? 'Касса' : 'Онлайн',
+        'Статус': w.status,
+        'Дата': new Date(w.created_at).toLocaleString('ru-RU'),
+        'Комментарий': payload?.comment || ''
+      };
+    });
+    
+    downloadCSV(exportData, `withdrawals-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  const hasFilters = searchQuery || methodFilter !== 'all' || statusFilter !== 'all' || startDate || endDate;
+
   return (
     <Card className="financial-card">
       <CardHeader>
@@ -156,7 +197,7 @@ export function WithdrawalsHistory() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filters */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {isAdmin && (
             <div className="space-y-2">
               <Label htmlFor="search">Поиск партнёра</Label>
@@ -183,6 +224,21 @@ export function WithdrawalsHistory() {
                 <SelectItem value="all">Все способы</SelectItem>
                 <SelectItem value="online">Онлайн</SelectItem>
                 <SelectItem value="manual">Выдано на кассе</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Статус</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger id="status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все статусы</SelectItem>
+                <SelectItem value="completed">Завершено</SelectItem>
+                <SelectItem value="processing">Обработка</SelectItem>
+                <SelectItem value="failed">Ошибка</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -216,20 +272,46 @@ export function WithdrawalsHistory() {
           </div>
         </div>
 
-        {/* Clear filters */}
-        {(searchQuery || methodFilter !== 'all' || startDate || endDate) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSearchQuery("");
-              setMethodFilter("all");
-              setStartDate("");
-              setEndDate("");
-            }}
-          >
-            Сбросить фильтры
-          </Button>
+        {/* Actions row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery("");
+                setMethodFilter("all");
+                setStatusFilter("all");
+                setStartDate("");
+                setEndDate("");
+              }}
+            >
+              Сбросить фильтры
+            </Button>
+          )}
+          
+          {showExport && withdrawals.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Экспорт CSV
+            </Button>
+          )}
+        </div>
+
+        {/* Stats */}
+        {showStats && withdrawals.length > 0 && (
+          <div className="flex flex-wrap gap-4 p-4 bg-muted rounded-lg">
+            <div>
+              <span className="text-sm text-muted-foreground">Всего выплат:</span>
+              <span className="ml-2 font-bold">{stats.count}</span>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Общая сумма:</span>
+              <span className="ml-2 font-bold text-primary">
+                {formatCents(stats.totalAmount, 'USD')}
+              </span>
+            </div>
+          </div>
         )}
 
         {/* Results */}
