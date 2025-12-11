@@ -28,11 +28,12 @@ interface Withdrawal {
 interface WithdrawalsHistoryProps {
   showExport?: boolean;
   showStats?: boolean;
+  ownOnly?: boolean; // NEW: Показывать только свои выплаты (для страницы личных финансов)
 }
 
-export function WithdrawalsHistory({ showExport = false, showStats = false }: WithdrawalsHistoryProps) {
+export function WithdrawalsHistory({ showExport = false, showStats = false, ownOnly = false }: WithdrawalsHistoryProps) {
   const { userRole } = useAuth();
-  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isAdmin = !ownOnly && (userRole === 'admin' || userRole === 'superadmin');
   
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false }: Wi
 
   useEffect(() => {
     fetchWithdrawals();
-  }, [searchQuery, methodFilter, statusFilter, startDate, endDate]);
+  }, [searchQuery, methodFilter, statusFilter, startDate, endDate, ownOnly]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -60,6 +61,13 @@ export function WithdrawalsHistory({ showExport = false, showStats = false }: Wi
   const fetchWithdrawals = async () => {
     try {
       setLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setWithdrawals([]);
+        setLoading(false);
+        return;
+      }
 
       // Build query
       let query = supabase
@@ -67,6 +75,15 @@ export function WithdrawalsHistory({ showExport = false, showStats = false }: Wi
         .select('*')
         .eq('type', 'withdrawal')
         .order('created_at', { ascending: false });
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Если ownOnly=true, всегда фильтровать по текущему пользователю
+      if (ownOnly) {
+        query = query.eq('user_id', user.id);
+      } else if (userRole !== 'admin' && userRole !== 'superadmin') {
+        // Для не-админов всегда показывать только свои
+        query = query.eq('user_id', user.id);
+      }
+      // Для админов без ownOnly - показываем все (для админ-панели)
 
       // Apply status filter
       if (statusFilter !== 'all') {

@@ -354,7 +354,7 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="withdrawals" className="space-y-6">
-          <WithdrawalsHistory />
+          <WithdrawalsHistory ownOnly />
         </TabsContent>
 
         <TabsContent value="structure1" className="space-y-6">
