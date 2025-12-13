@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useAdminLegalDocuments } from '@/hooks/useLegalDocuments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Eye, Edit, History } from 'lucide-react';
+import { Plus, FileText, Eye, Edit, History, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { CreateDocumentDialog } from '@/components/Admin/CreateDocumentDialog';
 import { EditDocumentDialog } from '@/components/Admin/EditDocumentDialog';
 import { DocumentVersionsDialog } from '@/components/Admin/DocumentVersionsDialog';
+import { DeleteDocumentDialog } from '@/components/Admin/DeleteDocumentDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Documents() {
@@ -18,6 +19,7 @@ export default function Documents() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editDoc, setEditDoc] = useState<any>(null);
   const [versionsDoc, setVersionsDoc] = useState<any>(null);
+  const [deleteDoc, setDeleteDoc] = useState<any>(null);
 
   if (isLoading) {
     return (
@@ -88,23 +90,37 @@ export default function Documents() {
                         variant="ghost"
                         size="sm"
                         onClick={() => window.open(`/docs/${doc.slug}`, '_blank')}
+                        title="Просмотр"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                     )}
                     {isSuperAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditDoc(doc)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditDoc(doc)}
+                          title="Редактировать"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteDoc(doc)}
+                          className="text-destructive hover:text-destructive"
+                          title="Удалить"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setVersionsDoc(doc)}
+                      title="История версий"
                     >
                       <History className="h-4 w-4" />
                     </Button>
@@ -117,8 +133,16 @@ export default function Documents() {
       )}
 
       <CreateDocumentDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <EditDocumentDialog doc={editDoc} onOpenChange={(open) => !open && setEditDoc(null)} />
+      <EditDocumentDialog
+        doc={editDoc}
+        onOpenChange={(open) => !open && setEditDoc(null)}
+        onDelete={(doc) => {
+          setEditDoc(null);
+          setDeleteDoc(doc);
+        }}
+      />
       <DocumentVersionsDialog doc={versionsDoc} onOpenChange={(open) => !open && setVersionsDoc(null)} />
+      <DeleteDocumentDialog doc={deleteDoc} onOpenChange={(open) => !open && setDeleteDoc(null)} />
     </div>
   );
 }

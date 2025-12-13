@@ -6,21 +6,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useUpdateDocument } from '@/hooks/useLegalDocuments';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 
 interface EditDocumentDialogProps {
   doc: any;
   onOpenChange: (open: boolean) => void;
+  onDelete?: (doc: any) => void;
 }
 
-export function EditDocumentDialog({ doc, onOpenChange }: EditDocumentDialogProps) {
+export function EditDocumentDialog({ doc, onOpenChange, onDelete }: EditDocumentDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
+    slug: '',
     summary: '',
     is_published: false,
     effective_at: '',
     meta_title: '',
     meta_description: '',
   });
+  const [slugChanged, setSlugChanged] = useState(false);
 
   const updateDocument = useUpdateDocument();
 
@@ -28,14 +32,26 @@ export function EditDocumentDialog({ doc, onOpenChange }: EditDocumentDialogProp
     if (doc) {
       setFormData({
         title: doc.title || '',
+        slug: doc.slug || '',
         summary: doc.summary || '',
         is_published: doc.is_published || false,
         effective_at: doc.effective_at ? new Date(doc.effective_at).toISOString().split('T')[0] : '',
         meta_title: doc.meta_title || '',
         meta_description: doc.meta_description || '',
       });
+      setSlugChanged(false);
     }
   }, [doc]);
+
+  const handleSlugChange = (value: string) => {
+    // Автоматическая транслитерация и форматирование slug
+    const formatted = value
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+    setFormData({ ...formData, slug: formatted });
+    setSlugChanged(formatted !== doc?.slug);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +77,23 @@ export function EditDocumentDialog({ doc, onOpenChange }: EditDocumentDialogProp
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="slug">URL (slug)</Label>
+            <Input
+              id="slug"
+              value={formData.slug}
+              onChange={(e) => handleSlugChange(e.target.value)}
+              required
+              className="font-mono"
+            />
+            {slugChanged && (
+              <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Изменение slug сломает старые ссылки на документ
+              </p>
+            )}
           </div>
 
           <div>
@@ -119,13 +152,25 @@ export function EditDocumentDialog({ doc, onOpenChange }: EditDocumentDialogProp
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
-            </Button>
-            <Button type="submit" disabled={updateDocument.isPending}>
-              Сохранить
-            </Button>
+          <div className="flex justify-between gap-2 border-t pt-4">
+            {onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => onDelete(doc)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Удалить
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Отмена
+              </Button>
+              <Button type="submit" disabled={updateDocument.isPending}>
+                Сохранить
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

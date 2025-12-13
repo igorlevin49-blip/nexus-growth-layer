@@ -173,3 +173,80 @@ export const useRecordConsent = () => {
     },
   });
 };
+
+export const useDeleteDocument = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Сначала удаляем все версии документа
+      const { error: versionsError } = await supabase
+        .from('legal_document_versions')
+        .delete()
+        .eq('document_id', id);
+      
+      if (versionsError) throw versionsError;
+      
+      // Затем удаляем сам документ
+      const { error } = await supabase
+        .from('legal_documents')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-legal-documents'] });
+      toast.success('Документ удалён');
+    },
+    onError: () => {
+      toast.error('Ошибка при удалении документа');
+    },
+  });
+};
+
+export const useUpdateVersion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { content_md?: string; changelog?: string } }) => {
+      const { error } = await supabase
+        .from('legal_document_versions')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['document-versions'] });
+      toast.success('Версия обновлена');
+    },
+    onError: () => {
+      toast.error('Ошибка при обновлении версии');
+    },
+  });
+};
+
+export const useDeleteVersion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, documentId }: { id: string; documentId: string }) => {
+      const { error } = await supabase
+        .from('legal_document_versions')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      return documentId;
+    },
+    onSuccess: (documentId) => {
+      queryClient.invalidateQueries({ queryKey: ['document-versions', documentId] });
+      toast.success('Версия удалена');
+    },
+    onError: () => {
+      toast.error('Ошибка при удалении версии');
+    },
+  });
+};
