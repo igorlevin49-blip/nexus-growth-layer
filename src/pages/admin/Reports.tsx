@@ -3,8 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Users, ShoppingCart, Download, Loader2, RefreshCw, CalendarIcon } from "lucide-react";
+import { DollarSign, TrendingUp, Users, ShoppingCart, Download, RefreshCw, CalendarIcon } from "lucide-react";
 import { useAdminGlobalStats, useAdminStructureStats } from "@/hooks/useAdminStats";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCents } from "@/utils/formatMoney";
 import { useState, useMemo } from "react";
 import { downloadCSV } from "@/utils/exportCSV";
@@ -129,8 +130,31 @@ export default function AdminReports() {
 
   if (globalLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <Skeleton className="h-9 w-64" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20 mb-1" />
+                <Skeleton className="h-3 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
       </div>
     );
   }
@@ -202,7 +226,9 @@ export default function AdminReports() {
           </CardHeader>
           <CardContent>
             {s1Loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
@@ -238,7 +264,9 @@ export default function AdminReports() {
           </CardHeader>
           <CardContent>
             {s2Loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
@@ -295,8 +323,8 @@ export default function AdminReports() {
               </div>
               
               {s1Loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
               ) : (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -358,8 +386,8 @@ export default function AdminReports() {
               </div>
               
               {s2Loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
               ) : (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
