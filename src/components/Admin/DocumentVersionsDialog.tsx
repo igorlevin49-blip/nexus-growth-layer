@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -134,8 +135,23 @@ export function DocumentVersionsDialog({ doc, onOpenChange }: DocumentVersionsDi
             )}
 
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <Skeleton className="h-5 w-24" />
+                          <Skeleton className="h-4 w-40" />
+                        </div>
+                        <div className="flex gap-1">
+                          <Skeleton className="h-8 w-8" />
+                          <Skeleton className="h-8 w-8" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
               </div>
             ) : !versions || versions.length === 0 ? (
               <Card>
