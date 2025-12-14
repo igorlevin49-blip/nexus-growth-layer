@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useLegalDocument } from '@/hooks/useLegalDocuments';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -14,8 +15,23 @@ export default function DocView() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Skeleton className="h-10 w-32 mb-6" />
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <Skeleton className="h-10 w-3/4" />
+              <Skeleton className="h-5 w-1/3" />
+              <div className="space-y-3 pt-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

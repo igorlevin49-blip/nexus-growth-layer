@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
   Users, 
@@ -16,7 +17,6 @@ import {
   Briefcase,
   GraduationCap,
   Globe,
-  Loader2,
   Coffee,
   ShoppingCart,
   Calendar,
@@ -183,8 +183,18 @@ const Index = () => {
             <h4 className="text-3xl font-bold mb-8">Наша команда</h4>
           </div>
           {teamLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6 md:p-8 text-center">
+                  <div className="flex justify-center mb-4 md:mb-6">
+                    <Skeleton className="w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-2xl" />
+                  </div>
+                  <Skeleton className="h-6 w-32 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-24 mx-auto mb-3" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4 mx-auto mt-1" />
+                </Card>
+              ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
