@@ -85,7 +85,7 @@ export function ActivationProgress() {
       // Get required amount from settings
       const { data: settings, error: settingsError } = await supabase
         .from("shop_settings")
-        .select("monthly_activation_required_usd")
+        .select("monthly_activation_required_usd, monthly_activation_required_kzt")
         .eq("id", 1)
         .single();
 
@@ -111,53 +111,40 @@ export function ActivationProgress() {
         const now = new Date();
         const required = dueFrom !== null && now >= dueFrom;
         setIsActivationRequired(required);
-        
-        setIsActivated(profile.monthly_activation_completed || false);
       }
 
-      // Calculate personal activation period if required
+      // If activation is required, fetch from monthly_activations table
       if (profile?.activation_due_from && isActivationRequired) {
-        const dueFrom = new Date(profile.activation_due_from);
         const now = new Date();
-        
-        // Calculate months passed since activation_due_from
-        const monthsPassed = Math.floor(
-          (now.getTime() - dueFrom.getTime()) / (30 * 24 * 60 * 60 * 1000)
-        );
-        
-        // Current period start
-        const periodStart = new Date(dueFrom);
-        periodStart.setMonth(periodStart.getMonth() + monthsPassed);
-        
-        const { data: orders, error: ordersError } = await supabase
-          .from("orders")
-          .select(`
-            id,
-            created_at,
-            order_items (
-              price_usd,
-              qty,
-              is_activation_snapshot
-            )
-          `)
-          .eq("user_id", user.id)
-          .eq("status", "paid")
-          .gte("created_at", periodStart.toISOString());
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
 
-        if (ordersError) throw ordersError;
+        // Fetch from monthly_activations table (populated by admin recalculation)
+        const { data: activation, error: activationError } = await supabase
+          .from('monthly_activations')
+          .select('total_amount_kzt, threshold_kzt, is_activated')
+          .eq('user_id', user.id)
+          .eq('year', currentYear)
+          .eq('month', currentMonth)
+          .single();
 
-        // Calculate activation sum
-        let sum = 0;
-        orders?.forEach((order: any) => {
-          order.order_items?.forEach((item: any) => {
-            if (item.is_activation_snapshot) {
-              sum += Number(item.price_usd) * item.qty;
-            }
-          });
-        });
+        if (activationError && activationError.code !== 'PGRST116') {
+          // PGRST116 = no rows found, which is OK
+          throw activationError;
+        }
 
-        setCurrentAmount(sum);
-        setIsActivated(sum >= Number(settings?.monthly_activation_required_usd || 40));
+        if (activation) {
+          // Convert KZT to USD for display (approximate rate)
+          const usdRate = Number(settings?.monthly_activation_required_usd) / Number(settings?.monthly_activation_required_kzt) || 0.002;
+          const currentUsd = Number(activation.total_amount_kzt) * usdRate;
+          
+          setCurrentAmount(currentUsd);
+          setIsActivated(activation.is_activated);
+        } else {
+          // No record yet - user hasn't made any activation purchases this month
+          setCurrentAmount(0);
+          setIsActivated(false);
+        }
       } else {
         // Activation not yet required
         setCurrentAmount(0);
