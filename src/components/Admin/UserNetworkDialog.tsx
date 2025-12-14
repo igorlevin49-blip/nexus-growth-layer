@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Users, ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -156,20 +155,7 @@ export function UserNetworkDialog({
           {/* Network Tree */}
           <div>
             <h4 className="font-semibold mb-4">Дерево партнёров</h4>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                    <Skeleton className="h-6 w-16" />
-                  </div>
-                ))}
-              </div>
-            ) : !members || members.length === 0 ? (
+            {isLoading ? null : !members || members.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 У пользователя пока нет партнёров в этой структуре
               </div>

@@ -219,11 +219,7 @@ export default function Shop() {
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   if (loading) {
-    return (
-      <div className="container mx-auto p-8">
-        <div className="text-center">Загрузка...</div>
-      </div>
-    );
+    return null;
   }
 
   return (
