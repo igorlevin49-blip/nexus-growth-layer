@@ -205,9 +205,14 @@ export default function AdminOrders() {
     }
 
     try {
+      const updateData: { status: "draft" | "pending" | "paid" | "cancelled"; paid_at?: string } = { status };
+      if (status === 'paid') {
+        updateData.paid_at = new Date().toISOString();
+      }
+      
       const { error } = await supabase
         .from("orders")
-        .update({ status })
+        .update(updateData)
         .eq("id", orderId);
 
       if (error) throw error;
