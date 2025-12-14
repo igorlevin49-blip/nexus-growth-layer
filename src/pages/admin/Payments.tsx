@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Loader2, Archive, Trash2, CheckCircle2, XCircle, Edit2, Save, X, Search } from "lucide-react";
+import { Archive, Trash2, CheckCircle2, XCircle, Edit2, Save, X, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -460,8 +461,8 @@ export default function AdminPayments() {
               </CardHeader>
               <CardContent>
                 {isLoadingSubscriptions ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                  <div className="space-y-3 py-4">
+                    {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
                   </div>
                 ) : !subscriptions || subscriptions.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
@@ -637,8 +638,8 @@ export default function AdminPayments() {
               </CardHeader>
               <CardContent>
                 {isLoadingOrders ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                  <div className="space-y-3 py-4">
+                    {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
                   </div>
                 ) : !orders || orders.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
@@ -821,7 +822,7 @@ export default function AdminPayments() {
                 disabled={approvePayment.isPending || !approveComment.trim()}
               >
                 {approvePayment.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Одобрение...</>
+                  "Одобрение..."
                 ) : (
                   <><CheckCircle2 className="mr-2 h-4 w-4" />Одобрить</>
                 )}
@@ -860,7 +861,7 @@ export default function AdminPayments() {
                 disabled={rejectPayment.isPending || !rejectComment.trim()}
               >
                 {rejectPayment.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Отклонение...</>
+                  "Отклонение..."
                 ) : (
                   <><XCircle className="mr-2 h-4 w-4" />Отклонить</>
                 )}

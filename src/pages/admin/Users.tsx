@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
 import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
 import { UserNetworkDialog } from "@/components/Admin/UserNetworkDialog";
@@ -253,7 +254,21 @@ export default function AdminUsers() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96">Загрузка...</div>;
+    return (
+      <div className="p-8">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

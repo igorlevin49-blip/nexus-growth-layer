@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useMLMRules } from "@/hooks/useMLMRules";
 import { useMLMSettings, useUpdateMLMSetting, useUpdateMLMRule } from "@/hooks/useMLMSettings";
 import { useState, useEffect } from "react";
-import { Loader2, Save, Settings } from "lucide-react";
+import { Save, Settings } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminMLMSettings() {
   const { data: settings, isLoading: settingsLoading } = useMLMSettings();
@@ -62,8 +63,15 @@ export default function AdminMLMSettings() {
 
   if (settingsLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="p-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-9 w-48" />
+        </div>
+        <Skeleton className="h-12 w-full" />
+        <div className="space-y-4">
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     );
   }
