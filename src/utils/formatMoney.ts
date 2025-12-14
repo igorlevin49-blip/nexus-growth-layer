@@ -9,6 +9,15 @@ export function formatCents(cents: number, currency: string = 'USD'): string {
   }).format(amount);
 }
 
+export function formatMoney(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: currency === 'KZT' ? 0 : 2,
+    maximumFractionDigits: currency === 'KZT' ? 0 : 2
+  }).format(amount);
+}
+
 export function parseCentsInput(input: string): number {
   // Remove all non-numeric characters except decimal point
   const cleaned = input.replace(/[^\d.]/g, '');

@@ -17,6 +17,7 @@ import {
   Trash2,
   DollarSign,
   Gift,
+  Activity,
   AlertCircle,
   Bell
 } from "lucide-react";
@@ -56,6 +57,7 @@ export function AppLayout() {
     { name: "Заказы", href: "/admin/orders", icon: ShoppingCart },
     { name: "Оплаты", href: "/admin/payments", icon: FileText },
     { name: "Выплаты", href: "/admin/payouts", icon: DollarSign },
+    { name: "Активации", href: "/admin/monthly-activations", icon: Activity },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
     { name: "Маркетинг доступ", href: "/admin/marketing-access", icon: Gift },

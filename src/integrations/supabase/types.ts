@@ -431,6 +431,70 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_activations: {
+        Row: {
+          created_at: string
+          id: string
+          is_activated: boolean
+          last_order_date: string | null
+          last_order_id: string | null
+          month: number
+          threshold_kzt: number
+          total_amount_kzt: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_activated?: boolean
+          last_order_date?: string | null
+          last_order_id?: string | null
+          month: number
+          threshold_kzt?: number
+          total_amount_kzt?: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_activated?: boolean
+          last_order_date?: string | null
+          last_order_id?: string | null
+          month?: number
+          threshold_kzt?: number
+          total_amount_kzt?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_activations_last_order_id_fkey"
+            columns: ["last_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_activations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_activations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_network_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_settings: {
         Row: {
           created_at: string | null
@@ -943,6 +1007,7 @@ export type Database = {
         Row: {
           currency: Database["public"]["Enums"]["currency_type"] | null
           id: number
+          monthly_activation_required_kzt: number | null
           monthly_activation_required_usd: number | null
           rate_usd_kzt: number | null
           updated_at: string | null
@@ -950,6 +1015,7 @@ export type Database = {
         Insert: {
           currency?: Database["public"]["Enums"]["currency_type"] | null
           id?: number
+          monthly_activation_required_kzt?: number | null
           monthly_activation_required_usd?: number | null
           rate_usd_kzt?: number | null
           updated_at?: string | null
@@ -957,6 +1023,7 @@ export type Database = {
         Update: {
           currency?: Database["public"]["Enums"]["currency_type"] | null
           id?: number
+          monthly_activation_required_kzt?: number | null
           monthly_activation_required_usd?: number | null
           rate_usd_kzt?: number | null
           updated_at?: string | null
@@ -1684,6 +1751,36 @@ export type Database = {
           volume_cents: number
         }[]
       }
+      get_monthly_activation_count: {
+        Args: {
+          p_month: number
+          p_search?: string
+          p_status?: string
+          p_year: number
+        }
+        Returns: Json
+      }
+      get_monthly_activation_report: {
+        Args: {
+          p_limit?: number
+          p_month: number
+          p_offset?: number
+          p_search?: string
+          p_status?: string
+          p_year: number
+        }
+        Returns: {
+          email: string
+          full_name: string
+          is_activated: boolean
+          last_order_date: string
+          orders_count: number
+          referral_code: string
+          threshold_kzt: number
+          total_amount_kzt: number
+          user_id: string
+        }[]
+      }
       get_network_profiles: {
         Args: { p_user_id: string }
         Returns: {
@@ -1742,6 +1839,17 @@ export type Database = {
           subscription_status: string
           total_team: number
           user_id: string
+        }[]
+      }
+      get_partner_orders_for_month: {
+        Args: { p_month: number; p_user_id: string; p_year: number }
+        Returns: {
+          items: Json
+          order_date: string
+          order_id: string
+          status: string
+          total_kzt: number
+          total_usd: number
         }[]
       }
       get_referral_network: {
@@ -1839,6 +1947,10 @@ export type Database = {
       }
       recalculate_all_s1_commissions: {
         Args: { p_admin_id: string }
+        Returns: Json
+      }
+      recalculate_monthly_activations: {
+        Args: { p_admin_id: string; p_month?: number; p_year?: number }
         Returns: Json
       }
       reject_payment: {
