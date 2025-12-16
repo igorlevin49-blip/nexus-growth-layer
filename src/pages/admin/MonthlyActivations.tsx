@@ -15,7 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, RefreshCw, Calendar, CheckCircle2, XCircle, 
-  ChevronLeft, ChevronRight, Eye, Package, User
+  ChevronLeft, ChevronRight, Eye, Package, User, Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -27,6 +27,7 @@ import {
   type ActivationReportItem
 } from "@/hooks/useMonthlyActivations";
 import { formatMoney } from "@/utils/formatMoney";
+import { exportActivationsToCSV } from "@/utils/exportCSV";
 
 const MONTHS = [
   { value: 1, label: "Январь" },
@@ -118,6 +119,15 @@ export default function MonthlyActivations() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => reportData && exportActivationsToCSV(reportData, month, year)}
+            disabled={!reportData || reportData.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Выгрузить Excel
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -276,6 +286,7 @@ export default function MonthlyActivations() {
                     <TableHead className="text-right">Порог</TableHead>
                     <TableHead className="text-center">Статус</TableHead>
                     <TableHead className="text-center">Заказов</TableHead>
+                    <TableHead>Дата активации</TableHead>
                     <TableHead>Последний заказ</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -307,6 +318,13 @@ export default function MonthlyActivations() {
                       </TableCell>
                       <TableCell className="text-center">
                         {item.orders_count}
+                      </TableCell>
+                      <TableCell>
+                        {item.activation_due_from ? (
+                          format(new Date(item.activation_due_from), 'dd.MM.yyyy', { locale: ru })
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {item.last_order_date ? (

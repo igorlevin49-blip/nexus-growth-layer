@@ -12,6 +12,7 @@ export interface ActivationReportItem {
   is_activated: boolean;
   last_order_date: string | null;
   orders_count: number;
+  activation_due_from: string | null;
 }
 
 export interface ActivationCounts {
