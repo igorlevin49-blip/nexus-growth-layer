@@ -120,18 +120,19 @@ export function ActivationProgress() {
 
       if (profileError) throw profileError;
       
+      let required = false;
       if (profile) {
         const dueFrom = profile.activation_due_from ? new Date(profile.activation_due_from) : null;
         setActivationDueFrom(dueFrom);
         
         // Check if activation is required (period has started)
         const now = new Date();
-        const required = dueFrom !== null && now >= dueFrom;
+        required = dueFrom !== null && now >= dueFrom;
         setIsActivationRequired(required);
       }
 
       // If activation is required, fetch from monthly_activations table
-      if (profile?.activation_due_from && isActivationRequired) {
+      if (profile?.activation_due_from && required) {
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth() + 1;
