@@ -1954,6 +1954,10 @@ export type Database = {
         Args: { p_admin_id: string; p_month?: number; p_year?: number }
         Returns: Json
       }
+      recalculate_user_monthly_activation: {
+        Args: { p_month: number; p_user_id: string; p_year: number }
+        Returns: undefined
+      }
       reject_payment: {
         Args: {
           p_admin_id: string
