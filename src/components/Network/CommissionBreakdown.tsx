@@ -76,10 +76,10 @@ export function CommissionBreakdown({ structureType }: CommissionBreakdownProps)
                     )}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">${level.earned.toFixed(0)}</span>
+                    <span className="font-medium">{level.earned.toLocaleString('ru-RU')} ₸</span>
                     {level.frozen > 0 && (
                       <span className="text-xs text-warning">
-                        (${level.frozen.toFixed(0)} ❄️)
+                        ({level.frozen.toLocaleString('ru-RU')} ₸ ❄️)
                       </span>
                     )}
                   </div>
@@ -89,10 +89,10 @@ export function CommissionBreakdown({ structureType }: CommissionBreakdownProps)
             <div className="pt-2 border-t border-border flex justify-between items-center">
               <span className="font-medium">Итого</span>
               <div className="text-right">
-                <span className="text-lg font-bold">${totalEarned.toFixed(0)}</span>
+                <span className="text-lg font-bold">{totalEarned.toLocaleString('ru-RU')} ₸</span>
                 {totalFrozen > 0 && (
                   <div className="text-xs text-warning">
-                    Заморожено: ${totalFrozen.toFixed(0)}
+                    Заморожено: {totalFrozen.toLocaleString('ru-RU')} ₸
                   </div>
                 )}
               </div>

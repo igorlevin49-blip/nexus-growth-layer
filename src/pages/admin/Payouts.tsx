@@ -158,7 +158,7 @@ export default function AdminPayouts() {
     if (amountCents > payoutDialog.partner.available_cents) {
       toast({
         title: "Ошибка",
-        description: `Недостаточно средств. Доступно: ${formatCents(payoutDialog.partner.available_cents, 'USD')}`,
+        description: `Недостаточно средств. Доступно: ${formatCents(payoutDialog.partner.available_cents, 'KZT')}`,
         variant: "destructive",
       });
       return;
@@ -199,7 +199,7 @@ export default function AdminPayouts() {
 
       toast({
         title: "Успешно",
-        description: `Выплата ${formatCents(amountCents, 'USD')} произведена`,
+        description: `Выплата ${formatCents(amountCents, 'KZT')} произведена`,
       });
 
       closePayoutDialog();
@@ -261,12 +261,12 @@ export default function AdminPayouts() {
                   <TableCell>{partner.phone || '—'}</TableCell>
                   <TableCell>
                     <Badge variant="default" className="font-mono">
-                      {formatCents(partner.available_cents, 'USD')}
+                      {formatCents(partner.available_cents, 'KZT')}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono">
-                      {formatCents(partner.frozen_cents, 'USD')}
+                      {formatCents(partner.frozen_cents, 'KZT')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -294,12 +294,12 @@ export default function AdminPayouts() {
                 <TableCell colSpan={3}>Итого</TableCell>
                 <TableCell>
                   <Badge variant="default" className="font-mono">
-                    {formatCents(totals.available, 'USD')}
+                    {formatCents(totals.available, 'KZT')}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="font-mono">
-                    {formatCents(totals.frozen, 'USD')}
+                    {formatCents(totals.frozen, 'KZT')}
                   </Badge>
                 </TableCell>
                 <TableCell></TableCell>
@@ -359,24 +359,24 @@ export default function AdminPayouts() {
               <div>
                 <p className="text-sm text-muted-foreground">Доступно для выплаты</p>
                 <p className="text-lg font-bold text-primary">
-                  {formatCents(payoutDialog.partner.available_cents, 'USD')}
+                  {formatCents(payoutDialog.partner.available_cents, 'KZT')}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="amount">Сумма выплаты (в центах) *</Label>
+                <Label htmlFor="amount">Сумма выплаты (в тенге) *</Label>
                 <Input
                   id="amount"
                   type="number"
                   min="1"
                   max={payoutDialog.partner.available_cents}
-                  placeholder="Например: 5000 для $50.00"
+                  placeholder="Например: 55000 для 55 000 ₸"
                   value={payoutForm.amount_cents}
                   onChange={(e) => setPayoutForm(prev => ({ ...prev, amount_cents: e.target.value }))}
                 />
                 {payoutForm.amount_cents && !isNaN(parseInt(payoutForm.amount_cents)) && (
                   <p className="text-sm text-muted-foreground">
-                    = {formatCents(parseInt(payoutForm.amount_cents), 'USD')}
+                    = {formatCents(parseInt(payoutForm.amount_cents), 'KZT')}
                   </p>
                 )}
               </div>

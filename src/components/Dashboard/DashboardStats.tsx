@@ -13,7 +13,7 @@ export function DashboardStats() {
   const stats = [
     {
       title: "Доступный баланс",
-      value: balanceLoading ? null : formatCents(balance?.available_cents || 0, 'USD'),
+      value: balanceLoading ? null : formatCents(balance?.available_cents || 0, 'KZT'),
       change: "+0%",
       trend: "up" as const,
       icon: DollarSign,
@@ -29,7 +29,7 @@ export function DashboardStats() {
     },
     {
       title: "Замороженные средства",
-      value: balanceLoading ? null : formatCents(balance?.frozen_cents || 0, 'USD'),
+      value: balanceLoading ? null : formatCents(balance?.frozen_cents || 0, 'KZT'),
       change: "-0%",
       trend: "down" as const,
       icon: Snowflake,
@@ -37,7 +37,7 @@ export function DashboardStats() {
     },
     {
       title: "Комиссии за месяц",
-      value: statsLoading ? null : formatCents(Math.round((networkStats?.commissions_this_month || 0) * 100), 'USD'),
+      value: statsLoading ? null : formatCents(networkStats?.commissions_this_month || 0, 'KZT'),
       change: "+0%",
       trend: "up" as const,
       icon: DollarSign,

@@ -338,7 +338,7 @@ export default function AdminUsers() {
                 <TableHead>Статус аккаунта</TableHead>
                 <TableHead>Статус подписки</TableHead>
                 <TableHead>Активация</TableHead>
-                <TableHead>Баланс (USD)</TableHead>
+                <TableHead>Баланс (KZT)</TableHead>
                 <TableHead>Дата регистрации</TableHead>
                 <TableHead className="text-right">Действия</TableHead>
               </TableRow>
@@ -420,7 +420,7 @@ export default function AdminUsers() {
                       {profile.monthly_activation_completed ? 'Выполнена' : 'Не выполнена'}
                     </Badge>
                   </TableCell>
-                  <TableCell>${(profile.realBalance ?? profile.balance ?? 0).toFixed(2)}</TableCell>
+                  <TableCell>{((profile.realBalance ?? profile.balance ?? 0)).toLocaleString('ru-RU')} ₸</TableCell>
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
                     <div className="flex gap-2 justify-end">

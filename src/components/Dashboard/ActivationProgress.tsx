@@ -280,7 +280,7 @@ export function ActivationProgress() {
           <div className="flex justify-between text-sm mb-2">
             <span>Прогресс активации</span>
             <span className="font-semibold">
-              ${currentAmount.toFixed(2)} / ${requiredAmount.toFixed(2)}
+              {currentAmount.toLocaleString('ru-RU')} ₸ / {requiredAmount.toLocaleString('ru-RU')} ₸
             </span>
           </div>
           <Progress value={progress} className="mb-2" />
@@ -309,7 +309,7 @@ export function ActivationProgress() {
             </p>
           ) : (
             <p className="text-xs text-muted-foreground mt-2">
-              Осталось приобрести активационных товаров на ${remaining.toFixed(2)}
+              Осталось приобрести активационных товаров на {remaining.toLocaleString('ru-RU')} ₸
             </p>
           )}
         </div>

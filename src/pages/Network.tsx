@@ -32,10 +32,10 @@ const getActivityIcon = (type: string) => {
 const getActivityText = (type: string, payload: any) => {
   switch (type) {
     case 'registration': return 'Зарегистрировался по вашей ссылке';
-    case 'activation': return `Выполнил активацию $${payload?.amount || 0}`;
+    case 'activation': return `Выполнил активацию ${(payload?.amount || 0).toLocaleString('ru-RU')} ₸`;
     case 'freeze': return 'Аккаунт заморожен';
     case 'unfreeze': return 'Аккаунт разморожен';
-    case 'purchase': return `Покупка на сумму $${payload?.amount || 0}`;
+    case 'purchase': return `Покупка на сумму ${(payload?.amount || 0).toLocaleString('ru-RU')} ₸`;
     default: return 'Действие';
   }
 };
@@ -215,7 +215,7 @@ export default function Network() {
         </CardContent></Card>
         <Card><CardContent className="p-6">
           {statsLoading ? <Skeleton className="h-20" /> : (
-            <><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">${stats?.volume_this_month?.toFixed(0) || 0}</p></>
+            <><p className="text-sm text-muted-foreground">Объём продаж</p><p className="text-2xl font-bold">{(stats?.volume_this_month || 0).toLocaleString('ru-RU')} ₸</p></>
           )}
         </CardContent></Card>
         {/* Commission breakdown card */}
@@ -309,7 +309,7 @@ export default function Network() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium">${m.monthly_volume.toFixed(2)}</div>
+                        <div className="font-medium">{m.monthly_volume.toLocaleString('ru-RU')} ₸</div>
                         <div className="text-xs text-muted-foreground">Команда: {m.total_team}</div>
                       </div>
                     </div>

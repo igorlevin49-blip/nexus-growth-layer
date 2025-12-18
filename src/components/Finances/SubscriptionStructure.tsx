@@ -123,11 +123,11 @@ export function SubscriptionStructure({
                         <td className="py-2 sm:py-3 px-2 text-right">
                         <div className="flex flex-col items-end">
                           <span className="font-medium text-success text-xs sm:text-sm">
-                            ${(level.earned || 0).toFixed(2)}
+                            {(level.earned || 0).toLocaleString('ru-RU')} ₸
                           </span>
                           {level.frozen && level.frozen > 0 && (
                             <span className="text-xs text-muted-foreground">
-                              ${level.frozen.toFixed(2)} заморожено
+                              {level.frozen.toLocaleString('ru-RU')} ₸ заморожено
                             </span>
                           )}
                         </div>

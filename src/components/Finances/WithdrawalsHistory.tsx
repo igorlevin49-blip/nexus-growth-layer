@@ -325,7 +325,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
             <div>
               <span className="text-sm text-muted-foreground">Общая сумма:</span>
               <span className="ml-2 font-bold text-primary">
-                {formatCents(stats.totalAmount, 'USD')}
+                {formatCents(stats.totalAmount, 'KZT')}
               </span>
             </div>
           </div>
