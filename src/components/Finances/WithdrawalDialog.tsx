@@ -51,7 +51,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
         <DialogHeader>
           <DialogTitle>Вывести средства</DialogTitle>
           <DialogDescription>
-            Доступно для вывода: {balance ? formatCents(balance.available_cents) : "$0.00"}
+            Доступно для вывода: {balance ? formatCents(balance.available_cents) : "0 ₸"}
           </DialogDescription>
         </DialogHeader>
 
@@ -61,7 +61,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
             <Input
               id="amount"
               type="text"
-              placeholder="0.00"
+              placeholder="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required

@@ -158,25 +158,25 @@ export default function Finances() {
         {[
           {
             title: "Доступный баланс",
-            amount: balance ? formatCents(balance.available_cents) : "$0.00",
+            amount: balance ? formatCents(balance.available_cents) : "0 ₸",
             description: "Доступно для вывода",
             loading: balanceLoading
           },
           {
             title: "Заморожено",
-            amount: balance ? formatCents(balance.frozen_cents) : "$0.00",
+            amount: balance ? formatCents(balance.frozen_cents) : "0 ₸",
             description: "Разморозка через 7 дней",
             loading: balanceLoading
           },
           {
             title: "В ожидании",
-            amount: balance ? formatCents(balance.pending_cents) : "$0.00",
+            amount: balance ? formatCents(balance.pending_cents) : "0 ₸",
             description: "Обработка платежей",
             loading: balanceLoading
           },
           {
             title: "Выведено",
-            amount: balance ? formatCents(balance.withdrawn_cents) : "$0.00",
+            amount: balance ? formatCents(balance.withdrawn_cents) : "0 ₸",
             description: "Всего выведено",
             loading: balanceLoading
           }
@@ -210,7 +210,7 @@ export default function Finances() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Вывести средства</h3>
                   <p className="text-sm text-muted-foreground">
-                    Доступно: {balance ? formatCents(balance.available_cents) : "$0.00"}
+                    Доступно: {balance ? formatCents(balance.available_cents) : "0 ₸"}
                   </p>
                 </div>
               </div>

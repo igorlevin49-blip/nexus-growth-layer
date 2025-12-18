@@ -54,13 +54,14 @@ export function useWithdrawals() {
 
       if (withdrawalError) throw withdrawalError;
 
-      // Create negative transaction
+      // Create negative transaction in KZT
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert([{
           user_id: user.id,
           type: 'withdrawal',
           amount_cents,
+          currency: 'KZT',
           status: 'processing',
           source_id: withdrawal.id,
           source_ref: `withdrawal_${withdrawal.id}`
