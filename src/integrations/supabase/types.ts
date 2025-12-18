@@ -1906,25 +1906,15 @@ export type Database = {
           withdrawn_cents: number
         }[]
       }
-      hard_delete_records:
-        | {
-            Args: {
-              confirmation_phrase: string
-              dry_run?: boolean
-              record_ids: string[]
-              record_type: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              confirmation_phrase?: string
-              dry_run?: boolean
-              record_ids: string[]
-              record_type: string
-            }
-            Returns: Json
-          }
+      hard_delete_records: {
+        Args: {
+          confirmation_phrase: string
+          dry_run?: boolean
+          record_ids: string[]
+          record_type: string
+        }
+        Returns: Json
+      }
       hard_delete_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
