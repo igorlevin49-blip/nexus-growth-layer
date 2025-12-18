@@ -116,9 +116,9 @@ export default function AdminReports() {
       'Уровень': `L${row.level}`,
       'Процент': `${row.percent}%`,
       'Транзакций': row.transactions_count,
-      'Начислено (USD)': (row.total_amount_cents / 100).toFixed(2),
-      'Заморожено (USD)': (row.frozen_amount_cents / 100).toFixed(2),
-      'Доступно (USD)': ((row.available_amount_cents || 0) / 100).toFixed(2),
+      'Начислено (KZT)': row.total_amount_cents,
+      'Заморожено (KZT)': row.frozen_amount_cents,
+      'Доступно (KZT)': row.available_amount_cents || 0,
       'Pass-up': row.pass_up_count
     }));
 

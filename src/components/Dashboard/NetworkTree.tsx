@@ -123,7 +123,7 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
             </div>
             <div className="text-right">
               <div className="font-medium text-foreground">
-                ${node.monthly_volume.toFixed(2)}
+                {node.monthly_volume.toLocaleString('ru-RU')} ₸
               </div>
               <div className="text-xs">
                 Команда: {node.total_team}

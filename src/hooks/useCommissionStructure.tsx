@@ -44,13 +44,13 @@ export function useCommissionStructure(options: UseCommissionStructureOptions = 
 
       if (error) throw error;
 
-      // Convert cents to dollars
+      // Data is already in whole KZT, no conversion needed
       return (data || []).map(level => ({
         level: level.level,
         percent: level.percent,
-        earned: level.earned_cents / 100,
-        frozen: level.frozen_cents / 100,
-        volume: level.volume_cents / 100,
+        earned: level.earned_cents,  // already whole KZT
+        frozen: level.frozen_cents,  // already whole KZT
+        volume: level.volume_cents,  // already whole KZT
         partners_count: level.partners_count,
         status: level.status as 'active' | 'frozen' | 'locked',
         unlock_requirement: level.unlock_requirement
