@@ -1926,6 +1926,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_payment_error: {
+        Args: {
+          p_error_message: string
+          p_error_type: string
+          p_source_id: string
+          p_source_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       process_manual_payout:
         | {
             Args: {
