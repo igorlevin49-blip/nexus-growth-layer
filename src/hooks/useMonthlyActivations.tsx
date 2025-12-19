@@ -13,6 +13,7 @@ export interface ActivationReportItem {
   last_order_date: string | null;
   orders_count: number;
   activation_due_from: string | null;
+  admin_comment: string | null;
 }
 
 export interface ActivationCounts {
@@ -152,5 +153,33 @@ export function useActivationThreshold() {
       };
     },
     staleTime: 60000
+  });
+}
+
+// Update activation comment
+export function useUpdateActivationComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { userId: string; year: number; month: number; comment: string }) => {
+      const { error } = await supabase
+        .from('monthly_activations')
+        .update({ 
+          admin_comment: params.comment, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('user_id', params.userId)
+        .eq('year', params.year)
+        .eq('month', params.month);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthly-activations-report'] });
+      toast.success("Комментарий сохранён");
+    },
+    onError: (error) => {
+      toast.error('Ошибка сохранения комментария: ' + error.message);
+    }
   });
 }

@@ -433,6 +433,7 @@ export type Database = {
       }
       monthly_activations: {
         Row: {
+          admin_comment: string | null
           created_at: string
           id: string
           is_activated: boolean
@@ -446,6 +447,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          admin_comment?: string | null
           created_at?: string
           id?: string
           is_activated?: boolean
@@ -459,6 +461,7 @@ export type Database = {
           year: number
         }
         Update: {
+          admin_comment?: string | null
           created_at?: string
           id?: string
           is_activated?: boolean
@@ -1771,6 +1774,7 @@ export type Database = {
         }
         Returns: {
           activation_due_from: string
+          admin_comment: string
           email: string
           full_name: string
           is_activated: boolean
