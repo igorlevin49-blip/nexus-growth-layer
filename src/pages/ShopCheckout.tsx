@@ -94,7 +94,11 @@ export default function ShopCheckout() {
         return sum + (product ? product.price_usd * item.quantity : 0);
       }, 0);
 
-      const totalKzt = totalUsd * rate;
+      // Use actual KZT prices from products, not converted from USD
+      const totalKzt = cartItems.reduce((sum, item) => {
+        const product = products.find((p) => p.id === item.productId);
+        return sum + (product ? product.price_kzt * item.quantity : 0);
+      }, 0);
 
       // Create order with selected payment type
       const { data: order, error: orderError } = await supabase
