@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
@@ -15,7 +16,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, RefreshCw, Calendar, CheckCircle2, XCircle, 
-  ChevronLeft, ChevronRight, Eye, Package, User, Download
+  ChevronLeft, ChevronRight, Eye, Package, User, Download,
+  Edit2, Save, X
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -24,6 +26,7 @@ import {
   useMonthlyActivationsCounts,
   usePartnerOrdersForMonth,
   useRecalculateMonthlyActivations,
+  useUpdateActivationComment,
   type ActivationReportItem
 } from "@/hooks/useMonthlyActivations";
 import { formatMoney } from "@/utils/formatMoney";
@@ -55,6 +58,10 @@ export default function MonthlyActivations() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
   const [selectedPartner, setSelectedPartner] = useState<ActivationReportItem | null>(null);
+  const [editingComment, setEditingComment] = useState<{
+    userId: string;
+    comment: string;
+  } | null>(null);
 
   // Debounce search
   const handleSearchChange = (value: string) => {
@@ -85,6 +92,7 @@ export default function MonthlyActivations() {
   );
 
   const recalculateMutation = useRecalculateMonthlyActivations();
+  const updateCommentMutation = useUpdateActivationComment();
 
   // Years for selector (last 3 years)
   const years = useMemo(() => {
@@ -100,6 +108,18 @@ export default function MonthlyActivations() {
     if (confirm('Пересчитать активации за все периоды? Это может занять некоторое время.')) {
       recalculateMutation.mutate({});
     }
+  };
+
+  const handleSaveComment = () => {
+    if (!editingComment) return;
+    updateCommentMutation.mutate({
+      userId: editingComment.userId,
+      year,
+      month,
+      comment: editingComment.comment
+    }, {
+      onSuccess: () => setEditingComment(null)
+    });
   };
 
   const totalPages = counts ? Math.ceil(
@@ -288,6 +308,7 @@ export default function MonthlyActivations() {
                     <TableHead className="text-center">Заказов</TableHead>
                     <TableHead>Дата активации</TableHead>
                     <TableHead>Последний заказ</TableHead>
+                    <TableHead className="min-w-[200px]">Комментарий</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -331,6 +352,50 @@ export default function MonthlyActivations() {
                           format(new Date(item.last_order_date), 'dd.MM.yyyy HH:mm', { locale: ru })
                         ) : (
                           <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingComment?.userId === item.user_id ? (
+                          <div className="flex items-center gap-2">
+                            <Textarea
+                              value={editingComment.comment}
+                              onChange={(e) => setEditingComment({ ...editingComment, comment: e.target.value })}
+                              className="min-h-[60px] text-sm"
+                              placeholder="Комментарий..."
+                            />
+                            <div className="flex flex-col gap-1">
+                              <Button 
+                                size="sm" 
+                                onClick={handleSaveComment}
+                                disabled={updateCommentMutation.isPending}
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => setEditingComment(null)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+                              {item.admin_comment || '—'}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingComment({
+                                userId: item.user_id,
+                                comment: item.admin_comment || ''
+                              })}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
