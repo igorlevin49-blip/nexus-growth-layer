@@ -5,7 +5,7 @@ import { useAuth } from "./useAuth";
 export interface AdminNotification {
   id: string;
   admin_id: string;
-  type: 'status_achievement' | 'payment' | 'system' | 'suspicious_activity' | 'commission';
+  type: 'status_achievement' | 'payment' | 'system' | 'suspicious_activity' | 'commission' | 'payment_error';
   title: string;
   message: string;
   read: boolean;
