@@ -284,10 +284,14 @@ export default function AdminOrders() {
       dry_run: false
     }, {
       onSuccess: () => {
+        toast({ title: "Записи успешно удалены" });
         setDeleteDialog(false);
         setConfirmationPhrase('');
         setSelectedOrders(new Set());
         loadOrders();
+      },
+      onError: (error: Error) => {
+        toast({ title: "Ошибка удаления", description: error.message, variant: "destructive" });
       }
     });
   };
