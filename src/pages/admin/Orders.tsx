@@ -258,7 +258,7 @@ export default function AdminOrders() {
     }
 
     archiveRecords.mutate({ 
-      record_type: 'order', 
+      record_type: 'orders', 
       record_ids: Array.from(selectedOrders) 
     }, {
       onSuccess: () => {
@@ -278,7 +278,7 @@ export default function AdminOrders() {
 
   const handleConfirmDelete = () => {
     hardDeleteRecords.mutate({
-      record_type: 'order',
+      record_type: 'orders',
       record_ids: Array.from(selectedOrders),
       confirmation_phrase: confirmationPhrase,
       dry_run: false
