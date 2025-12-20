@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ArchiveRecordsParams {
-  record_type: 'order' | 'subscription' | 'transaction';
+  record_type: 'orders' | 'subscriptions' | 'transactions';
   record_ids: string[];
 }
 
 interface HardDeleteParams {
-  record_type: 'order' | 'subscription';
+  record_type: 'orders' | 'subscriptions' | 'withdrawals' | 'transactions';
   record_ids: string[];
   confirmation_phrase: string;
   dry_run?: boolean;

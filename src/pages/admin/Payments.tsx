@@ -41,7 +41,7 @@ export default function AdminPayments() {
   const queryClient = useQueryClient();
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<Set<string>>(new Set());
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'subscription' | 'order' }>({ open: false, type: 'subscription' });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'subscriptions' | 'orders' }>({ open: false, type: 'subscriptions' });
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -313,8 +313,8 @@ export default function AdminPayments() {
   };
 
   // Archive/delete handlers
-  const handleArchiveSelected = (type: 'subscription' | 'order') => {
-    const ids = type === 'order' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
+  const handleArchiveSelected = (type: 'subscriptions' | 'orders') => {
+    const ids = type === 'orders' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
     
     if (ids.length === 0) {
       toast.error("Выберите записи для архивации");
@@ -326,7 +326,7 @@ export default function AdminPayments() {
       record_ids: ids 
     }, {
       onSuccess: () => {
-        if (type === 'order') {
+        if (type === 'orders') {
           setSelectedOrders(new Set());
         } else {
           setSelectedSubscriptions(new Set());
@@ -336,8 +336,8 @@ export default function AdminPayments() {
     });
   };
 
-  const handleDeleteSelected = (type: 'subscription' | 'order') => {
-    const ids = type === 'order' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
+  const handleDeleteSelected = (type: 'subscriptions' | 'orders') => {
+    const ids = type === 'orders' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
     
     if (ids.length === 0) {
       toast.error("Выберите записи для удаления");
@@ -353,7 +353,7 @@ export default function AdminPayments() {
       return;
     }
 
-    const ids = deleteDialog.type === 'order' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
+    const ids = deleteDialog.type === 'orders' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
 
     try {
       const { data, error } = await supabase.rpc('hard_delete_records', {
@@ -367,7 +367,7 @@ export default function AdminPayments() {
 
       setDeleteDialog({ open: false, type: deleteDialog.type });
       setDeleteConfirmPhrase("");
-      if (deleteDialog.type === 'order') {
+      if (deleteDialog.type === 'orders') {
         setSelectedOrders(new Set());
       } else {
         setSelectedSubscriptions(new Set());
@@ -441,7 +441,7 @@ export default function AdminPayments() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleArchiveSelected('subscription')}
+                      onClick={() => handleArchiveSelected('subscriptions')}
                       disabled={selectedSubscriptions.size === 0 || archiveRecords.isPending}
                     >
                       <Archive className="h-4 w-4 mr-2" />
@@ -450,7 +450,7 @@ export default function AdminPayments() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteSelected('subscription')}
+                      onClick={() => handleDeleteSelected('subscriptions')}
                       disabled={selectedSubscriptions.size === 0}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -618,7 +618,7 @@ export default function AdminPayments() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleArchiveSelected('order')}
+                      onClick={() => handleArchiveSelected('orders')}
                       disabled={selectedOrders.size === 0 || archiveRecords.isPending}
                     >
                       <Archive className="h-4 w-4 mr-2" />
@@ -627,7 +627,7 @@ export default function AdminPayments() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteSelected('order')}
+                      onClick={() => handleDeleteSelected('orders')}
                       disabled={selectedOrders.size === 0}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
