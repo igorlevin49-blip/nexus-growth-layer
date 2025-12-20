@@ -125,21 +125,26 @@ export default function AdminPayments() {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Fetch profiles separately
-      const subscriptionsWithProfiles = await Promise.all(
-        (data || []).map(async (sub) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', sub.user_id)
-            .single();
-          
-          return {
-            ...sub,
-            profiles: profile || { full_name: '', email: '' }
-          };
-        })
-      );
+      // Fetch all profiles in one query
+      const allUserIds = [...new Set((data || []).map(sub => sub.user_id).filter(Boolean))];
+      const profilesMap = new Map<string, { full_name: string; email: string }>();
+      
+      if (allUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', allUserIds);
+        
+        profiles?.forEach(p => {
+          profilesMap.set(p.id, { full_name: p.full_name || '', email: p.email || '' });
+        });
+      }
+      
+      // Map profiles to subscriptions
+      const subscriptionsWithProfiles = (data || []).map(sub => ({
+        ...sub,
+        profiles: profilesMap.get(sub.user_id) || { full_name: '', email: '' }
+      }));
       
       // Sort: pending first, then active, then others
       const sortedSubs = subscriptionsWithProfiles.sort((a, b) => {
@@ -208,20 +213,26 @@ export default function AdminPayments() {
       const { data, error } = await query;
       if (error) throw error;
       
-      const ordersWithProfiles = await Promise.all(
-        (data || []).map(async (order) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', order.user_id)
-            .single();
-          
-          return {
-            ...order,
-            profiles: profile || { full_name: '', email: '' }
-          };
-        })
-      );
+      // Fetch all profiles in one query
+      const allOrderUserIds = [...new Set((data || []).map(order => order.user_id).filter(Boolean))];
+      const profilesMap = new Map<string, { full_name: string; email: string }>();
+      
+      if (allOrderUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', allOrderUserIds);
+        
+        profiles?.forEach(p => {
+          profilesMap.set(p.id, { full_name: p.full_name || '', email: p.email || '' });
+        });
+      }
+      
+      // Map profiles to orders
+      const ordersWithProfiles = (data || []).map(order => ({
+        ...order,
+        profiles: profilesMap.get(order.user_id) || { full_name: '', email: '' }
+      }));
       
       // Sort: pending first, then paid, then others
       const sortedOrders = ordersWithProfiles.sort((a, b) => {
