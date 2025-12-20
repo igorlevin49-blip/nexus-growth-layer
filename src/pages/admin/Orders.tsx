@@ -277,13 +277,22 @@ export default function AdminOrders() {
   };
 
   const handleConfirmDelete = () => {
+    if (confirmationPhrase !== 'УДАЛИТЬ НАВСЕГДА') {
+      toast({ title: "Введите правильную фразу подтверждения", variant: "destructive" });
+      return;
+    }
+
     hardDeleteRecords.mutate({
       record_type: 'orders',
       record_ids: Array.from(selectedOrders),
       confirmation_phrase: confirmationPhrase,
       dry_run: false
     }, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
+        if (data && data.success === false) {
+          toast({ title: "Ошибка удаления", description: data.error || "Неизвестная ошибка", variant: "destructive" });
+          return;
+        }
         toast({ title: "Записи успешно удалены" });
         setDeleteDialog(false);
         setConfirmationPhrase('');
@@ -574,12 +583,12 @@ export default function AdminOrders() {
             <DialogTitle className="text-destructive">⚠️ Безвозвратное удаление</DialogTitle>
             <DialogDescription>
               Это действие удалит выбранные заказы НАВСЕГДА и не может быть отменено.
-              Для подтверждения введите фразу: <strong>DELETE PERMANENTLY</strong>
+              Для подтверждения введите фразу: <strong>УДАЛИТЬ НАВСЕГДА</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Input
-              placeholder="DELETE PERMANENTLY"
+              placeholder="УДАЛИТЬ НАВСЕГДА"
               value={confirmationPhrase}
               onChange={(e) => setConfirmationPhrase(e.target.value)}
             />
@@ -597,7 +606,7 @@ export default function AdminOrders() {
             <Button
               variant="destructive"
               onClick={handleConfirmDelete}
-              disabled={confirmationPhrase !== 'DELETE PERMANENTLY' || hardDeleteRecords.isPending}
+              disabled={confirmationPhrase !== 'УДАЛИТЬ НАВСЕГДА' || hardDeleteRecords.isPending}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить навсегда

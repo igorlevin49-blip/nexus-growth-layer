@@ -359,7 +359,7 @@ export default function AdminPayments() {
   };
 
   const handleConfirmDelete = () => {
-    if (deleteConfirmPhrase !== 'DELETE PERMANENTLY') {
+    if (deleteConfirmPhrase !== 'УДАЛИТЬ НАВСЕГДА') {
       toast.error("Введите правильную фразу подтверждения");
       return;
     }
@@ -372,7 +372,11 @@ export default function AdminPayments() {
       confirmation_phrase: deleteConfirmPhrase,
       dry_run: false
     }, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
+        if (data && data.success === false) {
+          toast.error(data.error || "Неизвестная ошибка");
+          return;
+        }
         setDeleteDialog({ open: false, type: deleteDialog.type });
         setDeleteConfirmPhrase("");
         if (deleteDialog.type === 'orders') {
@@ -888,13 +892,13 @@ export default function AdminPayments() {
             <DialogHeader>
               <DialogTitle className="text-destructive">⚠️ Безвозвратное удаление</DialogTitle>
               <DialogDescription>
-                Это действие удалит выбранные записи НАВСЕГДА и не может быть отменено.
-                Для подтверждения введите фразу: <strong>DELETE PERMANENTLY</strong>
+              Это действие удалит выбранные записи НАВСЕГДА и не может быть отменено.
+                Для подтверждения введите фразу: <strong>УДАЛИТЬ НАВСЕГДА</strong>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <Input
-                placeholder="DELETE PERMANENTLY"
+                placeholder="УДАЛИТЬ НАВСЕГДА"
                 value={deleteConfirmPhrase}
                 onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
               />
@@ -912,7 +916,7 @@ export default function AdminPayments() {
               <Button
                 variant="destructive"
                 onClick={handleConfirmDelete}
-                disabled={deleteConfirmPhrase !== 'DELETE PERMANENTLY' || hardDeleteRecords.isPending}
+                disabled={deleteConfirmPhrase !== 'УДАЛИТЬ НАВСЕГДА' || hardDeleteRecords.isPending}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Удалить навсегда
