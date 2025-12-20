@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useArchiveRecords } from "@/hooks/useArchiveRecords";
+import { useArchiveRecords, useHardDeleteRecords } from "@/hooks/useArchiveRecords";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export default function AdminPayments() {
   const [editingComment, setEditingComment] = useState<{ type: 'subscription' | 'order'; id: string; comment: string } | null>(null);
 
   const archiveRecords = useArchiveRecords();
-  const hardDeleteRecords = useArchiveRecords();
+  const hardDeleteRecords = useHardDeleteRecords();
   const { approvePayment, rejectPayment } = useManualPayment();
 
   // Subscriptions with search
@@ -347,7 +347,7 @@ export default function AdminPayments() {
     setDeleteDialog({ open: true, type });
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (deleteConfirmPhrase !== 'DELETE PERMANENTLY') {
       toast.error("Введите правильную фразу подтверждения");
       return;
@@ -355,27 +355,28 @@ export default function AdminPayments() {
 
     const ids = deleteDialog.type === 'orders' ? Array.from(selectedOrders) : Array.from(selectedSubscriptions);
 
-    try {
-      const { data, error } = await supabase.rpc('hard_delete_records', {
-        record_type: deleteDialog.type,
-        record_ids: ids,
-        confirmation_phrase: deleteConfirmPhrase,
-        dry_run: false
-      });
-
-      if (error) throw error;
-
-      setDeleteDialog({ open: false, type: deleteDialog.type });
-      setDeleteConfirmPhrase("");
-      if (deleteDialog.type === 'orders') {
-        setSelectedOrders(new Set());
-      } else {
-        setSelectedSubscriptions(new Set());
+    hardDeleteRecords.mutate({
+      record_type: deleteDialog.type,
+      record_ids: ids,
+      confirmation_phrase: deleteConfirmPhrase,
+      dry_run: false
+    }, {
+      onSuccess: () => {
+        setDeleteDialog({ open: false, type: deleteDialog.type });
+        setDeleteConfirmPhrase("");
+        if (deleteDialog.type === 'orders') {
+          setSelectedOrders(new Set());
+        } else {
+          setSelectedSubscriptions(new Set());
+        }
+        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
+        toast.success('Записи удалены навсегда');
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || 'Ошибка при удалении');
       }
-      toast.success('Записи удалены навсегда');
-    } catch (error: any) {
-      toast.error(error.message || 'Ошибка при удалении');
-    }
+    });
   };
 
   const getStatusBadge = (status: string) => {

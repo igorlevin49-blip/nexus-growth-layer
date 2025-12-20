@@ -27,16 +27,11 @@ export function useArchiveRecords() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['admin-global-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-structure-stats'] });
-      
-      toast.success(`Скрыто записей: ${data?.affected_count || 0}`);
-    },
-    onError: (error: Error) => {
-      toast.error(`Ошибка архивации: ${error.message}`);
     }
   });
 }
@@ -56,22 +51,14 @@ export function useHardDeleteRecords() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
-      if (variables.dry_run) {
-        // Just return the preview data
-        return data;
+    onSuccess: (_, variables) => {
+      if (!variables.dry_run) {
+        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-global-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-structure-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
       }
-      
-      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-global-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-structure-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      
-      toast.success('Записи успешно удалены');
-    },
-    onError: (error: Error) => {
-      toast.error(`Ошибка удаления: ${error.message}`);
     }
   });
 }
