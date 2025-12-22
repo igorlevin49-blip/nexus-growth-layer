@@ -33,15 +33,7 @@ export function DashboardStats() {
       change: "-0%",
       trend: "down" as const,
       icon: Snowflake,
-      description: "Ожидают разморозки"
-    },
-    {
-      title: "Комиссии за месяц",
-      value: statsLoading ? null : formatCents(networkStats?.commissions_this_month || 0, 'KZT'),
-      change: "+0%",
-      trend: "up" as const,
-      icon: DollarSign,
-      description: "Заработано в этом месяце"
+      description: "Ожидают разморозки (14 дней)"
     },
   ];
 
