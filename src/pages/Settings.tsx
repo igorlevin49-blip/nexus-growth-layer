@@ -542,17 +542,17 @@ export default function Settings() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="autoWithdrawLimit">Сумма для автовывода</Label>
+                      <Label htmlFor="autoWithdrawLimit">Сумма для автовывода (KZT)</Label>
                       <Input 
                         id="autoWithdrawLimit" 
                         type="number" 
-                        value={(autoWithdraw.data?.threshold_cents ?? 100000) / 100}
+                        value={autoWithdraw.data?.threshold_cents ?? 100000}
                         onChange={(e) => 
                           autoWithdraw.updateRule.mutate({ 
-                            threshold_cents: Math.round(parseFloat(e.target.value) * 100) 
+                            threshold_cents: Math.round(parseFloat(e.target.value) || 0) 
                           })
                         }
-                        placeholder="1000" 
+                        placeholder="100000" 
                       />
                     </div>
                     <div className="space-y-2">

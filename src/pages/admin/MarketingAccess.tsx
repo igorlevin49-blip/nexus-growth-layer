@@ -456,7 +456,7 @@ export default function MarketingAccess() {
                   </p>
                 </div>
                 <Badge variant={selectedUser.subscription.status === 'active' ? 'default' : 'secondary'}>
-                  {formatCents(selectedUser.subscription.amount_usd * 100)}
+                  ${selectedUser.subscription.amount_usd}
                 </Badge>
               </div>
 
@@ -492,7 +492,7 @@ export default function MarketingAccess() {
                   <div className="flex gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Сумма:</span>{" "}
-                      <span className="font-medium">{formatCents((userDetails?.s1_commissions_total || 0) * 100)}</span>
+                      <span className="font-medium">{formatCents(userDetails?.s1_commissions_total || 0)}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Транзакций:</span>{" "}
@@ -544,7 +544,7 @@ export default function MarketingAccess() {
             <AlertDialogTitle>Подтвердите обнуление</AlertDialogTitle>
             <AlertDialogDescription>
               Вы собираетесь обнулить {userDetails?.s1_commissions_count} начислений на общую сумму{" "}
-              {formatCents((userDetails?.s1_commissions_total || 0) * 100)}.
+              {formatCents(userDetails?.s1_commissions_total || 0)}.
               <br /><br />
               Будут созданы корректирующие записи для всех затронутых партнёров.
               Это действие нельзя отменить.
