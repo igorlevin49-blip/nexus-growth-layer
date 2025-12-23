@@ -112,7 +112,7 @@ export default function AdminUsers() {
       const { data: balancesData } = await supabase.rpc('get_all_user_balances');
       const balancesMap = new Map<string, number>();
       (balancesData || []).forEach((b: any) => {
-        balancesMap.set(b.user_id, (b.available_cents || 0) / 100);
+        balancesMap.set(b.user_id, b.available_cents || 0);
       });
       
       const profilesWithBalances = (data || []).map(profile => ({

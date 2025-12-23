@@ -139,7 +139,7 @@ export default function MarketingAccess() {
 
       return {
         ...selectedUser,
-        s1_commissions_total: totalCents / 100,
+        s1_commissions_total: totalCents,
         s1_commissions_count: commissions?.length || 0,
         has_reversals: (reversals?.length || 0) > 0,
       };
