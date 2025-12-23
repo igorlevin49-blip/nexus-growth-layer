@@ -45,16 +45,19 @@ export default function AdminPayouts() {
   });
   const [processing, setProcessing] = useState(false);
 
-  // Debounce search query
+  // Debounce search query with longer delay
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 500);
+    }, 800);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
   useEffect(() => {
-    fetchPartners();
+    // Only search if query is empty or has at least 2 characters
+    if (debouncedSearchQuery.trim() === '' || debouncedSearchQuery.trim().length >= 2) {
+      fetchPartners();
+    }
   }, [debouncedSearchQuery]);
 
   // Calculate totals
@@ -70,7 +73,21 @@ export default function AdminPayouts() {
     try {
       setLoading(true);
       
-      // Get all profiles with balances
+      // Use get_all_user_balances RPC for efficient batch balance fetching
+      const { data: balancesData, error: balancesError } = await supabase.rpc('get_all_user_balances');
+      
+      if (balancesError) throw balancesError;
+      
+      // Create balances map
+      const balancesMap = new Map<string, { available: number; frozen: number }>();
+      (balancesData || []).forEach((b: any) => {
+        balancesMap.set(b.user_id, {
+          available: b.available_cents || 0,
+          frozen: b.frozen_cents || 0,
+        });
+      });
+
+      // Get profiles
       let query = supabase
         .from('profiles')
         .select('id, full_name, email, phone')
@@ -82,7 +99,10 @@ export default function AdminPayouts() {
         query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
       }
 
-      const { data: profiles, error: profilesError } = await query.order('full_name', { ascending: true });
+      // Limit results for performance
+      const { data: profiles, error: profilesError } = await query
+        .order('full_name', { ascending: true })
+        .limit(100);
 
       if (profilesError) throw profilesError;
 
@@ -92,30 +112,16 @@ export default function AdminPayouts() {
         return;
       }
 
-      // Get balances for all users
-      const balancePromises = profiles.map(async (profile) => {
-        const { data: balanceData, error: balanceError } = await supabase.rpc('get_user_balance', {
-          p_user_id: profile.id
-        });
-
-        if (balanceError) {
-          console.error('Balance error for user', profile.id, balanceError);
-          return {
-            ...profile,
-            available_cents: 0,
-            frozen_cents: 0,
-          };
-        }
-
-        const balance = balanceData?.[0] || { available_cents: 0, frozen_cents: 0 };
+      // Combine profiles with balances (no N+1 queries!)
+      const partnersWithBalances = profiles.map((profile) => {
+        const balance = balancesMap.get(profile.id) || { available: 0, frozen: 0 };
         return {
           ...profile,
-          available_cents: balance.available_cents || 0,
-          frozen_cents: balance.frozen_cents || 0,
+          available_cents: balance.available,
+          frozen_cents: balance.frozen,
         };
       });
 
-      const partnersWithBalances = await Promise.all(balancePromises);
       setPartners(partnersWithBalances);
     } catch (error) {
       console.error('Error fetching partners:', error);

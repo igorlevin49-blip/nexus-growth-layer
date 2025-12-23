@@ -27,8 +27,8 @@ export function AutoWithdrawDialog({ open, onOpenChange }: AutoWithdrawDialogPro
   useEffect(() => {
     if (rule) {
       setEnabled(rule.enabled);
-      setThreshold((rule.threshold_cents / 100).toString());
-      setMinAmount((rule.min_amount_cents / 100).toString());
+      setThreshold(rule.threshold_cents.toString());
+      setMinAmount(rule.min_amount_cents.toString());
       setSchedule(rule.schedule);
       setMethodId(rule.method_id || "");
     }
