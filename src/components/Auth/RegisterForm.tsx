@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { APP_CONFIG } from "@/config/constants";
 import { setCookie, getCookie, deleteCookie } from "@/utils/cookies";
+import { Loader } from "@/components/ui/loader";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +25,7 @@ export function RegisterForm() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
 
   // Get referral code from URL or cookie (REQUIRED)
@@ -39,6 +40,15 @@ export function RegisterForm() {
       setReferralCode(refFromCookie);
     }
   }, [searchParams]);
+
+  // Show loader while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader />
+      </div>
+    );
+  }
 
   // Redirect if already logged in
   if (user) {
@@ -392,9 +402,9 @@ export function RegisterForm() {
             <div className="text-center">
               <div className="text-sm text-muted-foreground">
                 Уже есть аккаунт?{" "}
-                <a href="/login" className="text-primary hover:underline font-medium">
+                <Link to="/login" className="text-primary hover:underline font-medium">
                   Войти
-                </a>
+                </Link>
               </div>
             </div>
           </CardContent>

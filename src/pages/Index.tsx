@@ -24,7 +24,7 @@ import {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: teamMembers, isLoading: teamLoading } = useTeamMembers();
 
   useEffect(() => {
@@ -32,6 +32,15 @@ const Index = () => {
       navigate('/dashboard');
     }
   }, [user, navigate]);
+
+  // Show loader while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (user) return null;
 
