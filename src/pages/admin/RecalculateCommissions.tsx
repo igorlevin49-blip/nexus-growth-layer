@@ -13,7 +13,7 @@ export default function RecalculateCommissions() {
   const recalculateMutation = useRecalculateS1Commissions();
 
   const handleRecalculate = () => {
-    recalculateMutation.mutate();
+    recalculateMutation.mutate(30); // Backfill last 30 days
     setShowConfirmation(false);
   };
 
