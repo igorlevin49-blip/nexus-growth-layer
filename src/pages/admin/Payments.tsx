@@ -72,8 +72,9 @@ export default function AdminPayments() {
   const { approvePayment, rejectPayment } = useManualPayment();
 
   // Subscriptions with search
-  const { data: subscriptions, isLoading: isLoadingSubscriptions } = useQuery({
+  const { data: subscriptions, isLoading: isLoadingSubscriptions, isFetching: isFetchingSubscriptions } = useQuery({
     queryKey: ['admin-subscriptions', showArchived, debouncedSearchQuery],
+    placeholderData: (previousData) => previousData,
     queryFn: async () => {
       const search = debouncedSearchQuery.trim();
       let userIds: string[] | null = null;
@@ -160,8 +161,9 @@ export default function AdminPayments() {
   });
 
   // Orders with search
-  const { data: orders, isLoading: isLoadingOrders } = useQuery({
+  const { data: orders, isLoading: isLoadingOrders, isFetching: isFetchingOrders } = useQuery({
     queryKey: ['admin-orders', showArchived, debouncedSearchQuery],
+    placeholderData: (previousData) => previousData,
     queryFn: async () => {
       const search = debouncedSearchQuery.trim();
       let userIds: string[] | null = null;
