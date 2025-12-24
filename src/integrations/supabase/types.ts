@@ -1790,6 +1790,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_sponsor_info: { Args: never; Returns: Json }
       get_network_profiles: {
         Args: { p_user_id: string }
         Returns: {
