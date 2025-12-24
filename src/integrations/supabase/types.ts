@@ -1662,6 +1662,10 @@ export type Database = {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
       }
+      backfill_missing_s1_commissions: {
+        Args: { p_admin_id: string; p_days_back?: number }
+        Returns: Json
+      }
       bind_referral: { Args: { p_ref_code: string }; Returns: Json }
       cleanup_all_test_users:
         | {
