@@ -32,8 +32,8 @@ export function SponsorInfo() {
     return null;
   }
 
-  // Check if sponsor is truly deleted/archived
-  const sponsorIsDeleted = sponsor?.deleted_at !== null || sponsor?.is_archived === true || sponsor?.is_active === false;
+  // Check if sponsor is truly deleted/archived (be careful with null vs undefined)
+  const sponsorIsDeleted = sponsor && (sponsor.deleted_at != null || sponsor.is_archived === true || sponsor.is_active === false);
   const displayName = sponsorIsDeleted 
     ? (profile.referrer_snapshot?.full_name || profile.referrer_snapshot?.email || 'Неизвестный пользователь')
     : (sponsor?.full_name || sponsor?.email || profile.referrer_snapshot?.full_name || profile.referrer_snapshot?.email || 'Неизвестный пользователь');
