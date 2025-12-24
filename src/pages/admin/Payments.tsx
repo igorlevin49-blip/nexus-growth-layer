@@ -801,7 +801,9 @@ export default function AdminPayments() {
         </Tabs>
 
         {/* Approve Dialog */}
-        <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <Dialog open={approveDialogOpen} onOpenChange={(open) => {
+          if (!approvePayment.isPending) setApproveDialogOpen(open);
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Одобрить платёж</DialogTitle>
@@ -817,6 +819,7 @@ export default function AdminPayments() {
                   placeholder="Оплата подтверждена, квитанция проверена..."
                   value={approveComment}
                   onChange={(e) => setApproveComment(e.target.value)}
+                  disabled={approvePayment.isPending}
                 />
               </div>
               <div className="space-y-2">
@@ -826,11 +829,16 @@ export default function AdminPayments() {
                   placeholder="https://example.com/receipt.pdf"
                   value={approveProofUrl}
                   onChange={(e) => setApproveProofUrl(e.target.value)}
+                  disabled={approvePayment.isPending}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setApproveDialogOpen(false)}
+                disabled={approvePayment.isPending}
+              >
                 Отмена
               </Button>
               <Button 
@@ -848,7 +856,9 @@ export default function AdminPayments() {
         </Dialog>
 
         {/* Reject Dialog */}
-        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <Dialog open={rejectDialogOpen} onOpenChange={(open) => {
+          if (!rejectPayment.isPending) setRejectDialogOpen(open);
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Отклонить платёж</DialogTitle>
@@ -864,11 +874,16 @@ export default function AdminPayments() {
                   placeholder="Недостаточно средств, некорректная квитанция..."
                   value={rejectComment}
                   onChange={(e) => setRejectComment(e.target.value)}
+                  disabled={rejectPayment.isPending}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setRejectDialogOpen(false)}
+                disabled={rejectPayment.isPending}
+              >
                 Отмена
               </Button>
               <Button 
