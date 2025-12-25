@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Search, History } from "lucide-react";
+import { DollarSign, Search, History, Users, AlertTriangle, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCents } from "@/utils/formatMoney";
 import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
@@ -24,6 +25,8 @@ interface Partner {
   frozen_cents: number;
 }
 
+type BalanceFilter = "all" | "has_payout" | "no_payout" | "negative";
+
 export default function AdminPayouts() {
   const { user, userRole } = useAuth();
   const isSuperAdmin = userRole === 'superadmin';
@@ -32,6 +35,8 @@ export default function AdminPayouts() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>("all");
+  
   const [payoutDialog, setPayoutDialog] = useState<{
     open: boolean;
     partner: Partner | null;
@@ -45,7 +50,21 @@ export default function AdminPayouts() {
   });
   const [processing, setProcessing] = useState(false);
 
-  // Debounce search query with longer delay
+  // Adjustment dialog state
+  const [adjustmentDialog, setAdjustmentDialog] = useState<{
+    open: boolean;
+    partner: Partner | null;
+  }>({
+    open: false,
+    partner: null,
+  });
+  const [adjustmentForm, setAdjustmentForm] = useState({
+    amount: "",
+    direction: "credit" as "credit" | "debit",
+    reason: "",
+  });
+
+  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -54,31 +73,47 @@ export default function AdminPayouts() {
   }, [searchQuery]);
 
   useEffect(() => {
-    // Only search if query is empty or has at least 2 characters
     if (debouncedSearchQuery.trim() === '' || debouncedSearchQuery.trim().length >= 2) {
       fetchPartners();
     }
   }, [debouncedSearchQuery]);
 
+  // Filter partners based on balance filter
+  const filteredPartners = useMemo(() => {
+    switch (balanceFilter) {
+      case "has_payout":
+        return partners.filter(p => p.available_cents > 0);
+      case "no_payout":
+        return partners.filter(p => p.available_cents <= 0 && p.available_cents >= 0);
+      case "negative":
+        return partners.filter(p => p.available_cents < 0);
+      default:
+        return partners;
+    }
+  }, [partners, balanceFilter]);
+
   // Calculate totals
-  const totals = partners.reduce(
-    (acc, p) => ({
-      available: acc.available + p.available_cents,
-      frozen: acc.frozen + p.frozen_cents,
-    }),
-    { available: 0, frozen: 0 }
-  );
+  const totals = useMemo(() => ({
+    available: filteredPartners.reduce((acc, p) => acc + p.available_cents, 0),
+    frozen: filteredPartners.reduce((acc, p) => acc + p.frozen_cents, 0),
+  }), [filteredPartners]);
+
+  // Stats for filter badges
+  const stats = useMemo(() => ({
+    all: partners.length,
+    has_payout: partners.filter(p => p.available_cents > 0).length,
+    no_payout: partners.filter(p => p.available_cents <= 0 && p.available_cents >= 0).length,
+    negative: partners.filter(p => p.available_cents < 0).length,
+  }), [partners]);
 
   const fetchPartners = async () => {
     try {
       setLoading(true);
       
-      // Use get_all_user_balances RPC for efficient batch balance fetching
       const { data: balancesData, error: balancesError } = await supabase.rpc('get_all_user_balances');
       
       if (balancesError) throw balancesError;
       
-      // Create balances map
       const balancesMap = new Map<string, { available: number; frozen: number }>();
       (balancesData || []).forEach((b: any) => {
         balancesMap.set(b.user_id, {
@@ -87,7 +122,6 @@ export default function AdminPayouts() {
         });
       });
 
-      // Get profiles
       let query = supabase
         .from('profiles')
         .select('id, full_name, email, phone')
@@ -99,10 +133,9 @@ export default function AdminPayouts() {
         query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
       }
 
-      // Limit results for performance
       const { data: profiles, error: profilesError } = await query
         .order('full_name', { ascending: true })
-        .limit(100);
+        .limit(500);
 
       if (profilesError) throw profilesError;
 
@@ -112,7 +145,6 @@ export default function AdminPayouts() {
         return;
       }
 
-      // Combine profiles with balances (no N+1 queries!)
       const partnersWithBalances = profiles.map((profile) => {
         const balance = balancesMap.get(profile.id) || { available: 0, frozen: 0 };
         return {
@@ -145,12 +177,25 @@ export default function AdminPayouts() {
     setPayoutForm({ amount_cents: "", comment: "" });
   };
 
+  const openAdjustmentDialog = (partner: Partner) => {
+    setAdjustmentDialog({ open: true, partner });
+    setAdjustmentForm({ 
+      amount: "", 
+      direction: partner.available_cents < 0 ? "credit" : "debit",
+      reason: partner.available_cents < 0 ? "Коррекция отрицательного баланса" : ""
+    });
+  };
+
+  const closeAdjustmentDialog = () => {
+    setAdjustmentDialog({ open: false, partner: null });
+    setAdjustmentForm({ amount: "", direction: "credit", reason: "" });
+  };
+
   const handlePayout = async () => {
     if (!payoutDialog.partner || !user) return;
 
     const amountCents = parseInt(payoutForm.amount_cents);
     
-    // Validate amount
     if (isNaN(amountCents) || amountCents <= 0) {
       toast({
         title: "Ошибка",
@@ -160,7 +205,6 @@ export default function AdminPayouts() {
       return;
     }
 
-    // Check balance
     if (amountCents > payoutDialog.partner.available_cents) {
       toast({
         title: "Ошибка",
@@ -170,7 +214,6 @@ export default function AdminPayouts() {
       return;
     }
 
-    // Validate comment
     if (!payoutForm.comment.trim()) {
       toast({
         title: "Ошибка",
@@ -183,7 +226,6 @@ export default function AdminPayouts() {
     setProcessing(true);
 
     try {
-      // Call RPC function to process manual payout (bypasses RLS)
       const { data, error } = await supabase.rpc('process_manual_payout', {
         p_user_id: payoutDialog.partner.id,
         p_amount_cents: amountCents,
@@ -192,15 +234,10 @@ export default function AdminPayouts() {
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string; transaction_id?: string };
+      const result = data as { success: boolean; error?: string };
 
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          'UNAUTHORIZED': 'Недостаточно прав для выполнения операции',
-          'INVALID_AMOUNT': 'Некорректная сумма',
-          'INSUFFICIENT_BALANCE': 'Недостаточно средств на балансе партнёра'
-        };
-        throw new Error(errorMessages[result.error || ''] || result.error);
+        throw new Error(result.error || 'Неизвестная ошибка');
       }
 
       toast({
@@ -209,7 +246,7 @@ export default function AdminPayouts() {
       });
 
       closePayoutDialog();
-      fetchPartners(); // Refresh balances
+      fetchPartners();
     } catch (error: any) {
       console.error('Payout error:', error);
       toast({
@@ -222,14 +259,92 @@ export default function AdminPayouts() {
     }
   };
 
-  const PartnersTable = () => (
+  const handleAdjustment = async () => {
+    if (!adjustmentDialog.partner || !user) return;
+
+    const amountKzt = parseInt(adjustmentForm.amount);
+    
+    if (isNaN(amountKzt) || amountKzt <= 0) {
+      toast({
+        title: "Ошибка",
+        description: "Введите корректную сумму",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!adjustmentForm.reason.trim() || adjustmentForm.reason.trim().length < 3) {
+      toast({
+        title: "Ошибка",
+        description: "Укажите причину корректировки (минимум 3 символа)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      const amountCents = adjustmentForm.direction === "credit" 
+        ? amountKzt * 100 
+        : -amountKzt * 100;
+
+      const { data, error } = await supabase.rpc('admin_adjust_balance' as any, {
+        p_user_id: adjustmentDialog.partner.id,
+        p_amount_cents: amountCents,
+        p_reason: adjustmentForm.reason.trim(),
+        p_admin_id: user.id
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string };
+
+      if (!result.success) {
+        const errorMessages: Record<string, string> = {
+          'UNAUTHORIZED': 'Недостаточно прав',
+          'ZERO_AMOUNT': 'Сумма не может быть нулевой',
+          'REASON_REQUIRED': 'Укажите причину',
+          'USER_NOT_FOUND': 'Пользователь не найден'
+        };
+        throw new Error(errorMessages[result.error || ''] || result.error);
+      }
+
+      toast({
+        title: "Успешно",
+        description: adjustmentForm.direction === "credit" 
+          ? `Начислено ${amountKzt} ₸`
+          : `Списано ${amountKzt} ₸`,
+      });
+
+      closeAdjustmentDialog();
+      fetchPartners();
+    } catch (error: any) {
+      console.error('Adjustment error:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось выполнить корректировку",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const PartnersTable = ({ showActions = true }: { showActions?: boolean }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Ручные выплаты</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="h-5 w-5" />
+          Балансы партнёров
+        </CardTitle>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Показано: {filteredPartners.length} из {partners.length}</span>
+        </div>
       </CardHeader>
       <CardContent>
-        {/* Search Bar */}
-        <div className="mb-4 flex gap-2">
+        {/* Search and Filter Bar */}
+        <div className="mb-4 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -239,80 +354,166 @@ export default function AdminPayouts() {
               className="pl-9"
             />
           </div>
+          <Select value={balanceFilter} onValueChange={(v) => setBalanceFilter(v as BalanceFilter)}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Фильтр по балансу" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Все партнёры ({stats.all})
+                </div>
+              </SelectItem>
+              <SelectItem value="has_payout">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  На выдачу ({stats.has_payout})
+                </div>
+              </SelectItem>
+              <SelectItem value="no_payout">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  Без выдачи ({stats.no_payout})
+                </div>
+              </SelectItem>
+              <SelectItem value="negative">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Отрицательный ({stats.negative})
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Партнёр</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Телефон</TableHead>
-              <TableHead>Доступно</TableHead>
-              <TableHead>Заморожено</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {partners.length === 0 ? (
+        {/* Negative balance warning */}
+        {stats.negative > 0 && balanceFilter !== "negative" && (
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <span className="text-sm">
+              <strong>{stats.negative}</strong> партнёров с отрицательным балансом. 
+              <Button 
+                variant="link" 
+                className="h-auto p-0 pl-1 text-destructive"
+                onClick={() => setBalanceFilter("negative")}
+              >
+                Показать
+              </Button>
+            </span>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Партнёры не найдены
-                </TableCell>
+                <TableHead>Партнёр</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Телефон</TableHead>
+                <TableHead>Доступно</TableHead>
+                <TableHead>Заморожено</TableHead>
+                {showActions && <TableHead className="text-right">Действия</TableHead>}
               </TableRow>
-            ) : (
-              partners.map((partner) => (
-                <TableRow key={partner.id}>
-                  <TableCell>{partner.full_name || 'Без имени'}</TableCell>
-                  <TableCell>{partner.email || '—'}</TableCell>
-                  <TableCell>{partner.phone || '—'}</TableCell>
+            </TableHeader>
+            <TableBody>
+              {filteredPartners.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={showActions ? 6 : 5} className="text-center text-muted-foreground py-8">
+                    {balanceFilter === "negative" 
+                      ? "Нет партнёров с отрицательным балансом" 
+                      : balanceFilter === "has_payout"
+                      ? "Нет партнёров с доступными средствами"
+                      : "Партнёры не найдены"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPartners.map((partner) => (
+                  <TableRow key={partner.id} className={partner.available_cents < 0 ? "bg-destructive/5" : ""}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {partner.full_name || 'Без имени'}
+                        {partner.available_cents < 0 && (
+                          <Badge variant="destructive" className="text-xs">Долг</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{partner.email || '—'}</TableCell>
+                    <TableCell>{partner.phone || '—'}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={partner.available_cents < 0 ? "destructive" : "default"} 
+                        className="font-mono"
+                      >
+                        {formatCents(partner.available_cents, 'KZT')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="font-mono">
+                        {formatCents(partner.frozen_cents, 'KZT')}
+                      </Badge>
+                    </TableCell>
+                    {showActions && (
+                      <TableCell className="text-right">
+                        {isSuperAdmin ? (
+                          <div className="flex justify-end gap-2">
+                            {partner.available_cents > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openPayoutDialog(partner)}
+                              >
+                                <DollarSign className="h-4 w-4 mr-1" />
+                                Выдать
+                              </Button>
+                            )}
+                            <Button
+                              variant={partner.available_cents < 0 ? "destructive" : "ghost"}
+                              size="sm"
+                              onClick={() => openAdjustmentDialog(partner)}
+                            >
+                              {partner.available_cents < 0 ? (
+                                <>
+                                  <AlertTriangle className="h-4 w-4 mr-1" />
+                                  Исправить
+                                </>
+                              ) : (
+                                "Корректировка"
+                              )}
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            {filteredPartners.length > 0 && (
+              <TableFooter>
+                <TableRow className="bg-muted/50 font-semibold">
+                  <TableCell colSpan={3}>Итого ({filteredPartners.length})</TableCell>
                   <TableCell>
-                    <Badge variant="default" className="font-mono">
-                      {formatCents(partner.available_cents, 'KZT')}
+                    <Badge 
+                      variant={totals.available < 0 ? "destructive" : "default"} 
+                      className="font-mono"
+                    >
+                      {formatCents(totals.available, 'KZT')}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono">
-                      {formatCents(partner.frozen_cents, 'KZT')}
+                      {formatCents(totals.frozen, 'KZT')}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    {isSuperAdmin ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openPayoutDialog(partner)}
-                        disabled={partner.available_cents <= 0}
-                      >
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        Выдать
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
+                  {showActions && <TableCell></TableCell>}
                 </TableRow>
-              ))
+              </TableFooter>
             )}
-          </TableBody>
-          {partners.length > 0 && (
-            <TableFooter>
-              <TableRow className="bg-muted/50 font-semibold">
-                <TableCell colSpan={3}>Итого</TableCell>
-                <TableCell>
-                  <Badge variant="default" className="font-mono">
-                    {formatCents(totals.available, 'KZT')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="font-mono">
-                    {formatCents(totals.frozen, 'KZT')}
-                  </Badge>
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -322,18 +523,24 @@ export default function AdminPayouts() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Tabs defaultValue="payouts" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="payouts">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Выплаты партнёрам
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="payouts" className="gap-2">
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden sm:inline">Выплаты</span>
           </TabsTrigger>
           {isSuperAdmin && (
-            <TabsTrigger value="history">
-              <History className="h-4 w-4 mr-2" />
-              История выплат
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">История</span>
+              </TabsTrigger>
+              <TabsTrigger value="all" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Все партнёры</span>
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -342,9 +549,14 @@ export default function AdminPayouts() {
         </TabsContent>
 
         {isSuperAdmin && (
-          <TabsContent value="history">
-            <WithdrawalsHistory showExport showStats />
-          </TabsContent>
+          <>
+            <TabsContent value="history">
+              <WithdrawalsHistory showExport showStats />
+            </TabsContent>
+            <TabsContent value="all">
+              <PartnersTable showActions={false} />
+            </TabsContent>
+          </>
         )}
       </Tabs>
 
@@ -376,7 +588,7 @@ export default function AdminPayouts() {
                   type="number"
                   min="1"
                   max={payoutDialog.partner.available_cents}
-                  placeholder="Например: 55000 для 55 000 ₸"
+                  placeholder="Например: 55000"
                   value={payoutForm.amount_cents}
                   onChange={(e) => setPayoutForm(prev => ({ ...prev, amount_cents: e.target.value }))}
                 />
@@ -391,7 +603,7 @@ export default function AdminPayouts() {
                 <Label htmlFor="comment">Основание / Комментарий *</Label>
                 <Textarea
                   id="comment"
-                  placeholder="Укажите причину выплаты (например: Выдача наличными в офисе)"
+                  placeholder="Укажите причину выплаты"
                   value={payoutForm.comment}
                   onChange={(e) => setPayoutForm(prev => ({ ...prev, comment: e.target.value }))}
                   rows={3}
@@ -405,6 +617,101 @@ export default function AdminPayouts() {
             </Button>
             <Button onClick={handlePayout} disabled={processing}>
               {processing ? "Обработка..." : "Подтвердить выплату"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Adjustment Dialog */}
+      <Dialog open={adjustmentDialog.open} onOpenChange={(open) => !open && closeAdjustmentDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Корректировка баланса</DialogTitle>
+          </DialogHeader>
+          {adjustmentDialog.partner && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Партнёр</p>
+                <p className="font-medium">{adjustmentDialog.partner.full_name || 'Без имени'}</p>
+                <p className="text-sm text-muted-foreground">{adjustmentDialog.partner.email}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground">Текущий баланс</p>
+                <p className={`text-lg font-bold ${adjustmentDialog.partner.available_cents < 0 ? 'text-destructive' : 'text-primary'}`}>
+                  {formatCents(adjustmentDialog.partner.available_cents, 'KZT')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Тип операции</Label>
+                <Select 
+                  value={adjustmentForm.direction} 
+                  onValueChange={(v) => setAdjustmentForm(prev => ({ ...prev, direction: v as "credit" | "debit" }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="credit">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        Начислить (увеличить баланс)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="debit">
+                      <div className="flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4 text-destructive" />
+                        Списать (уменьшить баланс)
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adj-amount">Сумма (в тенге) *</Label>
+                <Input
+                  id="adj-amount"
+                  type="number"
+                  min="1"
+                  placeholder="Например: 1000"
+                  value={adjustmentForm.amount}
+                  onChange={(e) => setAdjustmentForm(prev => ({ ...prev, amount: e.target.value }))}
+                />
+                {adjustmentForm.amount && !isNaN(parseInt(adjustmentForm.amount)) && (
+                  <p className="text-sm text-muted-foreground">
+                    Новый баланс: {formatCents(
+                      adjustmentDialog.partner.available_cents + 
+                      (adjustmentForm.direction === "credit" ? 1 : -1) * parseInt(adjustmentForm.amount) * 100, 
+                      'KZT'
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adj-reason">Причина корректировки *</Label>
+                <Textarea
+                  id="adj-reason"
+                  placeholder="Укажите причину"
+                  value={adjustmentForm.reason}
+                  onChange={(e) => setAdjustmentForm(prev => ({ ...prev, reason: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={closeAdjustmentDialog} disabled={processing}>
+              Отмена
+            </Button>
+            <Button 
+              onClick={handleAdjustment} 
+              disabled={processing}
+              variant={adjustmentForm.direction === "debit" ? "destructive" : "default"}
+            >
+              {processing ? "Обработка..." : adjustmentForm.direction === "credit" ? "Начислить" : "Списать"}
             </Button>
           </DialogFooter>
         </DialogContent>
