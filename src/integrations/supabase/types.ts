@@ -1614,6 +1614,23 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_audit_user_commissions: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: {
+          actual_vs_expected: string
+          commission_amount_cents: number
+          commission_received: boolean
+          expected_commission_cents: number
+          expected_percent: number
+          level: number
+          no_commission_reason: string
+          partner_email: string
+          partner_id: string
+          partner_name: string
+          subscription_amount_kzt: number
+          subscription_id: string
+        }[]
+      }
       admin_backfill_sponsor_from_metadata: { Args: never; Returns: Json }
       admin_bind_sponsor: {
         Args: {
@@ -1923,9 +1940,11 @@ export type Database = {
           direct_referrals: number
           email: string
           full_name: string
+          has_commission_received: boolean
           level: number
           monthly_activation_met: boolean
           monthly_volume: number
+          no_commission_reason: string
           parent_partner_id: string
           partner_id: string
           referral_code: string

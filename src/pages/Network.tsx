@@ -56,6 +56,7 @@ export default function Network() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCommission, setFilterCommission] = useState<'all' | 'with_commission' | 'without_commission'>('all');
   const [structureType, setStructureType] = useState<1 | 2>(1);
   
   // Dynamic max levels based on structure type
@@ -255,7 +256,7 @@ export default function Network() {
         </CardHeader>
         <CardContent>
           <SimpleTabsContent value="tree" activeValue={tab} className="space-y-4 mt-0">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
               <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               <select
                 value={filterLevel}
@@ -272,11 +273,23 @@ export default function Network() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="all">Все</option>
+                <option value="all">Все статусы</option>
                 <option value="active">Активные</option>
                 <option value="frozen">Замороженные</option>
                 <option value="inactive">Неактивные</option>
               </select>
+              {/* Commission filter - only for S1 structure */}
+              {structureType === 1 && (
+                <select
+                  value={filterCommission}
+                  onChange={(e) => setFilterCommission(e.target.value as 'all' | 'with_commission' | 'without_commission')}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="all">Все партнёры</option>
+                  <option value="with_commission">С начислениями</option>
+                  <option value="without_commission">Без начислений</option>
+                </select>
+              )}
             </div>
             {membersLoading ? (
               <div className="space-y-2">
@@ -318,7 +331,10 @@ export default function Network() {
               )
             ) : (
               /* При "Все уровни" - показываем дерево с полными данными */
-              <NetworkTree members={filteredMembers} />
+              <NetworkTree 
+                members={filteredMembers} 
+                filterCommission={structureType === 1 ? filterCommission : 'all'} 
+              />
             )}
           </SimpleTabsContent>
 
