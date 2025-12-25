@@ -1,4 +1,4 @@
-import { Calendar, Target, Users, Copy } from "lucide-react";
+import { Calendar, Target, Users, Copy, AlertTriangle } from "lucide-react";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { ActivationProgress } from "@/components/Dashboard/ActivationProgress";
@@ -6,17 +6,21 @@ import { SubscriptionCard } from "@/components/Dashboard/SubscriptionCard";
 import { SponsorInfo } from "@/components/Dashboard/SponsorInfo";
 import { ActivationReminderDialog } from "@/components/Dashboard/ActivationReminderDialog";
 import { SystemNotificationModal } from "@/components/Dashboard/SystemNotificationModal";
+import { PayFromBalanceButton } from "@/components/Dashboard/PayFromBalanceButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useNetworkTree } from "@/hooks/useNetworkTree";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useBalance } from "@/hooks/useBalance";
+import { useActivationThreshold } from "@/hooks/useActivationThreshold";
 import { toast } from "sonner";
 import { formatCents } from "@/utils/formatMoney";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { APP_CONFIG, getReferralLink } from "@/config/constants";
@@ -26,7 +30,41 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: networkMembers = [] } = useNetworkTree(10);
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions({ limit: 3 });
+  const { data: balance } = useBalance();
+  const { data: activationThreshold } = useActivationThreshold();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Check if referral link is blocked (overdue activation)
+  const isReferralBlocked = useMemo(() => {
+    if (!profile) return false;
+    
+    const p = profile as any;
+    
+    // Blocked if subscription not active
+    if (p.subscription_status !== 'active') return true;
+    
+    // Blocked if activation is overdue and not completed
+    if (p.activation_due_from && 
+        new Date(p.activation_due_from) < new Date() && 
+        !p.monthly_activation_completed) {
+      return true;
+    }
+    
+    return false;
+  }, [profile]);
+  
+  const blockReason = useMemo(() => {
+    if (!profile) return null;
+    const p = profile as any;
+    
+    if (p.subscription_status !== 'active') return 'subscription_inactive';
+    if (p.activation_due_from && 
+        new Date(p.activation_due_from) < new Date() && 
+        !p.monthly_activation_completed) {
+      return 'activation_overdue';
+    }
+    return null;
+  }, [profile]);
 
   // Handle payment result
   useEffect(() => {
@@ -173,14 +211,38 @@ export default function Dashboard() {
               </p>
               {profileLoading ? (
                 <Skeleton className="h-9 w-full" />
-              ) : !isSubscriptionActive ? (
-                <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Реферальная ссылка станет доступна после активации подписки
-                  </p>
-                  <Badge variant="outline" className="mt-2">
-                    Подписка: {(profile as any)?.subscription_status || 'неактивна'}
-                  </Badge>
+              ) : isReferralBlocked ? (
+                <div className="space-y-4">
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Реферальная ссылка заблокирована</AlertTitle>
+                    <AlertDescription>
+                      {blockReason === 'subscription_inactive' 
+                        ? 'Активируйте подписку, чтобы использовать реферальную ссылку.'
+                        : 'Ваш срок активации истёк. Оплатите активацию, чтобы разблокировать ссылку.'}
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {/* Show pay from balance option if activation overdue and balance sufficient */}
+                  {blockReason === 'activation_overdue' && balance && activationThreshold && (
+                    <div className="bg-muted/50 border border-border rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Ваш баланс: <span className="font-medium text-foreground">{formatCents(balance.available_cents, 'KZT')}</span>
+                      </p>
+                      <PayFromBalanceButton 
+                        requiredAmountCents={activationThreshold.cents}
+                        availableBalanceCents={balance.available_cents}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="bg-muted/50 border border-border rounded-lg p-3 opacity-50">
+                    <code className="text-xs text-muted-foreground break-all">
+                      {(profile as any)?.referral_code 
+                        ? getReferralLink((profile as any).referral_code)
+                        : 'Загрузка...'}
+                    </code>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
