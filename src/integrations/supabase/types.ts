@@ -1605,6 +1605,15 @@ export type Database = {
       }
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: {
+          p_admin_id: string
+          p_amount_cents: number
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       admin_backfill_sponsor_from_metadata: { Args: never; Returns: Json }
       admin_bind_sponsor: {
         Args: {
@@ -1612,6 +1621,10 @@ export type Database = {
           p_sponsor_referral_code: string
           p_user_id: string
         }
+        Returns: Json
+      }
+      admin_fix_fractional_commissions: {
+        Args: { p_admin_id: string }
         Returns: Json
       }
       admin_fix_missing_referrals: { Args: never; Returns: Json }
@@ -1662,14 +1675,23 @@ export type Database = {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
       }
-      award_s1_subscription_commission: {
-        Args: {
-          p_amount_kzt: number
-          p_subscription_id: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      award_s1_subscription_commission:
+        | {
+            Args: {
+              p_amount_kzt: number
+              p_subscription_id: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount_kzt: number
+              p_subscription_id: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       backfill_missing_s1_commissions: {
         Args: { p_admin_id: string; p_days_back?: number }
         Returns: Json
