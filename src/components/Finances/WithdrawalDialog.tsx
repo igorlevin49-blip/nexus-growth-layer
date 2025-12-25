@@ -8,11 +8,15 @@ import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBalance } from "@/hooks/useBalance";
 import { formatCents, parseCentsInput } from "@/utils/formatMoney";
+import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
 
 interface WithdrawalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const MIN_WITHDRAWAL_CENTS = 50000; // 500 тенге
 
 export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) {
   const [amount, setAmount] = useState("");
@@ -22,6 +26,10 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
   const { data: methods } = usePaymentMethods();
   const { createWithdrawal } = useWithdrawals();
 
+  // Защита от отрицательного баланса - показываем 0
+  const availableBalance = Math.max(0, balance?.available_cents || 0);
+  const hasNegativeBalance = (balance?.available_cents || 0) < 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -29,21 +37,34 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
     
     const amountCents = parseCentsInput(amount);
     
-    if (balance && amountCents > balance.available_cents) {
+    // Проверка минимальной суммы
+    if (amountCents < MIN_WITHDRAWAL_CENTS) {
+      toast.error(`Минимальная сумма вывода: ${formatCents(MIN_WITHDRAWAL_CENTS)}`);
+      return;
+    }
+    
+    // Проверка доступного баланса
+    if (amountCents > availableBalance) {
+      toast.error(`Недостаточно средств. Доступно: ${formatCents(availableBalance)}`);
       return;
     }
 
-    await createWithdrawal.mutateAsync({
-      amount_cents: amountCents,
-      method_id: selectedMethod
-    });
+    try {
+      await createWithdrawal.mutateAsync({
+        amount_cents: amountCents,
+        method_id: selectedMethod
+      });
 
-    setAmount("");
-    setSelectedMethod("");
-    onOpenChange(false);
+      setAmount("");
+      setSelectedMethod("");
+      onOpenChange(false);
+    } catch (error) {
+      // Ошибка уже обрабатывается в хуке
+    }
   };
 
   const defaultMethod = methods?.find(m => m.is_default);
+  const canWithdraw = availableBalance >= MIN_WITHDRAWAL_CENTS && !hasNegativeBalance;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,9 +72,23 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
         <DialogHeader>
           <DialogTitle>Вывести средства</DialogTitle>
           <DialogDescription>
-            Доступно для вывода: {balance ? formatCents(balance.available_cents) : "0 ₸"}
+            Доступно для вывода: {formatCents(availableBalance)}
           </DialogDescription>
         </DialogHeader>
+
+        {hasNegativeBalance && (
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Баланс временно недоступен. Обратитесь в поддержку.</span>
+          </div>
+        )}
+
+        {!canWithdraw && !hasNegativeBalance && (
+          <div className="flex items-center gap-2 p-3 bg-muted text-muted-foreground rounded-md text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Минимальная сумма для вывода: {formatCents(MIN_WITHDRAWAL_CENTS)}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -65,12 +100,13 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
+              disabled={!canWithdraw}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="method">Способ оплаты</Label>
-            <Select value={selectedMethod} onValueChange={setSelectedMethod} required>
+            <Select value={selectedMethod} onValueChange={setSelectedMethod} required disabled={!canWithdraw}>
               <SelectTrigger id="method">
                 <SelectValue placeholder="Выберите способ" />
               </SelectTrigger>
@@ -97,7 +133,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
             <Button 
               type="submit" 
               className="flex-1 hero-gradient border-0"
-              disabled={!amount || !selectedMethod || createWithdrawal.isPending}
+              disabled={!amount || !selectedMethod || createWithdrawal.isPending || !canWithdraw}
             >
               {createWithdrawal.isPending ? "Обработка..." : "Вывести"}
             </Button>

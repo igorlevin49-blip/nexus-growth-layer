@@ -39,37 +39,23 @@ export function useWithdrawals() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create withdrawal record
-      const { data: withdrawal, error: withdrawalError } = await supabase
-        .from('withdrawals')
-        .insert([{
-          user_id: user.id,
-          amount_cents,
-          method_id,
-          fee_cents: 0,
-          status: 'processing'
-        }])
-        .select()
-        .single();
+      // Используем атомарную серверную функцию
+      const { data, error } = await supabase.rpc('create_user_withdrawal' as any, {
+        p_user_id: user.id,
+        p_amount_cents: amount_cents,
+        p_method_id: method_id
+      });
 
-      if (withdrawalError) throw withdrawalError;
+      if (error) throw error;
 
-      // Create negative transaction in KZT
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          user_id: user.id,
-          type: 'withdrawal',
-          amount_cents,
-          currency: 'KZT',
-          status: 'processing',
-          source_id: withdrawal.id,
-          source_ref: `withdrawal_${withdrawal.id}`
-        }]);
+      // Проверяем результат функции
+      const result = data as { success: boolean; message?: string; withdrawal_id?: string };
+      if (!result.success) {
+        const errorMessage = result.message || 'Ошибка при создании вывода';
+        throw new Error(errorMessage);
+      }
 
-      if (transactionError) throw transactionError;
-
-      return withdrawal;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['withdrawals'] });
@@ -77,8 +63,8 @@ export function useWithdrawals() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast.success('Запрос на вывод средств создан');
     },
-    onError: () => {
-      toast.error('Ошибка при создании запроса на вывод');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при создании запроса на вывод');
     }
   });
 
