@@ -16,6 +16,8 @@ export interface NetworkMember {
   total_team: number;
   monthly_volume: number;
   parent_partner_id: string | null;
+  has_commission_received: boolean | null;
+  no_commission_reason: string | null;
 }
 
 export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) {
@@ -48,6 +50,8 @@ export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) 
         total_team: number;
         monthly_volume: number;
         parent_partner_id: string | null;
+        has_commission_received: boolean | null;
+        no_commission_reason: string | null;
       }>;
       
       // Debug log to verify data

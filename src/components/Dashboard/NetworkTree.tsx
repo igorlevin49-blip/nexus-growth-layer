@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Crown, Users2 } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { NetworkMember } from "@/hooks/useNetworkTree";
 
@@ -11,6 +12,7 @@ interface NetworkNode extends NetworkMember {
 
 interface NetworkTreeProps {
   members: NetworkMember[];
+  filterCommission?: 'all' | 'with_commission' | 'without_commission';
 }
 
 function buildTree(members: NetworkMember[]): NetworkNode[] {
@@ -44,6 +46,19 @@ function buildTree(members: NetworkMember[]): NetworkNode[] {
   return rootNodes;
 }
 
+const getNoCommissionReasonText = (reason: string | null): string => {
+  switch (reason) {
+    case 'not_activated':
+      return 'Партнёр не активирован';
+    case 'too_deep':
+      return 'Глубже 5 уровня (S1)';
+    case 'sponsor_inactive':
+      return 'Спонсор был неактивен при активации партнёра';
+    default:
+      return 'Причина неизвестна';
+  }
+};
+
 interface NetworkNodeProps {
   node: NetworkNode;
   isRoot?: boolean;
@@ -57,6 +72,11 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
     : node.subscription_status === 'frozen' 
     ? 'frozen' 
     : 'inactive';
+
+  // Commission status - only relevant when partner is active but no commission received
+  const hasMissedCommission = status === 'active' && 
+    node.has_commission_received === false && 
+    node.no_commission_reason === 'sponsor_inactive';
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -85,7 +105,8 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
       <div className={cn(
         "network-node",
         status === "active" ? "active" : 
-        status === "frozen" ? "frozen" : ""
+        status === "frozen" ? "frozen" : "",
+        hasMissedCommission && "border-l-4 border-l-orange-500 bg-orange-500/5"
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -113,6 +134,21 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
               )}
               <span className="font-medium">{node.full_name || 'Без имени'}</span>
               {getStatusBadge(status)}
+              
+              {/* Missed commission indicator */}
+              {hasMissedCommission && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className="bg-orange-500 hover:bg-orange-600 text-white gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Без начисления
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{getNoCommissionReasonText(node.no_commission_reason)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
 
@@ -136,6 +172,12 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
           <span>Уровень {node.level}</span>
           <span>•</span>
           <span>ID: {node.partner_id.substring(0, 8)}</span>
+          {node.has_commission_received === true && status === 'active' && (
+            <>
+              <span>•</span>
+              <span className="text-success">✓ Комиссия начислена</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -150,8 +192,36 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
   );
 }
 
-export function NetworkTree({ members }: NetworkTreeProps) {
-  const treeData = useMemo(() => buildTree(members), [members]);
+export function NetworkTree({ members, filterCommission = 'all' }: NetworkTreeProps) {
+  // Apply commission filter
+  const filteredMembers = useMemo(() => {
+    if (filterCommission === 'all') return members;
+    
+    return members.filter(member => {
+      const isActive = member.subscription_status === 'active' || member.monthly_activation_met;
+      
+      if (filterCommission === 'with_commission') {
+        return member.has_commission_received === true;
+      }
+      
+      if (filterCommission === 'without_commission') {
+        // Show active partners without commission (missed commissions)
+        return isActive && member.has_commission_received === false;
+      }
+      
+      return true;
+    });
+  }, [members, filterCommission]);
+
+  const treeData = useMemo(() => buildTree(filteredMembers), [filteredMembers]);
+  
+  // Count missed commissions for stats
+  const missedCommissionCount = useMemo(() => {
+    return members.filter(m => {
+      const isActive = m.subscription_status === 'active' || m.monthly_activation_met;
+      return isActive && m.has_commission_received === false && m.no_commission_reason === 'sponsor_inactive';
+    }).length;
+  }, [members]);
   
   if (members.length === 0) {
     return (
@@ -163,8 +233,31 @@ export function NetworkTree({ members }: NetworkTreeProps) {
     );
   }
 
+  if (filteredMembers.length === 0 && filterCommission !== 'all') {
+    return (
+      <div className="text-center py-12">
+        <Users2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-lg font-medium mb-2">
+          {filterCommission === 'with_commission' 
+            ? 'Нет партнёров с начислениями' 
+            : 'Нет партнёров без начислений'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {/* Missed commission warning */}
+      {missedCommissionCount > 0 && filterCommission === 'all' && (
+        <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-sm">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <span>
+            <strong>{missedCommissionCount}</strong> партнёр(ов) без начисления комиссии (S1)
+          </span>
+        </div>
+      )}
+      
       <div className="border-t border-border pt-4 space-y-2">
         {treeData.map((node) => (
           <NetworkNodeComponent key={node.partner_id} node={node} isRoot />

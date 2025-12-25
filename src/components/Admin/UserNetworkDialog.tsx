@@ -3,11 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
-import { Users, ShoppingBag } from "lucide-react";
+import { Users, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NetworkMember } from "@/hooks/useNetworkTree";
+import { UserCommissionAuditDialog } from "./UserCommissionAuditDialog";
 
 interface UserNetworkDialogProps {
   open: boolean;
@@ -25,7 +27,7 @@ export function UserNetworkDialog({
   userEmail 
 }: UserNetworkDialogProps) {
   const [structureType, setStructureType] = useState<1 | 2>(1);
-  
+  const [auditDialogOpen, setAuditDialogOpen] = useState(false);
   // Dynamic max levels based on structure type
   const maxLevelForStructure = structureType === 1 ? 5 : 10;
 
@@ -109,7 +111,7 @@ export function UserNetworkDialog({
                   <p className="text-sm text-muted-foreground">{userEmail}</p>
                   <p className="text-xs text-muted-foreground">ID: {userId}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-2">
                   <div className="flex items-center gap-2 text-2xl font-bold">
                     <Users className="h-6 w-6" />
                     {totalPartners}
@@ -117,6 +119,17 @@ export function UserNetworkDialog({
                   <p className="text-sm text-muted-foreground">
                     Партнёров (L1-L{maxLevelForStructure})
                   </p>
+                  {structureType === 1 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setAuditDialogOpen(true)}
+                      className="gap-1"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Аудит комиссий S1
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -164,6 +177,14 @@ export function UserNetworkDialog({
             )}
           </div>
         </div>
+
+        {/* Commission Audit Dialog */}
+        <UserCommissionAuditDialog
+          open={auditDialogOpen}
+          onOpenChange={setAuditDialogOpen}
+          userId={userId}
+          userName={userName}
+        />
       </DialogContent>
     </Dialog>
   );
