@@ -16,6 +16,7 @@ export interface Transaction {
   frozen_until: string | null;
   created_at: string;
   updated_at: string;
+  source_user_name?: string; // ФИО пользователя-источника комиссии
 }
 
 type TransactionType = 'commission' | 'bonus' | 'withdrawal' | 'adjustment' | 'purchase';
@@ -59,7 +60,33 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as Transaction[];
+      
+      const transactions = (data || []) as Transaction[];
+      
+      // Получаем уникальные source_user_id из payload для подтягивания ФИО
+      const sourceUserIds = transactions
+        .filter(t => t.payload?.source_user_id)
+        .map(t => t.payload.source_user_id as string);
+      
+      const uniqueSourceUserIds = [...new Set(sourceUserIds)];
+      
+      if (uniqueSourceUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', uniqueSourceUserIds);
+        
+        if (profiles) {
+          const profileMap = new Map(profiles.map(p => [p.id, p.full_name]));
+          transactions.forEach(t => {
+            if (t.payload?.source_user_id) {
+              t.source_user_name = profileMap.get(t.payload.source_user_id) || undefined;
+            }
+          });
+        }
+      }
+      
+      return transactions;
     }
   });
 }

@@ -333,8 +333,10 @@ export default function Finances() {
                           <p className="text-sm text-muted-foreground mb-1">
                             {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatCents(transaction.amount_cents)}`}
                           </p>
-                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                            <span>ID: {transaction.id.substring(0, 8)}</span>
+                          <div className="flex items-center flex-wrap gap-2 text-xs text-muted-foreground">
+                            {transaction.source_user_name && (
+                              <span className="text-foreground font-medium">За: {transaction.source_user_name}</span>
+                            )}
                             <span>{new Date(transaction.created_at).toLocaleString('ru-RU')}</span>
                           </div>
                         </div>
