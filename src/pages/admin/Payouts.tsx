@@ -226,12 +226,9 @@ export default function AdminPayouts() {
     setProcessing(true);
 
     try {
-      // amountCents введено в KZT (тенге), конвертируем в тиыны (* 100)
-      const amountTiyn = amountCents * 100;
-      
       const { data, error } = await supabase.rpc('process_manual_payout', {
         p_user_id: payoutDialog.partner.id,
-        p_amount_cents: amountTiyn,
+        p_amount_cents: amountCents, // Уже в тенге, БЕЗ конвертации
         p_comment: payoutForm.comment.trim()
       });
 
