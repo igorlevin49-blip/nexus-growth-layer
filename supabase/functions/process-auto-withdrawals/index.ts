@@ -90,41 +90,26 @@ serve(async (req) => {
       if (balance.available_cents >= rule.threshold_cents && balance.available_cents >= rule.min_amount_cents) {
         console.log(`Processing auto-withdrawal for user ${rule.user_id}, amount: ${balance.available_cents}`);
 
-        // Create withdrawal
-        const { data: withdrawal, error: withdrawalError } = await supabase
-          .from('withdrawals')
-          .insert([{
-            user_id: rule.user_id,
-            method_id: rule.method_id,
-            amount_cents: balance.available_cents,
-            fee_cents: 0,
-            status: 'processing'
-          }])
-          .select()
-          .single();
+        // Use atomic function to create withdrawal + transaction in single transaction
+        const { data: result, error: withdrawalError } = await supabase
+          .rpc('create_user_withdrawal', {
+            p_user_id: rule.user_id,
+            p_amount_cents: balance.available_cents,
+            p_method_id: rule.method_id
+          });
 
         if (withdrawalError) {
           console.error(`Error creating withdrawal for user ${rule.user_id}:`, withdrawalError);
           continue;
         }
 
-        // Create transaction
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert([{
-            user_id: rule.user_id,
-            type: 'withdrawal',
-            amount_cents: balance.available_cents,
-            status: 'processing',
-            source_id: withdrawal.id,
-            source_ref: `auto_withdrawal_${withdrawal.id}`
-          }]);
-
-        if (transactionError) {
-          console.error(`Error creating transaction for user ${rule.user_id}:`, transactionError);
+        const withdrawalResult = result as { success: boolean; message?: string; withdrawal_id?: string };
+        if (!withdrawalResult.success) {
+          console.error(`Withdrawal failed for user ${rule.user_id}:`, withdrawalResult.message);
           continue;
         }
 
+        console.log(`Auto-withdrawal created for user ${rule.user_id}, withdrawal_id: ${withdrawalResult.withdrawal_id}`);
         processedCount++;
       }
     }
