@@ -1723,6 +1723,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      audit_unlock_levels_violations: {
+        Args: never
+        Returns: {
+          direct_referrals_count: number
+          level: number
+          required_referrals: number
+          total_wrong_amount_cents: number
+          user_email: string
+          user_id: string
+          user_name: string
+          violation_count: number
+        }[]
+      }
       award_s1_subscription_commission:
         | {
             Args: {
@@ -1774,6 +1787,10 @@ export type Database = {
       }
       create_user_withdrawal: {
         Args: { p_amount_cents: number; p_method_id: string; p_user_id: string }
+        Returns: Json
+      }
+      fix_unlock_levels_violations: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
         Returns: Json
       }
       flag_test_data: {
