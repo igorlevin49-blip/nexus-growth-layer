@@ -1741,6 +1741,10 @@ export type Database = {
         }
         Returns: Json
       }
+      create_user_withdrawal: {
+        Args: { p_amount_cents: number; p_method_id: string; p_user_id: string }
+        Returns: Json
+      }
       flag_test_data: {
         Args: {
           p_dry_run?: boolean
@@ -1976,6 +1980,10 @@ export type Database = {
       hard_delete_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
+      }
+      has_processing_withdrawal: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
