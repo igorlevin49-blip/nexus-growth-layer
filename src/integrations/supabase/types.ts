@@ -1711,6 +1711,18 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      audit_marketing_free_commissions: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          issue: string
+          subscriber_name: string
+          subscription_id: string
+          transaction_id: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       award_s1_subscription_commission:
         | {
             Args: {
