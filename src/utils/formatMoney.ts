@@ -1,7 +1,7 @@
 export function formatCents(amount: number, currency: string = 'KZT'): string {
-  // Для KZT amount - это уже целые тенге, НЕ делить
-  // Для USD amount - это центы, делить на 100
-  const displayAmount = currency === 'KZT' ? amount : amount / 100;
+  // amount всегда в минимальных единицах (центы для USD, тиыны для KZT)
+  // Всегда делим на 100 для отображения
+  const displayAmount = amount / 100;
   
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
