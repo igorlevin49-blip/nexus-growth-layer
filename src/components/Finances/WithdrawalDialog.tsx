@@ -24,11 +24,14 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
   
   const { data: balance } = useBalance();
   const { data: methods } = usePaymentMethods();
-  const { createWithdrawal } = useWithdrawals();
+  const { data: withdrawals, createWithdrawal } = useWithdrawals();
 
   // Защита от отрицательного баланса - показываем 0
   const availableBalance = Math.max(0, balance?.available_cents || 0);
   const hasNegativeBalance = (balance?.available_cents || 0) < 0;
+  
+  // Проверяем есть ли уже processing вывод
+  const hasProcessingWithdrawal = withdrawals?.some(w => w.status === 'processing');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +67,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
   };
 
   const defaultMethod = methods?.find(m => m.is_default);
-  const canWithdraw = availableBalance >= MIN_WITHDRAWAL_CENTS && !hasNegativeBalance;
+  const canWithdraw = availableBalance >= MIN_WITHDRAWAL_CENTS && !hasNegativeBalance && !hasProcessingWithdrawal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,7 +86,14 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
           </div>
         )}
 
-        {!canWithdraw && !hasNegativeBalance && (
+        {hasProcessingWithdrawal && (
+          <div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 rounded-md text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>У вас уже есть заявка на вывод в обработке. Дождитесь её завершения.</span>
+          </div>
+        )}
+
+        {!canWithdraw && !hasNegativeBalance && !hasProcessingWithdrawal && (
           <div className="flex items-center gap-2 p-3 bg-muted text-muted-foreground rounded-md text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>Минимальная сумма для вывода: {formatCents(MIN_WITHDRAWAL_CENTS)}</span>
