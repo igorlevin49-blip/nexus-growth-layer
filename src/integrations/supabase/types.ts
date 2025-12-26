@@ -1692,6 +1692,15 @@ export type Database = {
         Args: { record_ids: string[]; record_type: string }
         Returns: Json
       }
+      audit_balance_integrity: {
+        Args: never
+        Returns: {
+          details: Json
+          issue_type: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       award_s1_subscription_commission:
         | {
             Args: {
