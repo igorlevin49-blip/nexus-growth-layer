@@ -1701,6 +1701,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      audit_commission_structure_integrity: {
+        Args: never
+        Returns: {
+          current_structure_type: string
+          expected_structure_type: string
+          issue: string
+          source_ref: string
+          transaction_id: string
+        }[]
+      }
       award_s1_subscription_commission:
         | {
             Args: {
