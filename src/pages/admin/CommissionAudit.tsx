@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,7 +22,8 @@ import {
   DollarSign,
   Activity,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  Wrench
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -59,9 +60,21 @@ interface MarketingFreeIssue {
   issue: string;
 }
 
+interface FixResult {
+  success?: boolean;
+  dry_run?: boolean;
+  fixed_count?: number;
+  violations_count?: number;
+  total_amount_cents?: number;
+  error?: string;
+}
+
 export default function CommissionAudit() {
   const { userRole } = useAuth();
+  const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDryRun, setShowDryRun] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<FixResult | null>(null);
 
   // Balance integrity audit
   const { data: balanceIssues, isLoading: loadingBalance, refetch: refetchBalance } = useQuery({
@@ -94,6 +107,37 @@ export default function CommissionAudit() {
       return (data || []) as MarketingFreeIssue[];
     },
     staleTime: 60000
+  });
+
+  // Fix unlock violations mutation
+  const fixViolationsMutation = useMutation({
+    mutationFn: async (dryRun: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      const { data, error } = await supabase.rpc('admin_fix_unlock_violations', {
+        p_admin_id: user.id,
+        p_dry_run: dryRun
+      });
+      
+      if (error) throw error;
+      return data as FixResult;
+    },
+    onSuccess: (data, dryRun) => {
+      if (dryRun) {
+        setDryRunResult(data);
+        setShowDryRun(true);
+      } else {
+        toast.success(`Исправлено ${data.fixed_count} нарушений на сумму ${formatMoney(data.total_amount_cents || 0)}`);
+        setShowDryRun(false);
+        setDryRunResult(null);
+        queryClient.invalidateQueries({ queryKey: ['audit-unlock-violations'] });
+        queryClient.invalidateQueries({ queryKey: ['audit-commission-stats'] });
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Ошибка: ${error.message}`);
+    }
   });
 
   // Commission summary statistics
@@ -375,13 +419,48 @@ export default function CommissionAudit() {
 
         <TabsContent value="unlock">
           <Card>
-            <CardHeader>
-              <CardTitle>Нарушения разблокировки уровней</CardTitle>
-              <CardDescription>
-                Комиссии начисленные на уровни, которые ещё не разблокированы
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle>Нарушения разблокировки уровней</CardTitle>
+                <CardDescription>
+                  Комиссии начисленные на уровни, которые ещё не разблокированы
+                </CardDescription>
+              </div>
+              {(unlockViolations?.length || 0) > 0 && userRole === 'superadmin' && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fixViolationsMutation.mutate(true)}
+                    disabled={fixViolationsMutation.isPending}
+                  >
+                    <Wrench className="h-4 w-4 mr-2" />
+                    Проверить исправление
+                  </Button>
+                  {showDryRun && dryRunResult && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => fixViolationsMutation.mutate(false)}
+                      disabled={fixViolationsMutation.isPending}
+                    >
+                      Исправить {dryRunResult.violations_count} нарушений
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
+              {showDryRun && dryRunResult && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Предварительный просмотр исправлений</AlertTitle>
+                  <AlertDescription>
+                    Будет исправлено {dryRunResult.violations_count} нарушений. 
+                    Транзакции будут помечены как "failed" и удалены из балансов.
+                  </AlertDescription>
+                </Alert>
+              )}
               {loadingUnlock ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />

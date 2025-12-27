@@ -1640,11 +1640,19 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_commission_audit_summary: {
+        Args: { p_admin_id: string }
+        Returns: Json
+      }
       admin_fix_fractional_commissions: {
         Args: { p_admin_id: string }
         Returns: Json
       }
       admin_fix_missing_referrals: { Args: never; Returns: Json }
+      admin_fix_unlock_violations: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       admin_recalculate_commissions: {
         Args: never
         Returns: {
@@ -1771,6 +1779,14 @@ export type Database = {
       create_user_withdrawal: {
         Args: { p_amount_cents: number; p_method_id: string; p_user_id: string }
         Returns: Json
+      }
+      fix_unlock_level_violations: {
+        Args: never
+        Returns: {
+          details: Json
+          fixed_count: number
+          total_amount_cents: number
+        }[]
       }
       fix_unlock_levels_violations: {
         Args: { p_admin_id: string; p_dry_run?: boolean }
