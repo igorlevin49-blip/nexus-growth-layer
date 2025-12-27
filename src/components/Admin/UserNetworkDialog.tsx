@@ -78,6 +78,7 @@ export function UserNetworkDialog({
   }, {} as Record<number, { count: number; active: number; frozen: number }>);
 
   const totalPartners = (members || []).length;
+  const totalActivePartners = (members || []).filter(m => m.subscription_status === 'active' || m.monthly_activation_met).length;
   const displayLevels = Math.min(Math.max(...Object.keys(statsByLevel).map(Number), 0), maxLevelForStructure);
 
   return (
@@ -114,10 +115,13 @@ export function UserNetworkDialog({
                 <div className="text-right space-y-2">
                   <div className="flex items-center gap-2 text-2xl font-bold">
                     <Users className="h-6 w-6" />
-                    {totalPartners}
+                    {totalActivePartners}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Партнёров (L1-L{maxLevelForStructure})
+                    Активных партнёров (L1-L{maxLevelForStructure})
+                    {totalPartners > totalActivePartners && (
+                      <span className="block text-xs">+ {totalPartners - totalActivePartners} ожидают активации</span>
+                    )}
                   </p>
                   {structureType === 1 && (
                     <Button 
@@ -143,14 +147,17 @@ export function UserNetworkDialog({
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {Array.from({ length: maxLevelForStructure }, (_, i) => i + 1).map(level => {
                     const stats = statsByLevel[level] || { count: 0, active: 0, frozen: 0 };
+                    const pending = stats.count - stats.active - stats.frozen;
                     return (
                       <div key={level} className="border rounded-lg p-3">
                         <div className="text-sm font-medium mb-2">Уровень {level}</div>
-                        <div className="text-2xl font-bold mb-1">{stats.count}</div>
-                        <div className="flex gap-2 text-xs">
-                          <Badge variant="default" className="profit-indicator">
-                            {stats.active} акт.
-                          </Badge>
+                        <div className="text-2xl font-bold mb-1">{stats.active}</div>
+                        <div className="flex flex-wrap gap-1 text-xs">
+                          {pending > 0 && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              {pending} ожид.
+                            </Badge>
+                          )}
                           {stats.frozen > 0 && (
                             <Badge variant="secondary" className="pending-indicator">
                               {stats.frozen} зам.
