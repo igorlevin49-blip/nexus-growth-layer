@@ -41,6 +41,7 @@ import TestDataCleanup from "./pages/admin/TestDataCleanup";
 import ProductDetail from "./pages/ProductDetail";
 import MarketingAccess from "./pages/admin/MarketingAccess";
 import RecalculateCommissions from "./pages/admin/RecalculateCommissions";
+import CommissionAudit from "./pages/admin/CommissionAudit";
 import SecurityLogs from "./pages/admin/SecurityLogs";
 import AdminNotifications from "./pages/admin/Notifications";
 import MonthlyActivations from "./pages/admin/MonthlyActivations";
@@ -101,6 +102,7 @@ function AppContent() {
           <Route path="admin/notifications" element={<ProtectedRoute requireSuperAdmin><AdminNotifications /></ProtectedRoute>} />
           <Route path="admin/monthly-activations" element={<ProtectedRoute requireAdmin><MonthlyActivations /></ProtectedRoute>} />
           <Route path="admin/payment-diagnostics" element={<ProtectedRoute requireAdmin><PaymentDiagnostics /></ProtectedRoute>} />
+          <Route path="admin/commission-audit" element={<ProtectedRoute requireAdmin><CommissionAudit /></ProtectedRoute>} />
         </Route>
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
