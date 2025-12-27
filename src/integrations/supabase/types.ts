@@ -1719,6 +1719,20 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      audit_inactive_partner_commissions: {
+        Args: never
+        Returns: {
+          active_referrals: number
+          inactive_referrals: number
+          level: number
+          potentially_wrong_commissions: number
+          required_for_level: number
+          total_referrals: number
+          user_email: string
+          user_id: string
+          user_name: string
+        }[]
+      }
       audit_marketing_free_commissions: {
         Args: never
         Returns: {
