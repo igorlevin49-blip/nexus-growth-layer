@@ -48,6 +48,7 @@ import PaymentDiagnostics from "./pages/admin/PaymentDiagnostics";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import { MaintenanceModal } from "@/components/MaintenanceModal";
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,7 @@ const App = () => (
         <LoaderProvider>
           <AuthProvider>
             <GlobalLoader />
+            <MaintenanceModal />
             <AppContent />
           </AuthProvider>
         </LoaderProvider>
