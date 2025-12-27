@@ -2141,6 +2141,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reverse_unlock_level_violations: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       soft_delete_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
