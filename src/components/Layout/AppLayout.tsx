@@ -59,6 +59,7 @@ export function AppLayout() {
     { name: "Оплаты", href: "/admin/payments", icon: FileText },
     { name: "Выплаты", href: "/admin/payouts", icon: DollarSign },
     { name: "Активации", href: "/admin/monthly-activations", icon: Activity },
+    { name: "Аудит комиссий", href: "/admin/commission-audit", icon: Shield },
     { name: "Диагностика", href: "/admin/payment-diagnostics", icon: AlertCircle },
     { name: "Отчеты", href: "/admin/reports", icon: BarChart3 },
     { name: "Документы", href: "/admin/documents", icon: FileText },
