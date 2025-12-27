@@ -1745,6 +1745,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      audit_unlock_level_violations_detailed: {
+        Args: never
+        Returns: {
+          actual_referrals_at_time: number
+          amount_cents: number
+          created_at: string
+          level: number
+          required_referrals: number
+          subscriber_id: string
+          subscriber_name: string
+          subscription_id: string
+          transaction_id: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }[]
+      }
       audit_unlock_levels_violations: {
         Args: never
         Returns: {
@@ -1757,6 +1774,14 @@ export type Database = {
           user_name: string
           violation_count: number
         }[]
+      }
+      award_s1_subscription_commission: {
+        Args: {
+          p_amount_kzt: number
+          p_subscriber_id: string
+          p_subscription_id: string
+        }
+        Returns: Json
       }
       backfill_missing_s1_commissions: {
         Args: { p_admin_id: string; p_days_back?: number }
@@ -1856,7 +1881,7 @@ export type Database = {
         Args: {
           p_end_date?: string
           p_start_date?: string
-          p_structure_type: number
+          p_structure_type?: number
           p_user_id: string
         }
         Returns: {
