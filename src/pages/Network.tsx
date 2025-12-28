@@ -334,6 +334,39 @@ export default function Network() {
         </CardHeader>
         <CardContent>
           <SimpleTabsContent value="tree" activeValue={tab} className="space-y-4 mt-0">
+            {/* Quick filter buttons - only for S1 structure */}
+            {structureType === 1 && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={filterCommission === 'without_commission' ? 'default' : 'outline'}
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setFilterCommission(filterCommission === 'without_commission' ? 'all' : 'without_commission')}
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  Только без начислений
+                </Button>
+                <Button
+                  variant={filterCommission === 'with_commission' ? 'default' : 'outline'}
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setFilterCommission(filterCommission === 'with_commission' ? 'all' : 'with_commission')}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Только с начислениями
+                </Button>
+                {filterCommission !== 'all' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFilterCommission('all')}
+                  >
+                    Сбросить
+                  </Button>
+                )}
+              </div>
+            )}
+
             <div className="grid gap-4 md:grid-cols-4">
               <Input placeholder="Поиск..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               <select
@@ -356,7 +389,7 @@ export default function Network() {
                 <option value="frozen">Замороженные</option>
                 <option value="inactive">Неактивные</option>
               </select>
-              {/* Commission filter - only for S1 structure */}
+              {/* Commission filter select - only for S1 structure */}
               {structureType === 1 && (
                 <select
                   value={filterCommission}
