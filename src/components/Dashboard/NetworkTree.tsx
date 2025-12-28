@@ -73,14 +73,14 @@ interface ReasonInfo {
 
 const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
   not_activated: {
-    title: 'Партнёр не активен',
-    description: 'Партнёр ещё не оплатил подписку или не прошёл активацию. Комиссия будет начислена после его активации.',
+    title: 'Партнёр не активирован',
+    description: 'Партнёр ещё не оплатил годовую подписку. Он не учитывается как личник и комиссия за него не начисляется.',
     color: 'gray',
     icon: UserX
   },
   no_payment_this_month: {
-    title: 'Нет оплаты в этом месяце',
-    description: 'Партнёр не оплачивал подписку в текущем месяце. Комиссия начисляется только за оплаты текущего месяца.',
+    title: 'Нет активации в этом месяце',
+    description: 'Партнёр не сделал ежемесячную активацию (закуп на 20 000 ₸). В этом месяце комиссия за него не начисляется.',
     color: 'gray',
     icon: Clock
   },
@@ -98,19 +98,19 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
   },
   level_not_unlocked: {
     title: 'Уровень не открыт',
-    description: 'Для получения комиссии с этого уровня требуется больше активных личных продаж на 1-й линии.',
+    description: 'Данный партнёр находится на уровне, который вам ещё не открыт. Нужно больше активных личников.',
     color: 'orange',
     icon: Lock
   },
   marketing_free_access: {
-    title: 'Бесплатный доступ',
-    description: 'Партнёр получил бесплатный маркетинговый доступ. За бесплатные подписки комиссия не начисляется.',
+    title: 'Бесплатный маркетинговый доступ',
+    description: 'Партнёр был зарегистрирован по бесплатному маркетинговому доступу, поэтому за него комиссия не начисляется.',
     color: 'blue',
     icon: Gift
   },
   sponsor_inactive: {
-    title: 'Вы были неактивны',
-    description: 'В момент активации этого партнёра вы были неактивны (не выполнена месячная активация). Комиссия не была начислена.',
+    title: 'Вы не активны в этом месяце',
+    description: 'У вас не выполнена ежемесячная активация (закуп на 20 000 ₸). Комиссия за структуру в этом месяце закрыта.',
     color: 'orange',
     icon: AlertTriangle
   },
@@ -190,17 +190,19 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
     }
   };
 
-  // Get additional info for level_not_unlocked
-  const getLevelUnlockInfo = () => {
+  // Get additional info for level_not_unlocked with dynamic message
+  const getLevelUnlockInfo = (node: NetworkNode, rootDirectCount?: number) => {
     if (node.no_commission_reason !== 'level_not_unlocked') return null;
-    const required = UNLOCK_REQUIREMENTS[node.level] || node.level;
+    const required = UNLOCK_REQUIREMENTS[node.level] || 999;
     return {
       level: node.level,
-      required
+      required,
+      // If we had rootDirectCount we could show it, but it's not available on frontend
+      // We'll just show what's needed
     };
   };
 
-  const levelUnlockInfo = getLevelUnlockInfo();
+  const levelUnlockInfo = getLevelUnlockInfo(node);
 
   return (
     <div className="space-y-2">
