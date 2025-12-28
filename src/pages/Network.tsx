@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { StructureSelector } from "@/components/Network/StructureSelector";
 import { CommissionBreakdown } from "@/components/Network/CommissionBreakdown";
 import { SimpleTabs, SimpleTabsList, SimpleTabsTrigger, SimpleTabsContent } from "@/components/Network/SimpleTabs";
@@ -367,6 +368,7 @@ export default function Network() {
                   <option value="without_commission">Без начислений</option>
                 </select>
               )}
+            </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
                 Показано: <span className="font-medium text-foreground">{filteredMembers.length}</span> из{' '}
