@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NetworkTree } from "@/components/Dashboard/NetworkTree";
 import { StructureSelector } from "@/components/Network/StructureSelector";
 import { CommissionBreakdown } from "@/components/Network/CommissionBreakdown";
 import { SimpleTabs, SimpleTabsList, SimpleTabsTrigger, SimpleTabsContent } from "@/components/Network/SimpleTabs";
@@ -50,6 +50,70 @@ const getStatusBadge = (member: NetworkMember) => {
   return <Badge className="frozen-indicator">Ожидает активации</Badge>;
 };
 
+type NoCommissionReason =
+  | 'not_activated'
+  | 'no_payment_this_month'
+  | 'too_deep'
+  | 'level_not_unlocked'
+  | 'marketing_free_access'
+  | 'sponsor_inactive'
+  | 'already_received_before'
+  | 'no_active_subscription';
+
+const NO_COMMISSION_TEXT: Record<NoCommissionReason, { title: string; description: string }> = {
+  not_activated: {
+    title: 'Партнёр не активен',
+    description: 'Партнёр ещё не оплатил подписку или не прошёл активацию.',
+  },
+  no_payment_this_month: {
+    title: 'Нет оплаты в этом месяце',
+    description: 'Комиссия начисляется только за оплаты текущего месяца.',
+  },
+  no_active_subscription: {
+    title: 'Нет активной подписки',
+    description: 'Комиссия начисляется только за активных партнёров.',
+  },
+  too_deep: {
+    title: 'Глубже 5 уровня',
+    description: 'В структуре S1 комиссия начисляется только до 5-го уровня включительно.',
+  },
+  level_not_unlocked: {
+    title: 'Уровень не открыт',
+    description: 'Недостаточно активных личников на 1-й линии для открытия глубины.',
+  },
+  marketing_free_access: {
+    title: 'Бесплатный доступ',
+    description: 'За бесплатные (маркетинговые) подписки комиссия не начисляется.',
+  },
+  sponsor_inactive: {
+    title: 'Вы были неактивны',
+    description: 'В месяц оплаты партнёра у вас не была выполнена месячная активация.',
+  },
+  already_received_before: {
+    title: 'Реанимация партнёра',
+    description: 'Комиссия за этого партнёра уже начислялась ранее; повторно не начисляется.',
+  },
+};
+
+function NoCommissionBadge({ reason }: { reason: string | null }) {
+  if (!reason) return null;
+  const info = (NO_COMMISSION_TEXT as any)[reason] as { title: string; description: string } | undefined;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge className="cursor-pointer bg-warning text-warning-foreground hover:bg-warning/90">Нет начисления</Badge>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs p-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold">{info?.title ?? 'Нет начисления'}</p>
+          <p className="text-xs text-muted-foreground">{info?.description ?? 'Причина не определена'}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export default function Network() {
   const [selectedMember, setSelectedMember] = useState<NetworkMember | null>(null);
   const [tab, setTab] = useState('tree');
@@ -64,7 +128,13 @@ export default function Network() {
   
   const { data: stats, isLoading: statsLoading } = useNetworkStats(structureType);
   // Always load full data, filter only in UI
-  const { data: networkMembers = [], isLoading: membersLoading } = useNetworkTree(maxLevelsForStructure, structureType);
+  const {
+    data: networkMembers = [],
+    isLoading: membersLoading,
+    isFetching: membersFetching,
+    error: membersError,
+    refetch: refetchMembers,
+  } = useNetworkTree(maxLevelsForStructure, structureType);
   const { data: activities = [], isLoading: activitiesLoading } = useNetworkActivity({ limit: 50 });
   const { data: profile } = useProfile();
 
@@ -81,10 +151,14 @@ export default function Network() {
         (filterStatus === 'active' && (member.subscription_status === 'active' || member.monthly_activation_met)) ||
         (filterStatus === 'inactive' && member.subscription_status === 'inactive' && !member.monthly_activation_met) ||
         (filterStatus === 'frozen' && member.subscription_status === 'frozen');
+
+      const matchesCommission = structureType !== 1 || filterCommission === 'all' ||
+        (filterCommission === 'with_commission' && member.has_commission_received === true) ||
+        (filterCommission === 'without_commission' && member.has_commission_received === false && member.no_commission_reason !== null);
       
-      return matchesSearch && matchesLevel && matchesStatus;
+      return matchesSearch && matchesLevel && matchesStatus && matchesCommission;
     });
-  }, [networkMembers, searchQuery, filterLevel, filterStatus]);
+  }, [networkMembers, searchQuery, filterLevel, filterStatus, structureType, filterCommission]);
 
   // Calculate level stats
   const levelStats = useMemo(() => {
@@ -139,10 +213,13 @@ export default function Network() {
     [maxLevelsForStructure]
   );
 
-  // Reset filter level when structure type changes
+  // Reset filters when structure type changes
   const handleStructureChange = useCallback((newType: 1 | 2) => {
     setStructureType(newType);
     setFilterLevel('all');
+    setFilterStatus('all');
+    setSearchQuery('');
+    setFilterCommission('all');
   }, []);
 
   return (
@@ -290,7 +367,40 @@ export default function Network() {
                   <option value="without_commission">Без начислений</option>
                 </select>
               )}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                Показано: <span className="font-medium text-foreground">{filteredMembers.length}</span> из{' '}
+                <span className="font-medium text-foreground">{networkMembers.length}</span>
+                {membersFetching ? ' (обновление...)' : ''}
+              </span>
+              {(searchQuery || filterLevel !== 'all' || filterStatus !== 'all' || (structureType === 1 && filterCommission !== 'all')) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setFilterLevel('all');
+                    setFilterStatus('all');
+                    setFilterCommission('all');
+                  }}
+                >
+                  Сбросить фильтры
+                </Button>
+              )}
             </div>
+
+            {membersError && (
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                <div className="space-y-1">
+                  <p className="font-medium">Не удалось загрузить партнёров</p>
+                  <p className="text-sm text-muted-foreground">Попробуйте повторить загрузку.</p>
+                </div>
+                <Button variant="outline" onClick={() => refetchMembers()}>
+                  Повторить
+                </Button>
+              </div>
+            )}
+
             {membersLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-20" />
@@ -316,8 +426,14 @@ export default function Network() {
                             ? 'bg-warning' 
                             : 'bg-muted'
                         }`} />
-                        <div>
-                          <p className="font-medium">{m.full_name || 'Без имени'}</p>
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">{m.full_name || 'Без имени'}</p>
+                            {getStatusBadge(m)}
+                            {m.has_commission_received === false && m.no_commission_reason && (
+                              <NoCommissionBadge reason={m.no_commission_reason} />
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">{m.email}</p>
                         </div>
                       </div>
