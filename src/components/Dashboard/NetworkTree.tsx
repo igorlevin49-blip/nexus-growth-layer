@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { NetworkMember } from "@/hooks/useNetworkTree";
 
@@ -240,27 +240,30 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
               
               {/* No commission indicator with tooltip */}
               {hasNoCommission && reasonInfo && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <Badge className={cn("gap-1 cursor-pointer", getReasonBadgeClass(reasonInfo.color))}>
                       <ReasonIcon className="h-3 w-3" />
                       Нет начисления
                     </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs p-3">
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" className="w-72">
                     <div className="space-y-2">
-                      <p className="font-semibold text-sm">{reasonInfo.title}</p>
-                      <p className="text-xs text-muted-foreground">{reasonInfo.description}</p>
+                      <div className="flex items-center gap-2">
+                        <ReasonIcon className="h-4 w-4 text-warning" />
+                        <p className="font-semibold">{reasonInfo.title}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{reasonInfo.description}</p>
                       {levelUnlockInfo && (
                         <div className="mt-2 pt-2 border-t border-border">
-                          <p className="text-xs text-warning">
+                          <p className="text-sm text-warning">
                             Для открытия уровня {levelUnlockInfo.level} нужно {levelUnlockInfo.required} активных личников на 1-й линии
                           </p>
                         </div>
                       )}
                     </div>
-                  </TooltipContent>
-                </Tooltip>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </div>
