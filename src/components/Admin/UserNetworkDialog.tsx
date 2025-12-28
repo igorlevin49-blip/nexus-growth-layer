@@ -31,7 +31,7 @@ export function UserNetworkDialog({
   // Dynamic max levels based on structure type
   const maxLevelForStructure = structureType === 1 ? 5 : 10;
 
-  const { data: members, isLoading } = useQuery({
+  const { data: members, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-network-tree', userId, structureType],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
@@ -175,7 +175,14 @@ export function UserNetworkDialog({
           {/* Network Tree */}
           <div>
             <h4 className="font-semibold mb-4">Дерево партнёров</h4>
-            {isLoading ? null : !members || members.length === 0 ? (
+            {isLoading ? null : error ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground">
+                <div>Не удалось загрузить структуру партнёров</div>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Повторить
+                </Button>
+              </div>
+            ) : !members || members.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 У пользователя пока нет партнёров в этой структуре
               </div>
