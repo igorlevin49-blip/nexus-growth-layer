@@ -238,26 +238,51 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
               <span className="font-medium">{node.full_name || 'Без имени'}</span>
               {getStatusBadge(status)}
               
-              {/* No commission indicator with tooltip */}
+              {/* No commission indicator with click-to-open explanation */}
               {hasNoCommission && reasonInfo && (
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <Badge className={cn("gap-1 cursor-pointer", getReasonBadgeClass(reasonInfo.color))}>
+                  <PopoverTrigger>
+                    <Badge 
+                      className={cn(
+                        "gap-1 cursor-pointer select-none",
+                        getReasonBadgeClass(reasonInfo.color)
+                      )}
+                    >
                       <ReasonIcon className="h-3 w-3" />
-                      Нет начисления
+                      <span>Нет начисления</span>
                     </Badge>
                   </PopoverTrigger>
-                  <PopoverContent side="bottom" className="w-72">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <ReasonIcon className="h-4 w-4 text-warning" />
-                        <p className="font-semibold">{reasonInfo.title}</p>
+                  <PopoverContent 
+                    side="bottom" 
+                    align="start"
+                    className="w-80 z-[100]"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          reasonInfo.color === 'orange' && "bg-warning/20",
+                          reasonInfo.color === 'blue' && "bg-primary/20",
+                          reasonInfo.color === 'red' && "bg-destructive/20",
+                          reasonInfo.color === 'gray' && "bg-muted"
+                        )}>
+                          <ReasonIcon className={cn(
+                            "h-5 w-5",
+                            reasonInfo.color === 'orange' && "text-warning",
+                            reasonInfo.color === 'blue' && "text-primary",
+                            reasonInfo.color === 'red' && "text-destructive",
+                            reasonInfo.color === 'gray' && "text-muted-foreground"
+                          )} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-foreground">{reasonInfo.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{reasonInfo.description}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{reasonInfo.description}</p>
                       {levelUnlockInfo && (
-                        <div className="mt-2 pt-2 border-t border-border">
-                          <p className="text-sm text-warning">
-                            Для открытия уровня {levelUnlockInfo.level} нужно {levelUnlockInfo.required} активных личников на 1-й линии
+                        <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                          <p className="text-sm text-warning font-medium">
+                            💡 Для открытия уровня {levelUnlockInfo.level} нужно {levelUnlockInfo.required} активных личников на 1-й линии
                           </p>
                         </div>
                       )}
