@@ -135,13 +135,13 @@ const getReasonInfo = (reason: string | null): ReasonInfo | null => {
 const getReasonBadgeClass = (color: 'orange' | 'blue' | 'gray' | 'red'): string => {
   switch (color) {
     case 'orange':
-      return 'bg-orange-500 hover:bg-orange-600 text-white';
+      return 'bg-warning text-warning-foreground hover:bg-warning/90';
     case 'blue':
-      return 'bg-blue-500 hover:bg-blue-600 text-white';
+      return 'bg-primary text-primary-foreground hover:bg-primary/90';
     case 'red':
-      return 'bg-red-500 hover:bg-red-600 text-white';
+      return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
     default:
-      return 'bg-muted hover:bg-muted/80 text-muted-foreground';
+      return 'bg-muted text-muted-foreground hover:bg-muted/80';
   }
 };
 
@@ -208,8 +208,8 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
         "network-node",
         status === "active" ? "active" : 
         status === "frozen" ? "frozen" : "",
-        hasNoCommission && reasonInfo?.color === 'orange' && "border-l-4 border-l-orange-500 bg-orange-500/5",
-        hasNoCommission && reasonInfo?.color === 'blue' && "border-l-4 border-l-blue-500 bg-blue-500/5"
+        hasNoCommission && reasonInfo?.color === 'orange' && "border-l-4 border-l-warning bg-warning/10",
+        hasNoCommission && reasonInfo?.color === 'blue' && "border-l-4 border-l-primary bg-primary/10"
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -253,7 +253,7 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
                       <p className="text-xs text-muted-foreground">{reasonInfo.description}</p>
                       {levelUnlockInfo && (
                         <div className="mt-2 pt-2 border-t border-border">
-                          <p className="text-xs text-orange-400">
+                          <p className="text-xs text-warning">
                             Для открытия уровня {levelUnlockInfo.level} нужно {levelUnlockInfo.required} активных личников на 1-й линии
                           </p>
                         </div>
@@ -372,8 +372,8 @@ export function NetworkTree({ members, filterCommission = 'all' }: NetworkTreePr
     <div className="space-y-4">
       {/* Missed commission warning - only for actionable reasons */}
       {missedCommissionStats.total > 0 && filterCommission === 'all' && (
-        <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-sm">
-          <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+          <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0" />
           <span>
             <strong>{missedCommissionStats.total}</strong> партнёр(ов) без начисления комиссии.
             Нажмите на бейдж «Нет начисления» для подробностей.
