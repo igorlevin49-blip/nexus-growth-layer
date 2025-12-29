@@ -802,6 +802,7 @@ export type Database = {
           is_active: boolean
           is_archived: boolean | null
           is_public_profile: boolean | null
+          is_system_account: boolean | null
           language: string | null
           last_name: string | null
           monthly_activation_completed: boolean | null
@@ -836,6 +837,7 @@ export type Database = {
           is_active?: boolean
           is_archived?: boolean | null
           is_public_profile?: boolean | null
+          is_system_account?: boolean | null
           language?: string | null
           last_name?: string | null
           monthly_activation_completed?: boolean | null
@@ -870,6 +872,7 @@ export type Database = {
           is_active?: boolean
           is_archived?: boolean | null
           is_public_profile?: boolean | null
+          is_system_account?: boolean | null
           language?: string | null
           last_name?: string | null
           monthly_activation_completed?: boolean | null

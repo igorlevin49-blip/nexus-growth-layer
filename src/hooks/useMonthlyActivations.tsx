@@ -183,3 +183,29 @@ export function useUpdateActivationComment() {
     }
   });
 }
+
+// Export all activations data (for full Excel export)
+export function useExportAllActivations() {
+  return useMutation({
+    mutationFn: async (params: { 
+      year: number; 
+      month: number; 
+      status?: 'all' | 'activated' | 'not_activated'; 
+      search?: string 
+    }) => {
+      const { year, month, status = 'all', search = '' } = params;
+      
+      const { data, error } = await supabase.rpc('get_monthly_activation_report', {
+        p_year: year,
+        p_month: month,
+        p_status: status,
+        p_search: search || null,
+        p_limit: 10000, // Large limit to get all data
+        p_offset: 0
+      });
+
+      if (error) throw error;
+      return (data || []) as ActivationReportItem[];
+    }
+  });
+}
