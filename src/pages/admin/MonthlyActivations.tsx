@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, RefreshCw, Calendar, CheckCircle2, XCircle, 
   ChevronLeft, ChevronRight, Eye, Package, User, Download,
-  Edit2, Save, X
+  Edit2, Save, X, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -27,6 +27,7 @@ import {
   usePartnerOrdersForMonth,
   useRecalculateMonthlyActivations,
   useUpdateActivationComment,
+  useExportAllActivations,
   type ActivationReportItem
 } from "@/hooks/useMonthlyActivations";
 import { formatMoney } from "@/utils/formatMoney";
@@ -93,6 +94,7 @@ export default function MonthlyActivations() {
 
   const recalculateMutation = useRecalculateMonthlyActivations();
   const updateCommentMutation = useUpdateActivationComment();
+  const exportAllMutation = useExportAllActivations();
 
   // Years for selector (last 3 years)
   const years = useMemo(() => {
@@ -107,6 +109,18 @@ export default function MonthlyActivations() {
   const handleRecalculateAll = () => {
     if (confirm('Пересчитать активации за все периоды? Это может занять некоторое время.')) {
       recalculateMutation.mutate({});
+    }
+  };
+
+  const handleExportAll = async () => {
+    const data = await exportAllMutation.mutateAsync({
+      year,
+      month,
+      status,
+      search: debouncedSearch
+    });
+    if (data && data.length > 0) {
+      exportActivationsToCSV(data, month, year);
     }
   };
 
@@ -142,11 +156,15 @@ export default function MonthlyActivations() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => reportData && exportActivationsToCSV(reportData, month, year)}
-            disabled={!reportData || reportData.length === 0}
+            onClick={handleExportAll}
+            disabled={exportAllMutation.isPending || countsLoading || (counts?.total || 0) === 0}
           >
-            <Download className="w-4 h-4 mr-2" />
-            Выгрузить Excel
+            {exportAllMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Выгрузить Excel ({counts?.total || 0})
           </Button>
           <Button
             variant="outline"
