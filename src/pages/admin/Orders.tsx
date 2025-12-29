@@ -205,27 +205,43 @@ export default function AdminOrders() {
     }
 
     try {
-      const updateData: { status: "draft" | "pending" | "paid" | "cancelled"; paid_at?: string } = { status };
+      // Для статуса 'paid' используем RPC для правильного начисления комиссий
       if (status === 'paid') {
-        updateData.paid_at = new Date().toISOString();
-      }
-      
-      const { error } = await supabase
-        .from("orders")
-        .update(updateData)
-        .eq("id", orderId);
+        const { data: user } = await supabase.auth.getUser();
+        const { data, error } = await supabase.rpc('process_payment_completion', {
+          p_record_type: 'order',
+          p_record_id: orderId,
+          p_admin_id: user?.user?.id,
+          p_comment: 'Подтверждено администратором'
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        
+        // Проверяем результат RPC
+        const result = data as { success?: boolean; error?: string } | null;
+        if (result && result.success === false) {
+          throw new Error(result.error || 'Ошибка обработки оплаты');
+        }
+      } else {
+        // Для других статусов - прямое обновление
+        const { error } = await supabase
+          .from("orders")
+          .update({ status })
+          .eq("id", orderId);
+
+        if (error) throw error;
+      }
+
       toast({ title: "Статус обновлен" });
       loadOrders();
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating order status:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось обновить статус",
+        description: error?.message || error?.code || "Не удалось обновить статус",
         variant: "destructive",
       });
     }
