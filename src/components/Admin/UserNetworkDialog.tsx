@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NetworkTree } from "@/components/Dashboard/NetworkTree";
-import { Users, ShoppingBag, AlertTriangle } from "lucide-react";
+import { Users, ShoppingBag, AlertTriangle, AlertCircle, DollarSign, X, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { NetworkMember } from "@/hooks/useNetworkTree";
 import { UserCommissionAuditDialog } from "./UserCommissionAuditDialog";
 
@@ -28,6 +29,13 @@ export function UserNetworkDialog({
 }: UserNetworkDialogProps) {
   const [structureType, setStructureType] = useState<1 | 2>(1);
   const [auditDialogOpen, setAuditDialogOpen] = useState(false);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCommission, setFilterCommission] = useState<'all' | 'with_commission' | 'without_commission'>('all');
+  
   // Dynamic max levels based on structure type
   const maxLevelForStructure = structureType === 1 ? 5 : 10;
 
@@ -42,28 +50,61 @@ export function UserNetworkDialog({
 
       if (error) throw error;
       
-      // Map the data to include parent_partner_id
-      return ((data || []) as Array<{
-        user_id: string;
-        partner_id: string;
-        level: number;
-        full_name: string | null;
-        email: string | null;
-        avatar_url: string | null;
-        subscription_status: string | null;
-        monthly_activation_met: boolean | null;
-        referral_code: string;
-        created_at: string;
-        direct_referrals: number;
-        total_team: number;
-        monthly_volume: number;
-        parent_partner_id: string | null;
-      }>) as NetworkMember[];
+      return (data || []) as NetworkMember[];
     },
     enabled: open && !!userId,
   });
+
+  // Filter members based on search and filter criteria
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    
+    return members.filter(member => {
+      const matchesSearch = !searchQuery || 
+        member.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.referral_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.phone?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesLevel = filterLevel === 'all' || member.level === parseInt(filterLevel);
+      
+      const matchesStatus = filterStatus === 'all' ||
+        (filterStatus === 'active' && (member.subscription_status === 'active' || member.monthly_activation_met)) ||
+        (filterStatus === 'inactive' && member.subscription_status === 'inactive' && !member.monthly_activation_met) ||
+        (filterStatus === 'frozen' && member.subscription_status === 'frozen');
+
+      const matchesCommission = structureType !== 1 || filterCommission === 'all' ||
+        (filterCommission === 'with_commission' && member.has_commission_received === true) ||
+        (filterCommission === 'without_commission' && member.has_commission_received === false && member.no_commission_reason !== null);
+      
+      return matchesSearch && matchesLevel && matchesStatus && matchesCommission;
+    });
+  }, [members, searchQuery, filterLevel, filterStatus, structureType, filterCommission]);
+
+  // Level options
+  const levelOptions = useMemo(() => 
+    Array.from({ length: maxLevelForStructure }, (_, i) => i + 1),
+    [maxLevelForStructure]
+  );
+
+  // Check if any filter is active
+  const hasActiveFilters = searchQuery || filterLevel !== 'all' || filterStatus !== 'all' || filterCommission !== 'all';
+
+  // Reset all filters
+  const resetFilters = useCallback(() => {
+    setSearchQuery('');
+    setFilterLevel('all');
+    setFilterStatus('all');
+    setFilterCommission('all');
+  }, []);
+
+  // Reset filters when structure type changes
+  const handleStructureChange = useCallback((value: string) => {
+    setStructureType(parseInt(value) as 1 | 2);
+    resetFilters();
+  }, [resetFilters]);
   
-  // Calculate statistics by level
+  // Calculate statistics by level from ALL members (not filtered)
   const statsByLevel = (members || []).reduce((acc, member) => {
     if (!acc[member.level]) {
       acc[member.level] = { count: 0, active: 0, frozen: 0 };
@@ -90,7 +131,7 @@ export function UserNetworkDialog({
 
         <div className="space-y-6">
           {/* Structure Selector */}
-          <Tabs value={structureType.toString()} onValueChange={(v) => setStructureType(parseInt(v) as 1 | 2)}>
+          <Tabs value={structureType.toString()} onValueChange={handleStructureChange}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="1" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -172,6 +213,94 @@ export function UserNetworkDialog({
             </Card>
           )}
 
+          {/* Filters Section */}
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <h4 className="font-semibold">Фильтры</h4>
+              
+              {/* Quick filter buttons - only for S1 structure */}
+              {structureType === 1 && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={filterCommission === 'without_commission' ? 'default' : 'outline'}
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setFilterCommission(filterCommission === 'without_commission' ? 'all' : 'without_commission')}
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    Только без начислений
+                  </Button>
+                  <Button
+                    variant={filterCommission === 'with_commission' ? 'default' : 'outline'}
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setFilterCommission(filterCommission === 'with_commission' ? 'all' : 'with_commission')}
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    Только с начислениями
+                  </Button>
+                </div>
+              )}
+
+              {/* Search and Dropdowns */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Поиск по имени, email, телефону..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <select
+                  value={filterLevel}
+                  onChange={(e) => setFilterLevel(e.target.value)}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="all">Все уровни</option>
+                  {levelOptions.map(l => (
+                    <option key={l} value={l.toString()}>Уровень {l}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="all">Все статусы</option>
+                  <option value="active">Активные</option>
+                  <option value="frozen">Замороженные</option>
+                  <option value="inactive">Ожидают активации</option>
+                </select>
+                {structureType === 1 && (
+                  <select
+                    value={filterCommission}
+                    onChange={(e) => setFilterCommission(e.target.value as 'all' | 'with_commission' | 'without_commission')}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="all">Все партнёры</option>
+                    <option value="with_commission">С начислениями</option>
+                    <option value="without_commission">Без начислений</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Results counter and reset */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Показано: <span className="font-semibold">{filteredMembers.length}</span> из <span className="font-semibold">{totalPartners}</span>
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1">
+                    <X className="h-4 w-4" />
+                    Сбросить фильтры
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Network Tree */}
           <div>
             <h4 className="font-semibold mb-4">Дерево партнёров</h4>
@@ -182,12 +311,45 @@ export function UserNetworkDialog({
                   Повторить
                 </Button>
               </div>
-            ) : !members || members.length === 0 ? (
+            ) : !filteredMembers || filteredMembers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                У пользователя пока нет партнёров в этой структуре
+                {hasActiveFilters ? 
+                  'Нет партнёров, соответствующих фильтрам' : 
+                  'У пользователя пока нет партнёров в этой структуре'
+                }
+              </div>
+            ) : filterLevel !== 'all' ? (
+              // Flat list when specific level is selected
+              <div className="space-y-2">
+                {filteredMembers.map(member => (
+                  <Card key={member.partner_id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{member.full_name || 'Без имени'}</p>
+                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                        {member.phone && <p className="text-sm text-muted-foreground">{member.phone}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">L{member.level}</Badge>
+                        {member.subscription_status === 'active' || member.monthly_activation_met ? (
+                          <Badge className="profit-indicator">Активен</Badge>
+                        ) : member.subscription_status === 'frozen' ? (
+                          <Badge className="pending-indicator">Заморожен</Badge>
+                        ) : (
+                          <Badge className="frozen-indicator">Ожидает</Badge>
+                        )}
+                        {structureType === 1 && member.has_commission_received === false && member.no_commission_reason && (
+                          <Badge variant="secondary" className="bg-warning text-warning-foreground">
+                            Без начисления
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             ) : (
-              <NetworkTree members={members} />
+              <NetworkTree members={filteredMembers} />
             )}
           </div>
         </div>
