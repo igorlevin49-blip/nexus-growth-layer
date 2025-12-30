@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.send-system-notification]
 verify_jwt = true
+
+[functions.ban-user]
+verify_jwt = true
