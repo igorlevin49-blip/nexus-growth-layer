@@ -40,14 +40,23 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
   
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [methodFilter, setMethodFilter] = useState("all"); // all, online, manual
   const [statusFilter, setStatusFilter] = useState("all"); // all, completed, processing, failed
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Debounce search query to prevent reloading on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     fetchWithdrawals();
-  }, [searchQuery, methodFilter, statusFilter, startDate, endDate, ownOnly]);
+  }, [debouncedSearchQuery, methodFilter, statusFilter, startDate, endDate, ownOnly]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -145,8 +154,8 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
         }));
 
         // Apply search filter (admin only)
-        if (searchQuery.trim()) {
-          const search = searchQuery.toLowerCase();
+        if (debouncedSearchQuery.trim()) {
+          const search = debouncedSearchQuery.toLowerCase();
           setWithdrawals(
             withdrawalsWithUsers.filter(w => 
               w.user?.full_name?.toLowerCase().includes(search) ||
