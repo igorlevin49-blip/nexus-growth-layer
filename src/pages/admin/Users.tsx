@@ -5,14 +5,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search, Archive, AlertTriangle, ShieldOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSoftDeleteUser, useRestoreUser } from "@/hooks/useCleanupTestData";
+import { useSoftDeleteUser, useRestoreUser, useHardDeleteUser } from "@/hooks/useCleanupTestData";
+import { useBanUser, useReassignReferrals } from "@/hooks/useBanUser";
 import { BindSponsorDialog } from "@/components/Admin/BindSponsorDialog";
 import { UserNetworkDialog } from "@/components/Admin/UserNetworkDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Profile {
   id: string;
@@ -35,8 +47,18 @@ interface Profile {
     deleted_at: string | null;
     is_archived: boolean;
   } | null;
-  // Real balance from transactions
   realBalance?: number;
+}
+
+interface DeleteDialogState {
+  open: boolean;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  referralsCount: number;
+  mode: 'archive' | 'hard_delete';
+  reassignReferrals: boolean;
+  upperSponsorId: string | null;
 }
 
 export default function AdminUsers() {
@@ -62,8 +84,22 @@ export default function AdminUsers() {
     userName: "",
     userEmail: ""
   });
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
+    open: false,
+    userId: "",
+    userName: "",
+    userEmail: "",
+    referralsCount: 0,
+    mode: 'archive',
+    reassignReferrals: false,
+    upperSponsorId: null
+  });
+
   const softDeleteUser = useSoftDeleteUser();
+  const hardDeleteUser = useHardDeleteUser();
   const restoreUser = useRestoreUser();
+  const banUser = useBanUser();
+  const reassignReferrals = useReassignReferrals();
 
   useEffect(() => {
     fetchProfiles();
@@ -78,19 +114,14 @@ export default function AdminUsers() {
           sponsor:sponsor_id(full_name, email, is_active, deleted_at, is_archived)
         `);
 
-      // По умолчанию не показываем архивных
       if (!showArchived) {
         query = query.or('is_archived.is.null,is_archived.eq.false');
       }
 
-      // Поиск по email, имени, ID, referral_code
       if (searchQuery.trim()) {
         const search = searchQuery.trim();
-        
-        // Проверка, является ли строка валидным UUID
         const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
         
-        // Строим фильтр OR с условием для UUID только если строка валидна
         let orConditions = [
           `email.ilike.%${search}%`,
           `full_name.ilike.%${search}%`,
@@ -108,7 +139,6 @@ export default function AdminUsers() {
 
       if (error) throw error;
       
-      // Fetch real balances for all users in one query
       const { data: balancesData } = await supabase.rpc('get_all_user_balances');
       const balancesMap = new Map<string, number>();
       (balancesData || []).forEach((b: any) => {
@@ -216,36 +246,58 @@ export default function AdminUsers() {
     }
   };
 
-  const toggleUserStatus = async (userId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'frozen' : 'active';
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ subscription_status: newStatus })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Успешно",
-        description: `Статус пользователя изменен на ${newStatus}`,
-      });
-
-      fetchProfiles();
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить статус пользователя",
-        variant: "destructive",
-      });
-    }
+  const handleBanUser = async (userId: string, currentStatus: string) => {
+    const action = currentStatus === 'frozen' ? 'unban' : 'ban';
+    await banUser.mutateAsync({ userId, action });
+    fetchProfiles();
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    await softDeleteUser.mutateAsync(userId);
-    fetchProfiles();
+  const openDeleteDialog = async (
+    userId: string, 
+    userName: string, 
+    userEmail: string,
+    sponsorId: string | null,
+    mode: 'archive' | 'hard_delete'
+  ) => {
+    // Count referrals
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('sponsor_id', userId);
+    
+    setDeleteDialog({
+      open: true,
+      userId,
+      userName,
+      userEmail,
+      referralsCount: count || 0,
+      mode,
+      reassignReferrals: false,
+      upperSponsorId: sponsorId
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { userId, mode, reassignReferrals: shouldReassign } = deleteDialog;
+    
+    try {
+      // If reassign is checked and there are referrals, reassign first
+      if (shouldReassign && deleteDialog.referralsCount > 0) {
+        await reassignReferrals.mutateAsync(userId);
+      }
+      
+      // Then delete
+      if (mode === 'archive') {
+        await softDeleteUser.mutateAsync(userId);
+      } else {
+        await hardDeleteUser.mutateAsync(userId);
+      }
+      
+      setDeleteDialog({ ...deleteDialog, open: false });
+      fetchProfiles();
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
   };
 
   const handleRestoreUser = async (userId: string) => {
@@ -279,18 +331,10 @@ export default function AdminUsers() {
           <div className="flex items-center gap-2">
             {isSuperAdmin && (
               <>
-                <Button
-                  onClick={runDiagnose}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button onClick={runDiagnose} variant="outline" size="sm">
                   Диагностика
                 </Button>
-                <Button
-                  onClick={runBackfill}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button onClick={runBackfill} variant="outline" size="sm">
                   Восстановить связи
                 </Button>
                 <Button
@@ -351,11 +395,9 @@ export default function AdminUsers() {
                   <TableCell>{profile.phone || '—'}</TableCell>
                   <TableCell>
                     {(() => {
-                      // Check if sponsor exists and is active
                       const sponsorIsDeleted = profile.sponsor?.deleted_at || profile.sponsor?.is_archived || !profile.sponsor?.is_active;
                       
                       if (profile.sponsor && !sponsorIsDeleted) {
-                        // Show live sponsor data
                         return (
                           <div className="text-sm">
                             <div className="font-medium">{profile.sponsor.full_name || 'Не указано'}</div>
@@ -363,7 +405,6 @@ export default function AdminUsers() {
                           </div>
                         );
                       } else if (profile.referrer_snapshot) {
-                        // Show snapshot if sponsor is deleted/archived
                         return (
                           <div className="text-sm">
                             <div className="font-medium">{profile.referrer_snapshot.full_name || 'Не указано'}</div>
@@ -372,7 +413,6 @@ export default function AdminUsers() {
                           </div>
                         );
                       } else if (profile.sponsor_id) {
-                        // Has sponsor_id but no data (shouldn't happen normally)
                         return (
                           <div className="text-sm">
                             <div className="text-muted-foreground">Данные недоступны</div>
@@ -380,7 +420,6 @@ export default function AdminUsers() {
                           </div>
                         );
                       } else {
-                        // No sponsor at all
                         return <span className="text-muted-foreground">—</span>;
                       }
                     })()}
@@ -398,7 +437,7 @@ export default function AdminUsers() {
                       {profile.is_active && !profile.deleted_at && !profile.is_archived ? (
                         <><CheckCircle className="w-3 h-3 mr-1" /> Активен</>
                       ) : profile.subscription_status === 'frozen' ? (
-                        <><XCircle className="w-3 h-3 mr-1" /> Заморожен</>
+                        <><ShieldOff className="w-3 h-3 mr-1" /> Заблокирован</>
                       ) : (
                         <><Ban className="w-3 h-3 mr-1" /> Неактивен</>
                       )}
@@ -423,7 +462,8 @@ export default function AdminUsers() {
                   <TableCell>{((profile.realBalance ?? profile.balance ?? 0)).toLocaleString('ru-RU')} ₸</TableCell>
                   <TableCell>{new Date(profile.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-1 justify-end flex-wrap">
+                      {/* View network */}
                       <Button
                         variant="outline"
                         size="sm"
@@ -437,6 +477,8 @@ export default function AdminUsers() {
                       >
                         <Network className="h-4 w-4" />
                       </Button>
+
+                      {/* Bind sponsor (only for users without sponsor) */}
                       {isSuperAdmin && !profile.sponsor_id && profile.is_active && (
                         <Button
                           variant="outline"
@@ -451,27 +493,61 @@ export default function AdminUsers() {
                           <UserPlus className="w-4 h-4" />
                         </Button>
                       )}
-                      {isSuperAdmin && (
+
+                      {/* Ban/Unban (real auth block) */}
+                      {isSuperAdmin && profile.is_active && (
+                        <Button
+                          variant={profile.subscription_status === 'frozen' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleBanUser(profile.id, profile.subscription_status)}
+                          disabled={banUser.isPending}
+                          title={profile.subscription_status === 'frozen' ? 'Разблокировать вход' : 'Заблокировать вход'}
+                        >
+                          {profile.subscription_status === 'frozen' ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : (
+                            <Ban className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+
+                      {/* Archive (soft delete) */}
+                      {isSuperAdmin && profile.is_active && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => toggleUserStatus(profile.id, profile.subscription_status)}
-                          disabled={!profile.is_active}
-                          title={profile.subscription_status === 'active' ? 'Заблокировать' : 'Разблокировать'}
+                          onClick={() => openDeleteDialog(
+                            profile.id, 
+                            profile.full_name || 'Пользователь',
+                            profile.email || '',
+                            profile.sponsor_id,
+                            'archive'
+                          )}
+                          title="Архивировать"
                         >
-                          <Ban className="w-4 h-4" />
+                          <Archive className="w-4 h-4" />
                         </Button>
                       )}
+
+                      {/* Hard delete (permanent) */}
                       {isSuperAdmin && profile.is_active && (
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteUser(profile.id)}
-                          title="Удалить"
+                          onClick={() => openDeleteDialog(
+                            profile.id, 
+                            profile.full_name || 'Пользователь',
+                            profile.email || '',
+                            profile.sponsor_id,
+                            'hard_delete'
+                          )}
+                          title="Удалить навсегда"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
+
+                      {/* Restore archived user */}
                       {isSuperAdmin && !profile.is_active && (
                         <Button
                           variant="default"
@@ -490,6 +566,77 @@ export default function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {deleteDialog.mode === 'archive' ? (
+                <><Archive className="h-5 w-5" /> Архивировать пользователя?</>
+              ) : (
+                <><Trash2 className="h-5 w-5 text-destructive" /> Удалить пользователя навсегда?</>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium">{deleteDialog.userName}</p>
+                  <p className="text-sm text-muted-foreground">{deleteDialog.userEmail}</p>
+                </div>
+
+                {deleteDialog.referralsCount > 0 && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <p className="font-medium">У этого пользователя {deleteDialog.referralsCount} реферал(ов)!</p>
+                      {deleteDialog.mode === 'hard_delete' ? (
+                        <p className="text-sm mt-1">
+                          Они потеряют спонсора (sponsor_id станет NULL) и не получат комиссий.
+                        </p>
+                      ) : (
+                        <p className="text-sm mt-1">
+                          Комиссии за них перестанут начисляться.
+                        </p>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {deleteDialog.referralsCount > 0 && deleteDialog.upperSponsorId && (
+                  <div className="flex items-center space-x-2 p-3 bg-muted rounded-lg">
+                    <Checkbox
+                      id="reassign"
+                      checked={deleteDialog.reassignReferrals}
+                      onCheckedChange={(checked) => 
+                        setDeleteDialog({ ...deleteDialog, reassignReferrals: checked as boolean })
+                      }
+                    />
+                    <label htmlFor="reassign" className="text-sm cursor-pointer">
+                      Пересадить рефералов на вышестоящего спонсора
+                    </label>
+                  </div>
+                )}
+
+                {deleteDialog.mode === 'hard_delete' && (
+                  <p className="text-destructive font-medium">
+                    ⚠️ Это действие необратимо! Все данные пользователя будут удалены.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className={deleteDialog.mode === 'hard_delete' ? 'bg-destructive hover:bg-destructive/90' : ''}
+            >
+              {deleteDialog.mode === 'archive' ? 'Архивировать' : 'Удалить навсегда'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BindSponsorDialog
         userId={bindSponsorDialog.userId}

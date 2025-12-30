@@ -54,7 +54,32 @@ export function useCleanupTestData() {
   });
 }
 
+// Soft delete - archives user, keeps data
 export function useSoftDeleteUser() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('soft_delete_user', {
+        p_user_id: userId,
+        p_admin_id: user.id
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Пользователь архивирован');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Ошибка при архивировании пользователя');
+    }
+  });
+}
+
+// Hard delete - permanently removes all user data
+export function useHardDeleteUser() {
   return useMutation({
     mutationFn: async (userId: string) => {
       const { data: { user } } = await supabase.auth.getUser();

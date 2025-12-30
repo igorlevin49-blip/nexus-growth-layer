@@ -1818,6 +1818,7 @@ export type Database = {
         }
         Returns: Json
       }
+      count_user_referrals: { Args: { p_user_id: string }; Returns: number }
       create_user_withdrawal: {
         Args: { p_amount_cents: number; p_method_id: string; p_user_id: string }
         Returns: Json
@@ -2108,6 +2109,10 @@ export type Database = {
       }
       purge_test_data: {
         Args: { p_confirmation_phrase?: string; p_dry_run?: boolean }
+        Returns: Json
+      }
+      reassign_referrals_to_upper_sponsor: {
+        Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
       }
       recalculate_all_s1_commissions: {
