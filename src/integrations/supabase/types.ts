@@ -2023,7 +2023,11 @@ export type Database = {
         }[]
       }
       get_referral_network_from_table: {
-        Args: { max_level?: number; root_user_id: string }
+        Args: {
+          max_level?: number
+          p_structure_type?: number
+          root_user_id: string
+        }
         Returns: {
           avatar_url: string
           created_at: string
