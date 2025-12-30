@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Search, History, Users, AlertTriangle, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { DollarSign, Search, History, Users, AlertTriangle, TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCents } from "@/utils/formatMoney";
 import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
@@ -32,10 +32,12 @@ export default function AdminPayouts() {
   const isSuperAdmin = userRole === 'superadmin';
   
   const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>("all");
+  const requestIdRef = useRef(0);
   
   const [payoutDialog, setPayoutDialog] = useState<{
     open: boolean;
@@ -74,7 +76,7 @@ export default function AdminPayouts() {
 
   useEffect(() => {
     if (debouncedSearchQuery.trim() === '' || debouncedSearchQuery.trim().length >= 2) {
-      fetchPartners();
+      fetchPartners(initialLoading ? 'initial' : 'refresh');
     }
   }, [debouncedSearchQuery]);
 
@@ -106,13 +108,22 @@ export default function AdminPayouts() {
     negative: partners.filter(p => p.available_cents < 0).length,
   }), [partners]);
 
-  const fetchPartners = async () => {
+  const fetchPartners = async (mode: 'initial' | 'refresh' = 'initial') => {
+    const currentRequestId = ++requestIdRef.current;
+    
     try {
-      setLoading(true);
+      if (mode === 'initial') {
+        setInitialLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
       
       const { data: balancesData, error: balancesError } = await supabase.rpc('get_all_user_balances');
       
       if (balancesError) throw balancesError;
+      
+      // Check if this request is still current
+      if (currentRequestId !== requestIdRef.current) return;
       
       const balancesMap = new Map<string, { available: number; frozen: number }>();
       (balancesData || []).forEach((b: any) => {
@@ -138,10 +149,12 @@ export default function AdminPayouts() {
         .limit(500);
 
       if (profilesError) throw profilesError;
+      
+      // Check again if this request is still current
+      if (currentRequestId !== requestIdRef.current) return;
 
       if (!profiles || profiles.length === 0) {
         setPartners([]);
-        setLoading(false);
         return;
       }
 
@@ -163,7 +176,10 @@ export default function AdminPayouts() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (currentRequestId === requestIdRef.current) {
+        setInitialLoading(false);
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -246,7 +262,7 @@ export default function AdminPayouts() {
       });
 
       closePayoutDialog();
-      fetchPartners();
+      fetchPartners('refresh');
     } catch (error: any) {
       console.error('Payout error:', error);
       toast({
@@ -318,7 +334,7 @@ export default function AdminPayouts() {
       });
 
       closeAdjustmentDialog();
-      fetchPartners();
+      fetchPartners('refresh');
     } catch (error: any) {
       console.error('Adjustment error:', error);
       toast({
@@ -339,6 +355,7 @@ export default function AdminPayouts() {
           Балансы партнёров
         </CardTitle>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {isRefreshing && <Loader2 className="h-4 w-4 animate-spin" />}
           <span>Показано: {filteredPartners.length} из {partners.length}</span>
         </div>
       </CardHeader>
@@ -346,7 +363,11 @@ export default function AdminPayouts() {
         {/* Search and Filter Bar */}
         <div className="mb-4 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {isRefreshing ? (
+              <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+            ) : (
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            )}
             <Input
               placeholder="Поиск по имени или email..."
               value={searchQuery}
@@ -518,7 +539,7 @@ export default function AdminPayouts() {
     </Card>
   );
 
-  if (loading) {
+  if (initialLoading) {
     return <div className="flex items-center justify-center h-96">Загрузка...</div>;
   }
 
