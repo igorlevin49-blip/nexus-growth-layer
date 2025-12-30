@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Wrench } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 
 const SESSION_KEY = "maintenance_modal_dismissed";
 
@@ -37,8 +37,8 @@ export function MaintenanceModal() {
 
   const config: MaintenanceConfig = settings?.maintenance_mode || {
     enabled: false,
-    title: "Технические работы",
-    message: "Мы проводим технические работы.",
+    title: "С Новым 2025 Годом! 🎄",
+    message: "Желаем вам успехов, процветания и новых достижений в наступающем году!",
   };
 
   if (!config.enabled) {
@@ -54,8 +54,8 @@ export function MaintenanceModal() {
     <Dialog open={true} onOpenChange={(open) => !open && handleDismiss()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center sm:text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <Wrench className="h-8 w-8 text-amber-600" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+            <PartyPopper className="h-8 w-8 text-emerald-600" />
           </div>
           <DialogTitle className="text-xl">{config.title}</DialogTitle>
           <DialogDescription className="text-base pt-2">
