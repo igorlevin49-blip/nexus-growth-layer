@@ -7,8 +7,10 @@ export interface NetworkMember {
   level: number;
   full_name: string | null;
   email: string | null;
+  phone: string | null;
   avatar_url: string | null;
   subscription_status: string | null;
+  subscription_expires_at: string | null;
   monthly_activation_met: boolean | null;
   referral_code: string;
   created_at: string;
@@ -16,6 +18,7 @@ export interface NetworkMember {
   total_team: number;
   monthly_volume: number;
   parent_partner_id: string | null;
+  parent_user_id: string | null;
   has_commission_received: boolean | null;
   no_commission_reason: string | null;
 }
@@ -35,24 +38,7 @@ export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) 
 
       if (error) throw error;
       
-      const members = (data || []) as Array<{
-        user_id: string;
-        partner_id: string;
-        level: number;
-        full_name: string | null;
-        email: string | null;
-        avatar_url: string | null;
-        subscription_status: string | null;
-        monthly_activation_met: boolean | null;
-        referral_code: string;
-        created_at: string;
-        direct_referrals: number;
-        total_team: number;
-        monthly_volume: number;
-        parent_partner_id: string | null;
-        has_commission_received: boolean | null;
-        no_commission_reason: string | null;
-      }>;
+      const members = (data || []) as NetworkMember[];
       
       // Debug log to verify data
       console.log(`[NetworkTree] Structure ${structureType}, loaded ${members.length} members`);
