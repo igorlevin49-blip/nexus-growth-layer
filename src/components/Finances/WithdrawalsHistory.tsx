@@ -56,16 +56,29 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
 
   useEffect(() => {
     fetchWithdrawals();
-  }, [debouncedSearchQuery, methodFilter, statusFilter, startDate, endDate, ownOnly]);
+  }, [methodFilter, statusFilter, startDate, endDate, ownOnly]);
+
+  const filteredWithdrawals = useMemo(() => {
+    if (!isAdmin) return withdrawals;
+
+    const q = debouncedSearchQuery.trim().toLowerCase();
+    if (!q) return withdrawals;
+
+    return withdrawals.filter((w) => {
+      const name = w.user?.full_name?.toLowerCase() ?? "";
+      const email = w.user?.email?.toLowerCase() ?? "";
+      return name.includes(q) || email.includes(q);
+    });
+  }, [withdrawals, debouncedSearchQuery, isAdmin]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalAmount = withdrawals.reduce((sum, w) => sum + w.amount_cents, 0);
+    const totalAmount = filteredWithdrawals.reduce((sum, w) => sum + w.amount_cents, 0);
     return {
-      count: withdrawals.length,
+      count: filteredWithdrawals.length,
       totalAmount,
     };
-  }, [withdrawals]);
+  }, [filteredWithdrawals]);
 
   const fetchWithdrawals = async () => {
     try {
@@ -135,36 +148,26 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
 
       // For admins, fetch user details
       if (isAdmin) {
-        const userIds = [...new Set(filteredData.map(tx => tx.user_id))];
-        
+        const userIds = [...new Set(filteredData.map((tx) => tx.user_id))];
+
         const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', userIds);
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
 
         if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+          console.error("Error fetching profiles:", profilesError);
         }
 
-        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-        
-        const withdrawalsWithUsers = filteredData.map(tx => ({
+        const profilesMap = new Map(profiles?.map((p) => [p.id, p]) || []);
+
+        const withdrawalsWithUsers = filteredData.map((tx) => ({
           ...tx,
-          user: profilesMap.get(tx.user_id) || null
+          user: profilesMap.get(tx.user_id) || null,
         }));
 
-        // Apply search filter (admin only)
-        if (debouncedSearchQuery.trim()) {
-          const search = debouncedSearchQuery.toLowerCase();
-          setWithdrawals(
-            withdrawalsWithUsers.filter(w => 
-              w.user?.full_name?.toLowerCase().includes(search) ||
-              w.user?.email?.toLowerCase().includes(search)
-            )
-          );
-        } else {
-          setWithdrawals(withdrawalsWithUsers);
-        }
+        // Search is applied locally (filteredWithdrawals) to avoid refetching on each input
+        setWithdrawals(withdrawalsWithUsers);
       } else {
         setWithdrawals(filteredData);
       }
@@ -197,20 +200,20 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
   };
 
   const handleExport = () => {
-    const exportData = withdrawals.map(w => {
+    const exportData = filteredWithdrawals.map((w) => {
       const payload = w.payload as any;
       return {
-        'ID': w.id.substring(0, 8),
-        'Партнёр': w.user?.full_name || 'Без имени',
-        'Email': w.user?.email || '',
-        'Сумма': formatCents(w.amount_cents, w.currency),
-        'Способ': payload?.manual_payout ? 'Касса' : 'Онлайн',
-        'Статус': w.status,
-        'Дата': new Date(w.created_at).toLocaleString('ru-RU'),
-        'Комментарий': payload?.comment || ''
+        ID: w.id.substring(0, 8),
+        "Партнёр": w.user?.full_name || "Без имени",
+        Email: w.user?.email || "",
+        "Сумма": formatCents(w.amount_cents, w.currency),
+        "Способ": payload?.manual_payout ? "Касса" : "Онлайн",
+        "Статус": w.status,
+        "Дата": new Date(w.created_at).toLocaleString("ru-RU"),
+        "Комментарий": payload?.comment || "",
       };
     });
-    
+
     downloadCSV(exportData, `withdrawals-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
@@ -316,93 +319,89 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
             </Button>
           )}
           
-          {showExport && withdrawals.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              Экспорт CSV
-            </Button>
-          )}
-        </div>
+           {showExport && filteredWithdrawals.length > 0 && (
+             <Button variant="outline" size="sm" onClick={handleExport}>
+               <Download className="h-4 w-4 mr-2" />
+               Экспорт CSV
+             </Button>
+           )}
+         </div>
 
-        {/* Stats */}
-        {showStats && withdrawals.length > 0 && (
-          <div className="flex flex-wrap gap-4 p-4 bg-muted rounded-lg">
-            <div>
-              <span className="text-sm text-muted-foreground">Всего выплат:</span>
-              <span className="ml-2 font-bold">{stats.count}</span>
-            </div>
-            <div>
-              <span className="text-sm text-muted-foreground">Общая сумма:</span>
-              <span className="ml-2 font-bold text-primary">
-                {formatCents(stats.totalAmount, 'KZT')}
-              </span>
-            </div>
-          </div>
-        )}
+         {/* Stats */}
+         {showStats && filteredWithdrawals.length > 0 && (
+           <div className="flex flex-wrap gap-4 p-4 bg-muted rounded-lg">
+             <div>
+               <span className="text-sm text-muted-foreground">Всего выплат:</span>
+               <span className="ml-2 font-bold">{stats.count}</span>
+             </div>
+             <div>
+               <span className="text-sm text-muted-foreground">Общая сумма:</span>
+               <span className="ml-2 font-bold text-primary">
+                 {formatCents(stats.totalAmount, "KZT")}
+               </span>
+             </div>
+           </div>
+         )}
 
-        {/* Results */}
-        <div className="space-y-3">
-          {loading ? (
-            <p className="text-center text-muted-foreground py-8">Загрузка...</p>
-          ) : withdrawals.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Выплаты не найдены
-            </p>
-          ) : (
-            withdrawals.map((withdrawal) => (
-              <div
-                key={withdrawal.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg gap-3"
-              >
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isAdmin && withdrawal.user && (
-                      <span className="font-medium">
-                        {withdrawal.user.full_name || 'Без имени'}
-                      </span>
-                    )}
-                    {getMethodBadge(withdrawal)}
-                    {getStatusBadge(withdrawal.status)}
-                  </div>
-                  
-                  {isAdmin && withdrawal.user?.email && (
-                    <p className="text-sm text-muted-foreground">
-                      {withdrawal.user.email}
-                    </p>
-                  )}
-                  
-                  {(() => {
-                    const payload = withdrawal.payload as any;
-                    return payload?.comment && (
-                      <p className="text-sm text-muted-foreground">
-                        {payload.comment}
-                      </p>
-                    );
-                  })()}
-                  
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span>ID: {withdrawal.id.substring(0, 8)}</span>
-                    <span>{new Date(withdrawal.created_at).toLocaleString('ru-RU')}</span>
-                    {(() => {
-                      const payload = withdrawal.payload as any;
-                      return payload?.admin_id && (
-                        <span className="text-warning">
-                          Выдано админом
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="text-xl font-bold">
-                    {formatCents(withdrawal.amount_cents, withdrawal.currency)}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+         {/* Results */}
+         <div className="space-y-3">
+           {loading ? (
+             <p className="text-center text-muted-foreground py-8">Загрузка...</p>
+           ) : filteredWithdrawals.length === 0 ? (
+             <p className="text-center text-muted-foreground py-8">Выплаты не найдены</p>
+           ) : (
+             filteredWithdrawals.map((withdrawal) => (
+               <div
+                 key={withdrawal.id}
+                 className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg gap-3"
+               >
+                 <div className="flex-1 space-y-2">
+                   <div className="flex flex-wrap items-center gap-2">
+                     {isAdmin && withdrawal.user && (
+                       <span className="font-medium">
+                         {withdrawal.user.full_name || "Без имени"}
+                       </span>
+                     )}
+                     {getMethodBadge(withdrawal)}
+                     {getStatusBadge(withdrawal.status)}
+                   </div>
+
+                   {isAdmin && withdrawal.user?.email && (
+                     <p className="text-sm text-muted-foreground">{withdrawal.user.email}</p>
+                   )}
+
+                   {(() => {
+                     const payload = withdrawal.payload as any;
+                     return (
+                       payload?.comment && (
+                         <p className="text-sm text-muted-foreground">{payload.comment}</p>
+                       )
+                     );
+                   })()}
+
+                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                     <span>ID: {withdrawal.id.substring(0, 8)}</span>
+                     <span>{new Date(withdrawal.created_at).toLocaleString("ru-RU")}</span>
+                     {(() => {
+                       const payload = withdrawal.payload as any;
+                       return (
+                         payload?.admin_id && (
+                           <span className="text-warning">Выдано админом</span>
+                         )
+                       );
+                     })()}
+                   </div>
+                 </div>
+
+                 <div className="text-right">
+                   <div className="text-xl font-bold">
+                     {formatCents(withdrawal.amount_cents, withdrawal.currency)}
+                   </div>
+                 </div>
+               </div>
+             ))
+           )}
+         </div>
       </CardContent>
     </Card>
   );
