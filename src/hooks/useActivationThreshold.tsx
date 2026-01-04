@@ -12,10 +12,10 @@ export function useActivationThreshold() {
       
       if (error) throw error;
       
+      // All amounts in whole units (KZT as tenge, USD as dollars)
       return {
         kzt: data?.monthly_activation_required_kzt || 20000,
-        usd: data?.monthly_activation_required_usd || 40,
-        cents: (data?.monthly_activation_required_kzt || 20000) * 100
+        usd: data?.monthly_activation_required_usd || 40
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

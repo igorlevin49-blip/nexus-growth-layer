@@ -230,8 +230,8 @@ export default function Dashboard() {
                         Ваш баланс: <span className="font-medium text-foreground">{formatCents(balance.available_cents, 'KZT')}</span>
                       </p>
                       <PayFromBalanceButton 
-                        requiredAmountCents={activationThreshold.cents}
-                        availableBalanceCents={balance.available_cents}
+                        requiredAmountKzt={activationThreshold.kzt}
+                        availableBalanceKzt={balance.available_cents}
                       />
                     </div>
                   )}

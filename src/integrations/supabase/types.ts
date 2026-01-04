@@ -1608,15 +1608,25 @@ export type Database = {
       }
     }
     Functions: {
-      admin_adjust_balance: {
-        Args: {
-          p_admin_id: string
-          p_amount_cents: number
-          p_reason: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      admin_adjust_balance:
+        | {
+            Args: {
+              p_admin_id: string
+              p_amount_cents: number
+              p_reason: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_admin_id: string
+              p_amount_kzt: number
+              p_reason: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       admin_audit_user_commissions: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: {

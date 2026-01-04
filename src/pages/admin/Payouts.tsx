@@ -301,13 +301,14 @@ export default function AdminPayouts() {
     setProcessing(true);
 
     try {
-      const amountCents = adjustmentForm.direction === "credit" 
-        ? amountKzt * 100 
-        : -amountKzt * 100;
+      // Amount in whole KZT (no cents conversion for KZT)
+      const amountKztSigned = adjustmentForm.direction === "credit" 
+        ? amountKzt 
+        : -amountKzt;
 
       const { data, error } = await supabase.rpc('admin_adjust_balance' as any, {
         p_user_id: adjustmentDialog.partner.id,
-        p_amount_cents: amountCents,
+        p_amount_kzt: amountKztSigned,
         p_reason: adjustmentForm.reason.trim(),
         p_admin_id: user.id
       });
