@@ -1,31 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, Search, History, Users, AlertTriangle, TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import { DollarSign, History, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCents } from "@/utils/formatMoney";
 import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
-
-interface Partner {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-  available_cents: number;
-  frozen_cents: number;
-}
-
-type BalanceFilter = "all" | "has_payout" | "no_payout" | "negative";
+import { PartnersTable, Partner, BalanceFilter } from "@/components/Admin/PartnersTable";
 
 export default function AdminPayouts() {
   const { user, userRole } = useAuth();
@@ -348,197 +335,6 @@ export default function AdminPayouts() {
     }
   };
 
-  const PartnersTable = ({ showActions = true }: { showActions?: boolean }) => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          Балансы партнёров
-        </CardTitle>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {isRefreshing && <Loader2 className="h-4 w-4 animate-spin" />}
-          <span>Показано: {filteredPartners.length} из {partners.length}</span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Search and Filter Bar */}
-        <div className="mb-4 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            {isRefreshing ? (
-              <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-            ) : (
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            )}
-            <Input
-              placeholder="Поиск по имени или email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={balanceFilter} onValueChange={(v) => setBalanceFilter(v as BalanceFilter)}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Фильтр по балансу" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Все партнёры ({stats.all})
-                </div>
-              </SelectItem>
-              <SelectItem value="has_payout">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  На выдачу ({stats.has_payout})
-                </div>
-              </SelectItem>
-              <SelectItem value="no_payout">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  Без выдачи ({stats.no_payout})
-                </div>
-              </SelectItem>
-              <SelectItem value="negative">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Отрицательный ({stats.negative})
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Negative balance warning */}
-        {stats.negative > 0 && balanceFilter !== "negative" && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span className="text-sm">
-              <strong>{stats.negative}</strong> партнёров с отрицательным балансом. 
-              <Button 
-                variant="link" 
-                className="h-auto p-0 pl-1 text-destructive"
-                onClick={() => setBalanceFilter("negative")}
-              >
-                Показать
-              </Button>
-            </span>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Партнёр</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Телефон</TableHead>
-                <TableHead>Доступно</TableHead>
-                <TableHead>Заморожено</TableHead>
-                {showActions && <TableHead className="text-right">Действия</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPartners.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={showActions ? 6 : 5} className="text-center text-muted-foreground py-8">
-                    {balanceFilter === "negative" 
-                      ? "Нет партнёров с отрицательным балансом" 
-                      : balanceFilter === "has_payout"
-                      ? "Нет партнёров с доступными средствами"
-                      : "Партнёры не найдены"}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPartners.map((partner) => (
-                  <TableRow key={partner.id} className={partner.available_cents < 0 ? "bg-destructive/5" : ""}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {partner.full_name || 'Без имени'}
-                        {partner.available_cents < 0 && (
-                          <Badge variant="destructive" className="text-xs">Долг</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{partner.email || '—'}</TableCell>
-                    <TableCell>{partner.phone || '—'}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={partner.available_cents < 0 ? "destructive" : "default"} 
-                        className="font-mono"
-                      >
-                        {formatCents(partner.available_cents, 'KZT')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono">
-                        {formatCents(partner.frozen_cents, 'KZT')}
-                      </Badge>
-                    </TableCell>
-                    {showActions && (
-                      <TableCell className="text-right">
-                        {isSuperAdmin ? (
-                          <div className="flex justify-end gap-2">
-                            {partner.available_cents > 0 && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openPayoutDialog(partner)}
-                              >
-                                <DollarSign className="h-4 w-4 mr-1" />
-                                Выдать
-                              </Button>
-                            )}
-                            <Button
-                              variant={partner.available_cents < 0 ? "destructive" : "ghost"}
-                              size="sm"
-                              onClick={() => openAdjustmentDialog(partner)}
-                            >
-                              {partner.available_cents < 0 ? (
-                                <>
-                                  <AlertTriangle className="h-4 w-4 mr-1" />
-                                  Исправить
-                                </>
-                              ) : (
-                                "Корректировка"
-                              )}
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-            {filteredPartners.length > 0 && (
-              <TableFooter>
-                <TableRow className="bg-muted/50 font-semibold">
-                  <TableCell colSpan={3}>Итого ({filteredPartners.length})</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={totals.available < 0 ? "destructive" : "default"} 
-                      className="font-mono"
-                    >
-                      {formatCents(totals.available, 'KZT')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-mono">
-                      {formatCents(totals.frozen, 'KZT')}
-                    </Badge>
-                  </TableCell>
-                  {showActions && <TableCell></TableCell>}
-                </TableRow>
-              </TableFooter>
-            )}
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   if (initialLoading) {
     return <div className="flex items-center justify-center h-96">Загрузка...</div>;
@@ -567,7 +363,20 @@ export default function AdminPayouts() {
         </TabsList>
 
         <TabsContent value="payouts">
-          <PartnersTable />
+          <PartnersTable
+            partners={partners}
+            filteredPartners={filteredPartners}
+            totals={totals}
+            stats={stats}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            balanceFilter={balanceFilter}
+            onBalanceFilterChange={setBalanceFilter}
+            isRefreshing={isRefreshing}
+            isSuperAdmin={isSuperAdmin}
+            onOpenPayoutDialog={openPayoutDialog}
+            onOpenAdjustmentDialog={openAdjustmentDialog}
+          />
         </TabsContent>
 
         {isSuperAdmin && (
@@ -576,7 +385,21 @@ export default function AdminPayouts() {
               <WithdrawalsHistory showExport showStats />
             </TabsContent>
             <TabsContent value="all">
-              <PartnersTable showActions={false} />
+              <PartnersTable
+                partners={partners}
+                filteredPartners={filteredPartners}
+                totals={totals}
+                stats={stats}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                balanceFilter={balanceFilter}
+                onBalanceFilterChange={setBalanceFilter}
+                isRefreshing={isRefreshing}
+                isSuperAdmin={isSuperAdmin}
+                onOpenPayoutDialog={openPayoutDialog}
+                onOpenAdjustmentDialog={openAdjustmentDialog}
+                showActions={false}
+              />
             </TabsContent>
           </>
         )}
