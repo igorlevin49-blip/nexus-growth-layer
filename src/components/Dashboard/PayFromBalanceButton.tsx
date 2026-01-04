@@ -7,20 +7,20 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatCents } from "@/utils/formatMoney";
 
 interface PayFromBalanceButtonProps {
-  requiredAmountCents: number;
-  availableBalanceCents: number;
+  requiredAmountKzt: number;
+  availableBalanceKzt: number;
   onSuccess?: () => void;
 }
 
 export function PayFromBalanceButton({ 
-  requiredAmountCents, 
-  availableBalanceCents,
+  requiredAmountKzt, 
+  availableBalanceKzt,
   onSuccess 
 }: PayFromBalanceButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   
-  const canPay = availableBalanceCents >= requiredAmountCents;
+  const canPay = availableBalanceKzt >= requiredAmountKzt;
   
   const handlePayFromBalance = async () => {
     if (!canPay) {
@@ -48,7 +48,7 @@ export function PayFromBalanceButton({
       
       if (result?.success) {
         toast.success("Активация оплачена с баланса!", {
-          description: `Списано ${formatCents(requiredAmountCents, "KZT")}`
+          description: `Списано ${formatCents(requiredAmountKzt, "KZT")}`
         });
         
         // Invalidate relevant queries
@@ -87,8 +87,8 @@ export function PayFromBalanceButton({
         <>
           <Wallet className="h-4 w-4 mr-2" />
           {canPay 
-            ? `Оплатить с баланса (${formatCents(requiredAmountCents, "KZT")})`
-            : `Недостаточно средств (нужно ${formatCents(requiredAmountCents, "KZT")})`
+            ? `Оплатить с баланса (${formatCents(requiredAmountKzt, "KZT")})`
+            : `Недостаточно средств (нужно ${formatCents(requiredAmountKzt, "KZT")})`
           }
         </>
       )}
