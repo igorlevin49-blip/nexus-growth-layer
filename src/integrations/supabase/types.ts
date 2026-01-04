@@ -1788,14 +1788,24 @@ export type Database = {
           violation_count: number
         }[]
       }
-      award_s1_subscription_commission: {
-        Args: {
-          p_amount_kzt: number
-          p_subscriber_id: string
-          p_subscription_id: string
-        }
-        Returns: Json
-      }
+      award_s1_subscription_commission:
+        | {
+            Args: {
+              p_amount_kzt: number
+              p_subscriber_id: string
+              p_subscription_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_subscriber_id: string
+              p_subscription_amount: number
+              p_subscription_id: string
+              p_subscription_paid_at?: string
+            }
+            Returns: Json
+          }
       backfill_missing_s1_commissions: {
         Args: { p_admin_id: string; p_days_back?: number }
         Returns: Json
@@ -2032,34 +2042,59 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_referral_network_from_table: {
-        Args: {
-          max_level?: number
-          p_structure_type?: number
-          root_user_id: string
-        }
-        Returns: {
-          avatar_url: string
-          created_at: string
-          direct_referrals: number
-          email: string
-          full_name: string
-          has_commission_received: boolean
-          level: number
-          monthly_activation_met: boolean
-          monthly_volume: number
-          no_commission_reason: string
-          parent_partner_id: string
-          parent_user_id: string
-          partner_id: string
-          phone: string
-          referral_code: string
-          subscription_expires_at: string
-          subscription_status: string
-          total_team: number
-          user_id: string
-        }[]
-      }
+      get_referral_network_from_table:
+        | {
+            Args: { p_structure_type?: number; p_user_id: string }
+            Returns: {
+              activation_due_from: string
+              avatar_url: string
+              commission_amount: number
+              created_at: string
+              email: string
+              full_name: string
+              has_paid_subscription: boolean
+              level: number
+              monthly_activation_amount: number
+              monthly_activation_met: boolean
+              no_commission_reason: string
+              phone: string
+              referral_code: string
+              sponsor_id: string
+              status: string
+              subscription_paid_until: string
+              subscription_status: string
+              total_purchases: number
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              max_level?: number
+              p_structure_type?: number
+              root_user_id: string
+            }
+            Returns: {
+              avatar_url: string
+              created_at: string
+              direct_referrals: number
+              email: string
+              full_name: string
+              has_commission_received: boolean
+              level: number
+              monthly_activation_met: boolean
+              monthly_volume: number
+              no_commission_reason: string
+              parent_partner_id: string
+              parent_user_id: string
+              partner_id: string
+              phone: string
+              referral_code: string
+              subscription_expires_at: string
+              subscription_status: string
+              total_team: number
+              user_id: string
+            }[]
+          }
       get_user_balance: {
         Args: { p_user_id: string }
         Returns: {
