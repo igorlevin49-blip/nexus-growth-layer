@@ -69,7 +69,7 @@ export function ActivationProgress() {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [currentAmount, setCurrentAmount] = useState(0);
-  const [requiredAmount, setRequiredAmount] = useState(40);
+  const [requiredAmount, setRequiredAmount] = useState(20000);
   const [isActivated, setIsActivated] = useState(false);
   const [activationDueFrom, setActivationDueFrom] = useState<Date | null>(null);
   const [isActivationRequired, setIsActivationRequired] = useState(false);
@@ -99,16 +99,16 @@ export function ActivationProgress() {
     if (!user) return;
 
     try {
-      // Get required amount from settings
+      // Get required amount from settings (KZT only)
       const { data: settings, error: settingsError } = await supabase
         .from("shop_settings")
-        .select("monthly_activation_required_usd, monthly_activation_required_kzt")
+        .select("monthly_activation_required_kzt")
         .eq("id", 1)
         .single();
 
       if (settingsError) throw settingsError;
       if (settings) {
-        setRequiredAmount(Number(settings.monthly_activation_required_usd));
+        setRequiredAmount(Number(settings.monthly_activation_required_kzt) || 20000);
       }
 
       // Check profile subscription status and activation due date
@@ -166,11 +166,8 @@ export function ActivationProgress() {
         setOrdersCount(orderCount || 0);
 
         if (activation) {
-          // Convert KZT to USD for display (approximate rate)
-          const usdRate = Number(settings?.monthly_activation_required_usd) / Number(settings?.monthly_activation_required_kzt) || 0.002;
-          const currentUsd = Number(activation.total_amount_kzt) * usdRate;
-          
-          setCurrentAmount(currentUsd);
+          // Use KZT directly - no conversion needed
+          setCurrentAmount(Number(activation.total_amount_kzt) || 0);
           setIsActivated(activation.is_activated);
           setLastOrderDate(activation.last_order_date ? new Date(activation.last_order_date) : null);
         } else {
@@ -317,8 +314,8 @@ export function ActivationProgress() {
         {!isActivated && (
           <div className="pt-3 border-t space-y-3">
             <PayActivationButton 
-              requiredAmountUSD={requiredAmount}
-              currentAmountUSD={currentAmount}
+              requiredAmountKZT={requiredAmount}
+              currentAmountKZT={currentAmount}
               activationDueFrom={activationDueFrom}
               isActivationRequired={isActivationRequired}
             />

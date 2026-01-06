@@ -11,15 +11,15 @@ import { ru } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface PayActivationButtonProps {
-  requiredAmountUSD: number;
-  currentAmountUSD: number;
+  requiredAmountKZT: number;
+  currentAmountKZT: number;
   activationDueFrom: Date | null;
   isActivationRequired: boolean;
 }
 
 export function PayActivationButton({ 
-  requiredAmountUSD, 
-  currentAmountUSD,
+  requiredAmountKZT, 
+  currentAmountKZT,
   activationDueFrom,
   isActivationRequired
 }: PayActivationButtonProps) {
@@ -29,7 +29,7 @@ export function PayActivationButton({
   const [activationProducts, setActivationProducts] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [providerNotConfigured, setProviderNotConfigured] = useState(false);
-  const [amount, setAmount] = useState<{ usd: number; kzt: number } | undefined>();
+  const [amount, setAmount] = useState<{ kzt: number } | undefined>();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -47,17 +47,8 @@ export function PayActivationButton({
   }, []);
 
   const handleOpenDialog = async () => {
-    // Calculate amount
-    const { data: shopSettings } = await supabase
-      .from('shop_settings')
-      .select('rate_usd_kzt')
-      .eq('id', 1)
-      .single();
-
-    const rate = typeof shopSettings?.rate_usd_kzt === 'number' ? shopSettings.rate_usd_kzt : 450;
-    const priceKZT = Math.round(requiredAmountUSD * rate);
-
-    setAmount({ usd: requiredAmountUSD, kzt: priceKZT });
+    // Use KZT directly - no conversion needed
+    setAmount({ kzt: requiredAmountKZT });
     setDialogOpen(true);
   };
 
@@ -146,14 +137,14 @@ export function PayActivationButton({
   const isDisabled = 
     isProcessing || 
     createManualActivation.isPending || 
-    currentAmountUSD >= requiredAmountUSD ||
+    currentAmountKZT >= requiredAmountKZT ||
     !isActivationRequired;
 
   const getTooltipText = () => {
     if (!isActivationRequired && activationDueFrom) {
       return `Первая месячная активация требуется с ${format(activationDueFrom, "dd.MM.yyyy", { locale: ru })}. Сейчас ничего делать не нужно.`;
     }
-    if (currentAmountUSD >= requiredAmountUSD) {
+    if (currentAmountKZT >= requiredAmountKZT) {
       return "Активация уже выполнена";
     }
     return "Оплатить активацию";

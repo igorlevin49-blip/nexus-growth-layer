@@ -11,7 +11,7 @@ interface PaymentMethodDialogProps {
   providerNotConfigured: boolean;
   requiresSubscription?: boolean;
   type: "subscription" | "activation";
-  amount?: { usd: number; kzt: number };
+  amount?: { kzt: number };
 }
 
 export function PaymentMethodDialog({
@@ -39,8 +39,7 @@ export function PaymentMethodDialog({
 
         {amount && (
           <div className="py-4 text-center border-y">
-            <div className="text-2xl font-bold">${amount.usd}</div>
-            <div className="text-sm text-muted-foreground">{amount.kzt.toLocaleString()} ₸</div>
+            <div className="text-2xl font-bold">{amount.kzt.toLocaleString()} ₸</div>
           </div>
         )}
 
