@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -296,6 +296,11 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
           </div>
 
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-1.5 text-xs">
+              <Calendar className="h-3 w-3" />
+              <span>{new Date(node.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+              <span className="text-muted-foreground/60">{new Date(node.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
             <div className="flex items-center space-x-1">
               <Users2 className="h-3 w-3" />
               <span>{node.direct_referrals}</span>
