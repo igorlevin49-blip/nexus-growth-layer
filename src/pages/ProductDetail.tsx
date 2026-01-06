@@ -45,7 +45,6 @@ export default function ProductDetail() {
   const [images, setImages] = useState<ProductImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState<'USD' | 'KZT'>('USD');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Load cart from localStorage
@@ -56,29 +55,12 @@ export default function ProductDetail() {
     }
   }, []);
 
-  // Fetch product and settings
+  // Fetch product
   useEffect(() => {
     if (slug) {
       fetchProduct();
-      fetchSettings();
     }
   }, [slug]);
-
-  const fetchSettings = async () => {
-    try {
-      const { data } = await supabase
-        .from('shop_settings')
-        .select('currency')
-        .eq('id', 1)
-        .single();
-      
-      if (data) {
-        setCurrency(data.currency);
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
 
   const fetchProduct = async () => {
     try {
@@ -173,10 +155,6 @@ export default function ProductDetail() {
   }
 
   const isOutOfStock = product.stock !== null && product.stock === 0;
-  const displayPrice = currency === 'USD' ? product.price_usd : product.price_kzt;
-  const displayCurrencySymbol = currency === 'USD' ? '$' : '₸';
-  const secondaryPrice = currency === 'USD' ? product.price_kzt : product.price_usd;
-  const secondaryCurrencySymbol = currency === 'USD' ? '₸' : '$';
   const cartQuantity = cartItems.find(item => item.productId === product.id)?.quantity || 0;
 
   return (
@@ -185,12 +163,12 @@ export default function ProductDetail() {
         <title>{product.title} - Магазин | Marseco Group</title>
         <meta 
           name="description" 
-          content={product.description || `${product.title} - купить по цене ${displayCurrencySymbol}${displayPrice}`} 
+          content={product.description || `${product.title} - купить по цене ${product.price_kzt.toLocaleString('ru-RU')} ₸`} 
         />
         <meta property="og:title" content={`${product.title} - Магазин`} />
         <meta 
           property="og:description" 
-          content={product.description || `${product.title} - купить по цене ${displayCurrencySymbol}${displayPrice}`} 
+          content={product.description || `${product.title} - купить по цене ${product.price_kzt.toLocaleString('ru-RU')} ₸`} 
         />
         {selectedImage && (
           <meta property="og:image" content={selectedImage} />
@@ -281,8 +259,7 @@ export default function ProductDetail() {
                 <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
 
                 <div className="flex items-baseline gap-4 mb-6">
-                  <span className="text-4xl font-bold">{displayCurrencySymbol}{displayPrice}</span>
-                  <span className="text-xl text-muted-foreground">{secondaryCurrencySymbol}{secondaryPrice}</span>
+                  <span className="text-4xl font-bold">{product.price_kzt.toLocaleString('ru-RU')} ₸</span>
                 </div>
 
                 {product.stock !== null && (

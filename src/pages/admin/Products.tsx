@@ -676,8 +676,7 @@ export default function AdminProducts() {
             <TableHeader>
               <TableRow>
                 <TableHead>Название</TableHead>
-                <TableHead>Цена USD</TableHead>
-                <TableHead>Цена KZT</TableHead>
+                <TableHead>Цена (₸)</TableHead>
                 <TableHead>Склад</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Действия</TableHead>
@@ -687,8 +686,7 @@ export default function AdminProducts() {
               {products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.title}</TableCell>
-                  <TableCell>${product.price_usd}</TableCell>
-                  <TableCell>{product.price_kzt} ₸</TableCell>
+                  <TableCell>{product.price_kzt.toLocaleString('ru-RU')} ₸</TableCell>
                   <TableCell>
                     {product.stock !== null ? `${product.stock} шт.` : "∞"}
                   </TableCell>

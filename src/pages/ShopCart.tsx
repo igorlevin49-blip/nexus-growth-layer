@@ -27,13 +27,10 @@ export default function ShopCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rate, setRate] = useState(450);
-  const [currency, setCurrency] = useState<"USD" | "KZT">("USD");
 
   useEffect(() => {
     loadCart();
     fetchProducts();
-    fetchRate();
   }, []);
 
   const loadCart = () => {
@@ -57,23 +54,6 @@ export default function ShopCart() {
       console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchRate = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("shop_settings")
-        .select("rate_usd_kzt, currency")
-        .eq("id", 1)
-        .single();
-      if (error) throw error;
-      if (data) {
-        setRate(Number(data.rate_usd_kzt));
-        setCurrency(data.currency);
-      }
-    } catch (error) {
-      console.error("Error fetching rate:", error);
     }
   };
 
@@ -119,20 +99,10 @@ export default function ShopCart() {
     navigate("/shop/checkout");
   };
 
-  const totalUsd = cartItems.reduce((sum, item) => {
-    const product = products.find((p) => p.id === item.productId);
-    return sum + (product ? product.price_usd * item.quantity : 0);
-  }, 0);
-
   const totalKzt = cartItems.reduce((sum, item) => {
     const product = products.find((p) => p.id === item.productId);
     return sum + (product ? product.price_kzt * item.quantity : 0);
   }, 0);
-
-  const displayTotal = currency === "USD" ? totalUsd : totalKzt;
-  const displayCurrency = currency === "USD" ? "$" : "₸";
-  const secondaryTotal = currency === "USD" ? totalKzt : totalUsd;
-  const secondaryCurrency = currency === "USD" ? "₸" : "$";
 
   if (loading) {
     return (
@@ -201,8 +171,8 @@ export default function ShopCart() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold mb-1">{product.title}</h3>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {currency === "USD" ? `$${product.price_usd}` : `${product.price_kzt} ₸`} / {currency === "USD" ? `${product.price_kzt} ₸` : `$${product.price_usd}`}
+                      <div className="text-sm text-muted-foreground mb-2">
+                          {product.price_kzt.toLocaleString('ru-RU')} ₸ / шт.
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -240,12 +210,9 @@ export default function ShopCart() {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-right">
+                    <div className="text-right">
                         <div className="font-bold">
-                          {currency === "USD" ? `$${(product.price_usd * item.quantity).toFixed(2)}` : `${(product.price_kzt * item.quantity).toFixed(2)} ₸`}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {currency === "USD" ? `${(product.price_kzt * item.quantity).toFixed(2)} ₸` : `$${(product.price_usd * item.quantity).toFixed(2)}`}
+                          {(product.price_kzt * item.quantity).toLocaleString('ru-RU')} ₸
                         </div>
                       </div>
                     </div>
@@ -270,11 +237,7 @@ export default function ShopCart() {
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-2xl font-bold mb-2">
                     <span>Сумма:</span>
-                    <span>{displayCurrency}{displayTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{currency === "USD" ? "В тенге:" : "В долларах:"}</span>
-                    <span>{secondaryCurrency}{secondaryTotal.toFixed(2)}</span>
+                    <span>{totalKzt.toLocaleString('ru-RU')} ₸</span>
                   </div>
                 </div>
                 <Button onClick={handleCheckout} className="w-full" size="lg">

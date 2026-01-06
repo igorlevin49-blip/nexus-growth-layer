@@ -538,10 +538,7 @@ export default function AdminPayments() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div>{sub.amount_kzt.toLocaleString('ru-RU')} ₸</div>
-                            <div className="text-xs text-muted-foreground">
-                              ${sub.amount_usd}
-                            </div>
+                            <div className="font-semibold">{sub.amount_kzt.toLocaleString('ru-RU')} ₸</div>
                           </TableCell>
                           <TableCell>{getStatusBadge(sub.status)}</TableCell>
                           <TableCell>
@@ -715,10 +712,7 @@ export default function AdminPayments() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div>{order.total_kzt.toLocaleString('ru-RU')} ₸</div>
-                            <div className="text-xs text-muted-foreground">
-                              ${order.total_usd}
-                            </div>
+                            <div className="font-semibold">{order.total_kzt.toLocaleString('ru-RU')} ₸</div>
                           </TableCell>
                           <TableCell>{getStatusBadge(order.status)}</TableCell>
                           <TableCell>

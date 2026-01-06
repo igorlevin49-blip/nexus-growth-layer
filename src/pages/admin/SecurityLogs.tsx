@@ -163,7 +163,7 @@ export default function SecurityLogs() {
     if (log.type === 'subscription_activated') {
       return (
         <div className="text-sm">
-          <div className="text-green-600">${payload.amount_usd}</div>
+          <div className="text-green-600">{payload.amount_kzt?.toLocaleString('ru-RU') || payload.amount_usd} ₸</div>
         </div>
       );
     }

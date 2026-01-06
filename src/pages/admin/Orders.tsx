@@ -455,11 +455,8 @@ export default function AdminOrders() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-semibold">${order.total_usd}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {order.total_kzt} ₸
-                      </div>
+                    <div className="font-semibold">
+                      {order.total_kzt.toLocaleString('ru-RU')} ₸
                     </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
@@ -558,17 +555,11 @@ export default function AdminOrders() {
                         </TableCell>
                         <TableCell>{item.qty}</TableCell>
                         <TableCell>
-                          <div>${item.price_usd}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.price_kzt} ₸
-                          </div>
+                          {item.price_kzt.toLocaleString('ru-RU')} ₸
                         </TableCell>
                         <TableCell>
                           <div className="font-semibold">
-                            ${(item.price_usd * item.qty).toFixed(2)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {(item.price_kzt * item.qty).toFixed(2)} ₸
+                            {(item.price_kzt * item.qty).toLocaleString('ru-RU')} ₸
                           </div>
                         </TableCell>
                       </TableRow>
@@ -581,10 +572,7 @@ export default function AdminOrders() {
                 <div className="flex justify-between text-xl font-bold">
                   <span>Итого:</span>
                   <div className="text-right">
-                    <div>${selectedOrder.total_usd}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {selectedOrder.total_kzt} ₸
-                    </div>
+                    {selectedOrder.total_kzt.toLocaleString('ru-RU')} ₸
                   </div>
                 </div>
               </div>
