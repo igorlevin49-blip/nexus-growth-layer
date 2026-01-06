@@ -2054,26 +2054,19 @@ export type Database = {
       }
       get_referral_network_from_table:
         | {
-            Args: { p_structure_type?: number; p_user_id: string }
+            Args: { max_depth?: number; root_user_id: string }
             Returns: {
-              activation_due_from: string
-              avatar_url: string
-              commission_amount: number
-              created_at: string
-              email: string
+              depth: number
               full_name: string
-              has_paid_subscription: boolean
-              level: number
-              monthly_activation_amount: number
-              monthly_activation_met: boolean
+              has_commission: boolean
+              is_active_this_month: boolean
               no_commission_reason: string
-              phone: string
-              referral_code: string
-              sponsor_id: string
-              status: string
-              subscription_paid_until: string
+              parent_partner_id: string
+              parent_user_id: string
+              partner_id: string
+              personal_volume: number
+              registered_at: string
               subscription_status: string
-              total_purchases: number
               user_id: string
             }[]
           }

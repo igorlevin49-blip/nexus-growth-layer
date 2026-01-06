@@ -66,7 +66,8 @@ type NoCommissionReason =
   | 'marketing_free_access' 
   | 'sponsor_inactive'
   | 'already_received_before'
-  | 'no_active_subscription';
+  | 'no_active_subscription'
+  | 'new_partner';
 
 interface ReasonInfo {
   title: string;
@@ -147,6 +148,12 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     description: 'Комиссия за этого партнёра уже была получена ранее. При реанимации (повторной активации) комиссия не начисляется повторно.',
     color: 'blue',
     icon: Clock
+  },
+  new_partner: {
+    title: 'Новый партнёр',
+    description: 'Партнёр зарегистрирован в текущем месяце. Ежемесячная активация начнёт требоваться со следующего месяца.',
+    color: 'blue',
+    icon: Gift
   }
 };
 
