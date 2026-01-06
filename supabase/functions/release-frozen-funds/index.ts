@@ -60,25 +60,21 @@ serve(async (req) => {
 
     console.log('Starting frozen funds release process by admin:', user.id, 'with role:', roleData.role);
 
-    // Update transactions where frozen_until has passed
-    const { data, error } = await supabase
-      .from('transactions')
-      .update({ frozen_until: null })
-      .lte('frozen_until', new Date().toISOString())
-      .not('frozen_until', 'is', null)
-      .select();
+    // Call RPC function to properly release frozen transactions
+    // This updates status to 'completed' and adds to user balance
+    const { data, error } = await supabase.rpc('release_expired_frozen_transactions');
 
     if (error) {
       console.error('Error releasing frozen funds:', error);
       throw error;
     }
 
-    console.log(`Released ${data?.length || 0} frozen transactions`);
+    console.log('Release result:', data);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        released: data?.length || 0,
+        result: data,
         message: 'Frozen funds released successfully'
       }),
       { 
