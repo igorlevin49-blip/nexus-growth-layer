@@ -98,7 +98,7 @@ export default function AdminReports() {
     {
       title: "Средний чек",
       value: formatCents(globalStats?.avg_order_cents || 0),
-      change: "в USD",
+      change: "в тенге",
       icon: TrendingUp,
     },
   ];
