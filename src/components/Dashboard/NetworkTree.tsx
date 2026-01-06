@@ -46,19 +46,23 @@ function buildTree(members: NetworkMember[]): NetworkNode[] {
   return rootNodes;
 }
 
-// Get unlock requirements for each level
+// Get unlock requirements for each level (matches DB logic)
 const UNLOCK_REQUIREMENTS: Record<number, number> = {
-  2: 3,
-  3: 5,
-  4: 8,
-  5: 10
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5
 };
 
 type NoCommissionReason = 
   | 'not_activated' 
   | 'no_payment_this_month'
   | 'too_deep' 
-  | 'level_not_unlocked' 
+  | 'level_not_unlocked'
+  | 'level_2_locked'
+  | 'level_3_locked'
+  | 'level_4_locked'
+  | 'level_5_locked'
   | 'marketing_free_access' 
   | 'sponsor_inactive'
   | 'already_received_before'
@@ -99,6 +103,30 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
   level_not_unlocked: {
     title: 'Уровень не открыт',
     description: 'Данный партнёр находится на уровне, который вам ещё не открыт. Нужно больше активных личников.',
+    color: 'orange',
+    icon: Lock
+  },
+  level_2_locked: {
+    title: 'Уровень 2 закрыт',
+    description: 'Для доступа к уровню 2 нужно минимум 2 активных личника на первой линии.',
+    color: 'orange',
+    icon: Lock
+  },
+  level_3_locked: {
+    title: 'Уровень 3 закрыт',
+    description: 'Для доступа к уровню 3 нужно минимум 3 активных личника на первой линии.',
+    color: 'orange',
+    icon: Lock
+  },
+  level_4_locked: {
+    title: 'Уровень 4 закрыт',
+    description: 'Для доступа к уровню 4 нужно минимум 4 активных личника на первой линии.',
+    color: 'orange',
+    icon: Lock
+  },
+  level_5_locked: {
+    title: 'Уровень 5 закрыт',
+    description: 'Для доступа к уровню 5 нужно минимум 5 активных личников на первой линии.',
     color: 'orange',
     icon: Lock
   },
@@ -190,16 +218,20 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
     }
   };
 
-  // Get additional info for level_not_unlocked with dynamic message
-  const getLevelUnlockInfo = (node: NetworkNode, rootDirectCount?: number) => {
-    if (node.no_commission_reason !== 'level_not_unlocked') return null;
-    const required = UNLOCK_REQUIREMENTS[node.level] || 999;
-    return {
-      level: node.level,
-      required,
-      // If we had rootDirectCount we could show it, but it's not available on frontend
-      // We'll just show what's needed
-    };
+  // Get additional info for level_not_unlocked or level_X_locked with dynamic message
+  const getLevelUnlockInfo = (node: NetworkNode) => {
+    const levelLockedReasons = ['level_2_locked', 'level_3_locked', 'level_4_locked', 'level_5_locked', 'level_not_unlocked'];
+    if (!node.no_commission_reason || !levelLockedReasons.includes(node.no_commission_reason)) return null;
+    
+    // Parse level from reason like "level_3_locked"
+    const levelMatch = node.no_commission_reason.match(/level_(\d)_locked/);
+    if (levelMatch) {
+      const level = parseInt(levelMatch[1]);
+      return { level, required: level };
+    }
+    
+    // Fallback for level_not_unlocked
+    return { level: node.level, required: UNLOCK_REQUIREMENTS[node.level] || node.level };
   };
 
   const levelUnlockInfo = getLevelUnlockInfo(node);
@@ -370,8 +402,8 @@ export function NetworkTree({ members, filterCommission = 'all' }: NetworkTreePr
       if (m.has_commission_received === false && m.no_commission_reason) {
         const reason = m.no_commission_reason;
         stats[reason] = (stats[reason] || 0) + 1;
-        // Only count "actionable" missed commissions
-        if (['sponsor_inactive', 'level_not_unlocked'].includes(reason)) {
+        // Only count "actionable" missed commissions (including level_X_locked)
+        if (['sponsor_inactive', 'level_not_unlocked', 'level_2_locked', 'level_3_locked', 'level_4_locked', 'level_5_locked'].includes(reason)) {
           total++;
         }
       }
