@@ -14,7 +14,7 @@ import { downloadCSV } from "@/utils/exportCSV";
 interface Withdrawal {
   id: string;
   user_id: string;
-  amount_cents: number;
+  amount_kzt: number;
   currency: string;
   status: string;
   created_at: string;
@@ -73,7 +73,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalAmount = filteredWithdrawals.reduce((sum, w) => sum + w.amount_cents, 0);
+    const totalAmount = filteredWithdrawals.reduce((sum, w) => sum + w.amount_kzt, 0);
     return {
       count: filteredWithdrawals.length,
       totalAmount,
@@ -161,15 +161,19 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
 
         const profilesMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
-        const withdrawalsWithUsers = filteredData.map((tx) => ({
+        const withdrawalsWithUsers = filteredData.map((tx: any) => ({
           ...tx,
+          amount_kzt: tx.amount_kzt ?? tx.amount_cents ?? 0,
           user: profilesMap.get(tx.user_id) || null,
         }));
 
         // Search is applied locally (filteredWithdrawals) to avoid refetching on each input
-        setWithdrawals(withdrawalsWithUsers);
+        setWithdrawals(withdrawalsWithUsers as Withdrawal[]);
       } else {
-        setWithdrawals(filteredData);
+        setWithdrawals(filteredData.map((tx: any) => ({
+          ...tx,
+          amount_kzt: tx.amount_kzt ?? tx.amount_cents ?? 0
+        })) as Withdrawal[]);
       }
     } catch (error) {
       console.error('Error fetching withdrawals:', error);
@@ -206,7 +210,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
         ID: w.id.substring(0, 8),
         "Партнёр": w.user?.full_name || "Без имени",
         Email: w.user?.email || "",
-        "Сумма": formatCents(w.amount_cents, w.currency),
+        "Сумма": formatCents(w.amount_kzt, w.currency),
         "Способ": payload?.manual_payout ? "Касса" : "Онлайн",
         "Статус": w.status,
         "Дата": new Date(w.created_at).toLocaleString("ru-RU"),
@@ -394,10 +398,10 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
                  </div>
 
                  <div className="text-right">
-                   <div className="text-xl font-bold">
-                     {formatCents(withdrawal.amount_cents, withdrawal.currency)}
-                   </div>
-                 </div>
+                    <div className="text-xl font-bold">
+                      {formatCents(withdrawal.amount_kzt, withdrawal.currency)}
+                    </div>
+                  </div>
                </div>
              ))
            )}

@@ -5,7 +5,7 @@ export interface Transaction {
   id: string;
   user_id: string;
   type: 'commission' | 'bonus' | 'withdrawal' | 'adjustment' | 'purchase';
-  amount_cents: number;
+  amount_kzt: number;
   currency: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'frozen';
   source_id: string | null;
@@ -61,7 +61,11 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
       if (error) throw error;
       
-      const transactions = (data || []) as Transaction[];
+      // Map from DB column names (amount_cents in types.ts until regenerated) to our interface
+      const transactions = (data || []).map((t: any) => ({
+        ...t,
+        amount_kzt: t.amount_kzt ?? t.amount_cents ?? 0
+      })) as Transaction[];
       
       // Получаем уникальные source_user_id из payload для подтягивания ФИО
       const sourceUserIds = transactions

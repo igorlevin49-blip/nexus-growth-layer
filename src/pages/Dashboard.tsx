@@ -227,11 +227,11 @@ export default function Dashboard() {
                   {blockReason === 'activation_overdue' && balance && activationThreshold && (
                     <div className="bg-muted/50 border border-border rounded-lg p-4">
                       <p className="text-sm text-muted-foreground mb-2">
-                        Ваш баланс: <span className="font-medium text-foreground">{formatCents(balance.available_cents, 'KZT')}</span>
+                        Ваш баланс: <span className="font-medium text-foreground">{formatCents(balance.available_kzt, 'KZT')}</span>
                       </p>
                       <PayFromBalanceButton 
                         requiredAmountKzt={activationThreshold.kzt}
-                        availableBalanceKzt={balance.available_cents}
+                        availableBalanceKzt={balance.available_kzt}
                       />
                     </div>
                   )}
@@ -298,9 +298,9 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {transactions.map((transaction) => {
+            {transactions.map((transaction) => {
                 const isPositive = ['commission', 'bonus'].includes(transaction.type);
-                const amount = formatCents(transaction.amount_cents, transaction.currency);
+                const amount = formatCents(transaction.amount_kzt, transaction.currency);
                 
                 return (
                   <div key={transaction.id} className="flex items-center justify-between py-3 border-b border-border last:border-b-0">

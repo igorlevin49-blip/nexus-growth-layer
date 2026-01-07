@@ -140,7 +140,7 @@ export function ProductStructure({
                             </td>
                             <td className="py-2 px-2 text-center text-xs">{percent}%</td>
                             <td className="py-2 px-2 text-right font-medium text-success">
-                              {formatCents(trans.amount_cents)}
+                              {formatCents(trans.amount_kzt)}
                             </td>
                             <td className="py-2 px-2 text-right">
                               {getStatusBadge(trans.status)}

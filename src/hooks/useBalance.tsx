@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Balance {
-  available_cents: number;
-  frozen_cents: number;
-  pending_cents: number;
-  withdrawn_cents: number;
+  available_kzt: number;
+  frozen_kzt: number;
+  pending_kzt: number;
+  withdrawn_kzt: number;
 }
 
 export function useBalance() {
@@ -22,10 +22,10 @@ export function useBalance() {
       if (error) throw error;
       
       const balance = data?.[0] || {
-        available_cents: 0,
-        frozen_cents: 0,
-        pending_cents: 0,
-        withdrawn_cents: 0
+        available_kzt: 0,
+        frozen_kzt: 0,
+        pending_kzt: 0,
+        withdrawn_kzt: 0
       };
 
       return balance as Balance;
