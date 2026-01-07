@@ -21,6 +21,8 @@ export interface NetworkMember {
   parent_user_id: string | null;
   has_commission_received: boolean | null;
   no_commission_reason: string | null;
+  commission_status: string | null;
+  commission_frozen_until: string | null;
 }
 
 export function useNetworkTree(maxLevel: number = 10, structureType: 1 | 2 = 1) {

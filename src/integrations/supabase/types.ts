@@ -2057,6 +2057,8 @@ export type Database = {
             Args: { max_level: number; root_user_id: string }
             Returns: {
               avatar_url: string
+              commission_frozen_until: string
+              commission_status: string
               created_at: string
               direct_referrals: number
               email: string
@@ -2085,6 +2087,8 @@ export type Database = {
             }
             Returns: {
               avatar_url: string
+              commission_frozen_until: string
+              commission_status: string
               created_at: string
               direct_referrals: number
               email: string
