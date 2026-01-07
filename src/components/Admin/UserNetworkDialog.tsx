@@ -39,20 +39,36 @@ export function UserNetworkDialog({
   // Dynamic max levels based on structure type
   const maxLevelForStructure = structureType === 1 ? 5 : 10;
 
-  const { data: members, isLoading, error, refetch } = useQuery({
+  const { data: members, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['admin-network-tree', userId, structureType],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: userId,
         max_level: maxLevelForStructure,
-        p_structure_type: structureType
+        p_structure_type: structureType,
       });
 
-      if (error) throw error;
-      
-      return (data || []) as NetworkMember[];
+      if (error) {
+        console.error('[UserNetworkDialog] RPC error', {
+          userId,
+          structureType,
+          maxLevelForStructure,
+          error,
+        });
+        throw error;
+      }
+
+      const result = (data || []) as NetworkMember[];
+      console.log('[UserNetworkDialog] Loaded members', {
+        userId,
+        structureType,
+        count: result.length,
+      });
+
+      return result;
     },
     enabled: open && !!userId,
+    refetchOnWindowFocus: true,
   });
 
   // Filter members based on search and filter criteria
