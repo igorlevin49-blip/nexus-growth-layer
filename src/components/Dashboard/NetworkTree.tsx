@@ -67,6 +67,7 @@ type NoCommissionReason =
   | 'level_5_locked'
   | 'marketing_free_access' 
   | 'sponsor_inactive'
+  | 'sponsor_no_activation'
   | 'already_received_before'
   | 'no_active_subscription'
   | 'new_partner';
@@ -140,10 +141,16 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     icon: Gift
   },
   sponsor_inactive: {
-    title: 'Вы не активны в этом месяце',
-    description: 'У вас не выполнена ежемесячная активация (закуп на 20 000 ₸). Комиссия за структуру в этом месяце закрыта.',
-    color: 'orange',
+    title: 'Нет активной подписки спонсора',
+    description: 'У спонсора нет активной подписки, поэтому комиссия за эту структуру не начисляется.',
+    color: 'red',
     icon: AlertTriangle
+  },
+  sponsor_no_activation: {
+    title: 'Спонсор не активирован',
+    description: 'У спонсора не выполнена ежемесячная активация (закуп на 20 000 ₸). Комиссия за структуру в этом месяце закрыта.',
+    color: 'orange',
+    icon: Clock
   },
   already_received_before: {
     title: 'Реанимация партнёра',
