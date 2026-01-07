@@ -5,9 +5,9 @@ import { toast } from "sonner";
 export interface AutoWithdrawRule {
   user_id: string;
   enabled: boolean;
-  threshold_cents: number;
+  threshold_kzt: number;
   schedule: 'daily' | 'weekly' | 'monthly';
-  min_amount_cents: number;
+  min_amount_kzt: number;
   method_id: string | null;
   created_at: string;
   updated_at: string;
@@ -29,7 +29,13 @@ export function useAutoWithdraw() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as AutoWithdrawRule | null;
+      if (!data) return null;
+      // Map from DB column names until types.ts is regenerated
+      return {
+        ...data,
+        threshold_kzt: (data as any).threshold_kzt ?? (data as any).threshold_cents ?? 0,
+        min_amount_kzt: (data as any).min_amount_kzt ?? (data as any).min_amount_cents ?? 0
+      } as AutoWithdrawRule;
     }
   });
 

@@ -90,11 +90,11 @@ export default function Finances() {
     const d = new Date(nowDate.getFullYear(), nowDate.getMonth() - (3 - idx), 1);
     const startM = new Date(d.getFullYear(), d.getMonth(), 1);
     const endM = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    const amountCents = (analyticsTxs || [])
+    const amountKzt = (analyticsTxs || [])
       .filter(t => new Date(t.created_at) >= startM && new Date(t.created_at) < endM)
       .filter(t => (t.type === 'commission' || t.type === 'bonus') && t.status === 'completed')
-      .reduce((sum, t) => sum + (t.amount_cents || 0), 0);
-    return { month: monthNames[d.getMonth()], amountCents };
+      .reduce((sum, t) => sum + (t.amount_kzt || 0), 0);
+    return { month: monthNames[d.getMonth()], amountCents: amountKzt };
   });
 
   const monthlyWithChange = monthlyAnalytics.map((m, i) => {
@@ -111,17 +111,17 @@ export default function Finances() {
   });
   const directCents = periodTxs
     .filter(t => t.type === 'commission' && (t.level === 1))
-    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+    .reduce((s, t) => s + (t.amount_kzt || 0), 0);
   const teamBonusCents = periodTxs
     .filter(t => t.type === 'bonus' || (t.type === 'commission' && ((t.level ?? 0) > 1)))
-    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+    .reduce((s, t) => s + (t.amount_kzt || 0), 0);
   const activationCents = periodTxs
     .filter(t => t.type === 'commission' && (
       (t.payload?.type && String(t.payload.type).toLowerCase().includes('activation')) ||
       t.payload?.structure === 'secondary' ||
       t.payload?.has_activation === true
     ))
-    .reduce((s, t) => s + (t.amount_cents || 0), 0);
+    .reduce((s, t) => s + (t.amount_kzt || 0), 0);
   const totalSources = directCents + teamBonusCents + activationCents;
 
   return (
@@ -158,25 +158,25 @@ export default function Finances() {
         {[
           {
             title: "Доступный баланс",
-            amount: balance ? formatCents(balance.available_cents) : "0 ₸",
+            amount: balance ? formatCents(balance.available_kzt) : "0 ₸",
             description: "Доступно для вывода",
             loading: balanceLoading
           },
           {
             title: "Заморожено",
-            amount: balance ? formatCents(balance.frozen_cents) : "0 ₸",
+            amount: balance ? formatCents(balance.frozen_kzt) : "0 ₸",
             description: "Разморозка через 7 дней",
             loading: balanceLoading
           },
           {
             title: "В ожидании",
-            amount: balance ? formatCents(balance.pending_cents) : "0 ₸",
+            amount: balance ? formatCents(balance.pending_kzt) : "0 ₸",
             description: "Обработка платежей",
             loading: balanceLoading
           },
           {
             title: "Выведено",
-            amount: balance ? formatCents(balance.withdrawn_cents) : "0 ₸",
+            amount: balance ? formatCents(balance.withdrawn_kzt) : "0 ₸",
             description: "Всего выведено",
             loading: balanceLoading
           }
@@ -331,7 +331,7 @@ export default function Finances() {
                             {getStatusBadge(transaction.status)}
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">
-                            {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatCents(transaction.amount_cents)}`}
+                            {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatCents(transaction.amount_kzt)}`}
                           </p>
                           <div className="flex items-center flex-wrap gap-2 text-xs text-muted-foreground">
                             {transaction.source_user_name && (
@@ -344,7 +344,7 @@ export default function Finances() {
                           ['commission', 'bonus'].includes(transaction.type) ? "text-success" : "text-muted-foreground"
                         }`}>
                           {['commission', 'bonus'].includes(transaction.type) ? '+' : '-'}
-                          {formatCents(transaction.amount_cents)}
+                          {formatCents(transaction.amount_kzt)}
                         </div>
                       </div>
                     );

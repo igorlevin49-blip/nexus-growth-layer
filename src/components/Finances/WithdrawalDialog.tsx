@@ -16,7 +16,7 @@ interface WithdrawalDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const MIN_WITHDRAWAL_CENTS = 50000; // 500 тенге
+const MIN_WITHDRAWAL_KZT = 50000; // 500 тенге
 
 export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) {
   const [amount, setAmount] = useState("");
@@ -27,8 +27,8 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
   const { data: withdrawals, createWithdrawal } = useWithdrawals();
 
   // Защита от отрицательного баланса - показываем 0
-  const availableBalance = Math.max(0, balance?.available_cents || 0);
-  const hasNegativeBalance = (balance?.available_cents || 0) < 0;
+  const availableBalance = Math.max(0, balance?.available_kzt || 0);
+  const hasNegativeBalance = (balance?.available_kzt || 0) < 0;
   
   // Проверяем есть ли уже processing вывод
   const hasProcessingWithdrawal = withdrawals?.some(w => w.status === 'processing');
@@ -38,23 +38,23 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
     
     if (!selectedMethod || !amount) return;
     
-    const amountCents = parseCentsInput(amount);
+    const amountKzt = parseCentsInput(amount);
     
     // Проверка минимальной суммы
-    if (amountCents < MIN_WITHDRAWAL_CENTS) {
-      toast.error(`Минимальная сумма вывода: ${formatCents(MIN_WITHDRAWAL_CENTS)}`);
+    if (amountKzt < MIN_WITHDRAWAL_KZT) {
+      toast.error(`Минимальная сумма вывода: ${formatCents(MIN_WITHDRAWAL_KZT)}`);
       return;
     }
     
     // Проверка доступного баланса
-    if (amountCents > availableBalance) {
+    if (amountKzt > availableBalance) {
       toast.error(`Недостаточно средств. Доступно: ${formatCents(availableBalance)}`);
       return;
     }
 
     try {
       await createWithdrawal.mutateAsync({
-        amount_cents: amountCents,
+        amount_kzt: amountKzt,
         method_id: selectedMethod
       });
 
@@ -67,7 +67,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
   };
 
   const defaultMethod = methods?.find(m => m.is_default);
-  const canWithdraw = availableBalance >= MIN_WITHDRAWAL_CENTS && !hasNegativeBalance && !hasProcessingWithdrawal;
+  const canWithdraw = availableBalance >= MIN_WITHDRAWAL_KZT && !hasNegativeBalance && !hasProcessingWithdrawal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,7 +96,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
         {!canWithdraw && !hasNegativeBalance && !hasProcessingWithdrawal && (
           <div className="flex items-center gap-2 p-3 bg-muted text-muted-foreground rounded-md text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>Минимальная сумма для вывода: {formatCents(MIN_WITHDRAWAL_CENTS)}</span>
+            <span>Минимальная сумма для вывода: {formatCents(MIN_WITHDRAWAL_KZT)}</span>
           </div>
         )}
 

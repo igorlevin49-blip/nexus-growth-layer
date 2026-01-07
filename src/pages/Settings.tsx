@@ -546,10 +546,10 @@ export default function Settings() {
                       <Input 
                         id="autoWithdrawLimit" 
                         type="number" 
-                        value={autoWithdraw.data?.threshold_cents ?? 100000}
+                        value={autoWithdraw.data?.threshold_kzt ?? 100000}
                         onChange={(e) => 
                           autoWithdraw.updateRule.mutate({ 
-                            threshold_cents: Math.round(parseFloat(e.target.value) || 0) 
+                            threshold_kzt: Math.round(parseFloat(e.target.value) || 0)
                           })
                         }
                         placeholder="100000" 

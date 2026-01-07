@@ -6,8 +6,8 @@ export interface Withdrawal {
   id: string;
   user_id: string;
   method_id: string | null;
-  amount_cents: number;
-  fee_cents: number;
+  amount_kzt: number;
+  fee_kzt: number;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   transaction_id: string | null;
   created_at: string;
@@ -30,19 +30,24 @@ export function useWithdrawals() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as Withdrawal[];
+      // Map from DB column names until types.ts is regenerated
+      return (data || []).map((w: any) => ({
+        ...w,
+        amount_kzt: w.amount_kzt ?? w.amount_cents ?? 0,
+        fee_kzt: w.fee_kzt ?? w.fee_cents ?? 0
+      })) as Withdrawal[];
     }
   });
 
   const createWithdrawal = useMutation({
-    mutationFn: async ({ amount_cents, method_id }: { amount_cents: number; method_id: string }) => {
+    mutationFn: async ({ amount_kzt, method_id }: { amount_kzt: number; method_id: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Используем атомарную серверную функцию
       const { data, error } = await supabase.rpc('create_user_withdrawal' as any, {
         p_user_id: user.id,
-        p_amount_cents: amount_cents,
+        p_amount_kzt: amount_kzt,
         p_method_id: method_id
       });
 

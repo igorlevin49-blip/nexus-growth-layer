@@ -27,8 +27,8 @@ export function AutoWithdrawDialog({ open, onOpenChange }: AutoWithdrawDialogPro
   useEffect(() => {
     if (rule) {
       setEnabled(rule.enabled);
-      setThreshold(rule.threshold_cents.toString());
-      setMinAmount(rule.min_amount_cents.toString());
+      setThreshold(rule.threshold_kzt.toString());
+      setMinAmount(rule.min_amount_kzt.toString());
       setSchedule(rule.schedule);
       setMethodId(rule.method_id || "");
     }
@@ -39,8 +39,8 @@ export function AutoWithdrawDialog({ open, onOpenChange }: AutoWithdrawDialogPro
 
     await updateRule.mutateAsync({
       enabled,
-      threshold_cents: parseCentsInput(threshold),
-      min_amount_cents: parseCentsInput(minAmount),
+      threshold_kzt: parseCentsInput(threshold),
+      min_amount_kzt: parseCentsInput(minAmount),
       schedule,
       method_id: methodId || null
     });
