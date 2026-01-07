@@ -1962,6 +1962,7 @@ export type Database = {
         }[]
       }
       get_my_sponsor_info: { Args: never; Returns: Json }
+      get_network_debug_report: { Args: { p_user_id: string }; Returns: Json }
       get_network_profiles: {
         Args: { p_user_id: string }
         Returns: {
