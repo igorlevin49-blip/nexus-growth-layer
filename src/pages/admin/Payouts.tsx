@@ -71,11 +71,11 @@ export default function AdminPayouts() {
   const filteredPartners = useMemo(() => {
     switch (balanceFilter) {
       case "has_payout":
-        return partners.filter(p => p.available_cents > 0);
+        return partners.filter(p => p.available_kzt > 0);
       case "no_payout":
-        return partners.filter(p => p.available_cents <= 0 && p.available_cents >= 0);
+        return partners.filter(p => p.available_kzt <= 0 && p.available_kzt >= 0);
       case "negative":
-        return partners.filter(p => p.available_cents < 0);
+        return partners.filter(p => p.available_kzt < 0);
       default:
         return partners;
     }
@@ -83,16 +83,16 @@ export default function AdminPayouts() {
 
   // Calculate totals
   const totals = useMemo(() => ({
-    available: filteredPartners.reduce((acc, p) => acc + p.available_cents, 0),
-    frozen: filteredPartners.reduce((acc, p) => acc + p.frozen_cents, 0),
+    available: filteredPartners.reduce((acc, p) => acc + p.available_kzt, 0),
+    frozen: filteredPartners.reduce((acc, p) => acc + p.frozen_kzt, 0),
   }), [filteredPartners]);
 
   // Stats for filter badges
   const stats = useMemo(() => ({
     all: partners.length,
-    has_payout: partners.filter(p => p.available_cents > 0).length,
-    no_payout: partners.filter(p => p.available_cents <= 0 && p.available_cents >= 0).length,
-    negative: partners.filter(p => p.available_cents < 0).length,
+    has_payout: partners.filter(p => p.available_kzt > 0).length,
+    no_payout: partners.filter(p => p.available_kzt <= 0 && p.available_kzt >= 0).length,
+    negative: partners.filter(p => p.available_kzt < 0).length,
   }), [partners]);
 
   const fetchPartners = async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -115,8 +115,8 @@ export default function AdminPayouts() {
       const balancesMap = new Map<string, { available: number; frozen: number }>();
       (balancesData || []).forEach((b: any) => {
         balancesMap.set(b.user_id, {
-          available: b.available_cents || 0,
-          frozen: b.frozen_cents || 0,
+          available: b.available_kzt || 0,
+          frozen: b.frozen_kzt || 0,
         });
       });
 
@@ -149,8 +149,8 @@ export default function AdminPayouts() {
         const balance = balancesMap.get(profile.id) || { available: 0, frozen: 0 };
         return {
           ...profile,
-          available_cents: balance.available,
-          frozen_cents: balance.frozen,
+          available_kzt: balance.available,
+          frozen_kzt: balance.frozen,
         };
       });
 
@@ -184,8 +184,8 @@ export default function AdminPayouts() {
     setAdjustmentDialog({ open: true, partner });
     setAdjustmentForm({ 
       amount: "", 
-      direction: partner.available_cents < 0 ? "credit" : "debit",
-      reason: partner.available_cents < 0 ? "Коррекция отрицательного баланса" : ""
+      direction: partner.available_kzt < 0 ? "credit" : "debit",
+      reason: partner.available_kzt < 0 ? "Коррекция отрицательного баланса" : ""
     });
   };
 
@@ -208,10 +208,10 @@ export default function AdminPayouts() {
       return;
     }
 
-    if (amountCents > payoutDialog.partner.available_cents) {
+    if (amountCents > payoutDialog.partner.available_kzt) {
       toast({
         title: "Ошибка",
-        description: `Недостаточно средств. Доступно: ${formatCents(payoutDialog.partner.available_cents, 'KZT')}`,
+        description: `Недостаточно средств. Доступно: ${formatCents(payoutDialog.partner.available_kzt, 'KZT')}`,
         variant: "destructive",
       });
       return;
@@ -422,7 +422,7 @@ export default function AdminPayouts() {
               <div>
                 <p className="text-sm text-muted-foreground">Доступно для выплаты</p>
                 <p className="text-lg font-bold text-primary">
-                  {formatCents(payoutDialog.partner.available_cents, 'KZT')}
+                  {formatCents(payoutDialog.partner.available_kzt, 'KZT')}
                 </p>
               </div>
 
@@ -432,7 +432,7 @@ export default function AdminPayouts() {
                   id="amount"
                   type="number"
                   min="1"
-                  max={payoutDialog.partner.available_cents}
+                  max={payoutDialog.partner.available_kzt}
                   placeholder="Например: 55000"
                   value={payoutForm.amount_cents}
                   onChange={(e) => setPayoutForm(prev => ({ ...prev, amount_cents: e.target.value }))}
@@ -483,8 +483,8 @@ export default function AdminPayouts() {
               
               <div>
                 <p className="text-sm text-muted-foreground">Текущий баланс</p>
-                <p className={`text-lg font-bold ${adjustmentDialog.partner.available_cents < 0 ? 'text-destructive' : 'text-primary'}`}>
-                  {formatCents(adjustmentDialog.partner.available_cents, 'KZT')}
+                <p className={`text-lg font-bold ${adjustmentDialog.partner.available_kzt < 0 ? 'text-destructive' : 'text-primary'}`}>
+                  {formatCents(adjustmentDialog.partner.available_kzt, 'KZT')}
                 </p>
               </div>
 
@@ -527,8 +527,8 @@ export default function AdminPayouts() {
                 {adjustmentForm.amount && !isNaN(parseInt(adjustmentForm.amount)) && (
                   <p className="text-sm text-muted-foreground">
                     Новый баланс: {formatCents(
-                      adjustmentDialog.partner.available_cents + 
-                      (adjustmentForm.direction === "credit" ? 1 : -1) * parseInt(adjustmentForm.amount) * 100, 
+                      adjustmentDialog.partner.available_kzt + 
+                      (adjustmentForm.direction === "credit" ? 1 : -1) * parseInt(adjustmentForm.amount), 
                       'KZT'
                     )}
                   </p>
