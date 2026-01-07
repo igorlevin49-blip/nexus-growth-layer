@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, Search, Users, AlertTriangle, TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 
 export interface Partner {
   id: string;
@@ -172,12 +172,12 @@ export function PartnersTable({
                         variant={partner.available_kzt < 0 ? "destructive" : "default"} 
                         className="font-mono"
                       >
-                        {formatCents(partner.available_kzt, 'KZT')}
+                        {formatKZT(partner.available_kzt, 'KZT')}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-mono">
-                        {formatCents(partner.frozen_kzt, 'KZT')}
+                        {formatKZT(partner.frozen_kzt, 'KZT')}
                       </Badge>
                     </TableCell>
                     {showActions && (
@@ -227,12 +227,12 @@ export function PartnersTable({
                       variant={totals.available < 0 ? "destructive" : "default"} 
                       className="font-mono"
                     >
-                      {formatCents(totals.available, 'KZT')}
+                      {formatKZT(totals.available, 'KZT')}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono">
-                      {formatCents(totals.frozen, 'KZT')}
+                      {formatKZT(totals.frozen, 'KZT')}
                     </Badge>
                   </TableCell>
                   {showActions && <TableCell></TableCell>}

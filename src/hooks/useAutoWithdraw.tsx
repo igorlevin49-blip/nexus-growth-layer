@@ -31,10 +31,11 @@ export function useAutoWithdraw() {
       if (error) throw error;
       if (!data) return null;
       // Map from DB column names until types.ts is regenerated
+      // Map from DB naming to interface naming (DB was migrated to _kzt)
       return {
         ...data,
-        threshold_kzt: (data as any).threshold_kzt ?? (data as any).threshold_cents ?? 0,
-        min_amount_kzt: (data as any).min_amount_kzt ?? (data as any).min_amount_cents ?? 0
+        threshold_kzt: (data as any).threshold_kzt ?? 0,
+        min_amount_kzt: (data as any).min_amount_kzt ?? 0
       } as AutoWithdrawRule;
     }
   });

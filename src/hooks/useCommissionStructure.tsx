@@ -44,13 +44,13 @@ export function useCommissionStructure(options: UseCommissionStructureOptions = 
 
       if (error) throw error;
 
-      // Data is already in whole KZT, no conversion needed
+      // Data is already in whole KZT, map from DB naming to interface naming
       return (data || []).map(level => ({
         level: level.level,
         percent: level.percent,
-        earned: level.earned_cents,  // already whole KZT
-        frozen: level.frozen_cents,  // already whole KZT
-        volume: level.volume_cents,  // already whole KZT
+        earned: level.earned_cents,  // DB returns _cents but values are in whole KZT
+        frozen: level.frozen_cents,  // DB returns _cents but values are in whole KZT
+        volume: level.volume_cents,  // DB returns _cents but values are in whole KZT
         partners_count: level.partners_count,
         status: level.status as 'active' | 'frozen' | 'locked',
         unlock_requirement: level.unlock_requirement

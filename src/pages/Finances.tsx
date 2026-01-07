@@ -4,7 +4,7 @@ import { useBalance } from "@/hooks/useBalance";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCommissionStructure } from "@/hooks/useCommissionStructure";
 import { useProfile } from "@/hooks/useProfile";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

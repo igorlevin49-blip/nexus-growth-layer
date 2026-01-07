@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/useBalance";
 import { useNetworkStats } from "@/hooks/useNetworkStats";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 
 export function DashboardStats() {
   const { data: balance, isLoading: balanceLoading } = useBalance();
@@ -13,7 +13,7 @@ export function DashboardStats() {
   const stats = [
     {
       title: "Доступный баланс",
-      value: balanceLoading ? null : formatCents(balance?.available_kzt || 0, 'KZT'),
+      value: balanceLoading ? null : formatKZT(balance?.available_kzt || 0, 'KZT'),
       change: "+0%",
       trend: "up" as const,
       icon: DollarSign,
@@ -29,7 +29,7 @@ export function DashboardStats() {
     },
     {
       title: "Замороженные средства",
-      value: balanceLoading ? null : formatCents(balance?.frozen_kzt || 0, 'KZT'),
+      value: balanceLoading ? null : formatKZT(balance?.frozen_kzt || 0, 'KZT'),
       change: "-0%",
       trend: "down" as const,
       icon: Snowflake,
