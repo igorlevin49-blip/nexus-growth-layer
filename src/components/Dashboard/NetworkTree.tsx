@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX, Calendar } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +13,8 @@ interface NetworkNode extends NetworkMember {
 interface NetworkTreeProps {
   members: NetworkMember[];
   filterCommission?: 'all' | 'with_commission' | 'without_commission';
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 function buildTree(members: NetworkMember[]): NetworkNode[] {
@@ -379,7 +381,7 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
   );
 }
 
-export function NetworkTree({ members, filterCommission = 'all' }: NetworkTreeProps) {
+export function NetworkTree({ members, filterCommission = 'all', isError, onRetry }: NetworkTreeProps) {
   // Apply commission filter
   const filteredMembers = useMemo(() => {
     if (filterCommission === 'all') return members;
@@ -418,6 +420,23 @@ export function NetworkTree({ members, filterCommission = 'all' }: NetworkTreePr
     
     return { stats, total };
   }, [members]);
+  
+  // Show error state first
+  if (isError) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+        <p className="text-lg font-medium mb-2">Не удалось загрузить структуру</p>
+        <p className="text-sm text-muted-foreground mb-4">Произошла ошибка при загрузке данных</p>
+        {onRetry && (
+          <Button variant="outline" onClick={() => onRetry()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Повторить
+          </Button>
+        )}
+      </div>
+    );
+  }
   
   if (members.length === 0) {
     return (

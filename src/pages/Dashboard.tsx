@@ -28,7 +28,7 @@ import { APP_CONFIG, getReferralLink } from "@/config/constants";
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: networkMembers = [] } = useNetworkTree(10);
+  const { data: networkMembers = [], isError: networkError, refetch: refetchNetwork } = useNetworkTree(10);
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions({ limit: 3 });
   const { data: balance } = useBalance();
   const { data: activationThreshold } = useActivationThreshold();
@@ -270,7 +270,7 @@ export default function Dashboard() {
       </div>
 
       {/* Network Tree */}
-      <NetworkTree members={networkMembers} />
+      <NetworkTree members={networkMembers} isError={networkError} onRetry={refetchNetwork} />
 
       {/* Recent Activity */}
       <Card className="financial-card">
