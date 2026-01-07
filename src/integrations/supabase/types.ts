@@ -2200,6 +2200,7 @@ export type Database = {
         Returns: Json
       }
       release_expired_frozen_transactions: { Args: never; Returns: Json }
+      reset_monthly_activation_status: { Args: never; Returns: undefined }
       restore_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
