@@ -368,10 +368,16 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
           <span>Уровень {node.level}</span>
           <span>•</span>
           <span>ID: {node.partner_id.substring(0, 8)}</span>
-          {node.has_commission_received === true && status === 'active' && (
+          {node.has_commission_received === true && (
             <>
               <span>•</span>
-              <span className="text-success">✓ Комиссия начислена</span>
+              {node.commission_status === 'frozen' && node.commission_frozen_until ? (
+                <span className="text-warning">
+                  ⏳ Комиссия заморожена до {new Date(node.commission_frozen_until).toLocaleDateString('ru-RU')}
+                </span>
+              ) : (
+                <span className="text-success">✓ Комиссия начислена</span>
+              )}
             </>
           )}
         </div>
