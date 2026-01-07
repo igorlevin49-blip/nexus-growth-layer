@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Lock, Info } from "lucide-react";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { CommissionLevel } from "@/hooks/useCommissionStructure";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -136,11 +136,11 @@ export function ProductStructure({
                               <Badge variant="outline" className="text-xs">L{trans.level}</Badge>
                             </td>
                             <td className="py-2 px-2 text-right">
-                              {formatCents(purchaseAmount)}
+                              {formatKZT(purchaseAmount)}
                             </td>
                             <td className="py-2 px-2 text-center text-xs">{percent}%</td>
                             <td className="py-2 px-2 text-right font-medium text-success">
-                              {formatCents(trans.amount_kzt)}
+                              {formatKZT(trans.amount_kzt)}
                             </td>
                             <td className="py-2 px-2 text-right">
                               {getStatusBadge(trans.status)}

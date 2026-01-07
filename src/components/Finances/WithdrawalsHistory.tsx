@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Calendar, Download } from "lucide-react";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { useAuth } from "@/hooks/useAuth";
 import { downloadCSV } from "@/utils/exportCSV";
 
@@ -210,7 +210,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
         ID: w.id.substring(0, 8),
         "Партнёр": w.user?.full_name || "Без имени",
         Email: w.user?.email || "",
-        "Сумма": formatCents(w.amount_kzt, w.currency),
+        "Сумма": formatKZT(w.amount_kzt, w.currency),
         "Способ": payload?.manual_payout ? "Касса" : "Онлайн",
         "Статус": w.status,
         "Дата": new Date(w.created_at).toLocaleString("ru-RU"),

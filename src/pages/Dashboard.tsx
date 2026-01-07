@@ -19,7 +19,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useBalance } from "@/hooks/useBalance";
 import { useActivationThreshold } from "@/hooks/useActivationThreshold";
 import { toast } from "sonner";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -227,7 +227,7 @@ export default function Dashboard() {
                   {blockReason === 'activation_overdue' && balance && activationThreshold && (
                     <div className="bg-muted/50 border border-border rounded-lg p-4">
                       <p className="text-sm text-muted-foreground mb-2">
-                        Ваш баланс: <span className="font-medium text-foreground">{formatCents(balance.available_kzt, 'KZT')}</span>
+                        Ваш баланс: <span className="font-medium text-foreground">{formatKZT(balance.available_kzt, 'KZT')}</span>
                       </p>
                       <PayFromBalanceButton 
                         requiredAmountKzt={activationThreshold.kzt}
@@ -300,7 +300,7 @@ export default function Dashboard() {
             <div className="space-y-4">
             {transactions.map((transaction) => {
                 const isPositive = ['commission', 'bonus'].includes(transaction.type);
-                const amount = formatCents(transaction.amount_kzt, transaction.currency);
+                const amount = formatKZT(transaction.amount_kzt, transaction.currency);
                 
                 return (
                   <div key={transaction.id} className="flex items-center justify-between py-3 border-b border-border last:border-b-0">

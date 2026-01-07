@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, TrendingUp, Users, ShoppingCart, Download, RefreshCw, CalendarIcon } from "lucide-react";
 import { useAdminGlobalStats, useAdminStructureStats } from "@/hooks/useAdminStats";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { useState, useMemo } from "react";
 import { downloadCSV } from "@/utils/exportCSV";
 import { Switch } from "@/components/ui/switch";
@@ -79,7 +79,7 @@ export default function AdminReports() {
   const stats = [
     {
       title: "Общий доход",
-      value: formatCents(globalStats?.total_revenue_cents || 0),
+      value: formatKZT(globalStats?.total_revenue_kzt || 0),
       change: periodLabel,
       icon: DollarSign,
     },
@@ -97,7 +97,7 @@ export default function AdminReports() {
     },
     {
       title: "Средний чек",
-      value: formatCents(globalStats?.avg_order_cents || 0),
+      value: formatKZT(globalStats?.avg_order_kzt || 0),
       change: "в тенге",
       icon: TrendingUp,
     },
@@ -116,9 +116,9 @@ export default function AdminReports() {
       'Уровень': `L${row.level}`,
       'Процент': `${row.percent}%`,
       'Транзакций': row.transactions_count,
-      'Начислено (KZT)': row.total_amount_cents,
-      'Заморожено (KZT)': row.frozen_amount_cents,
-      'Доступно (KZT)': row.available_amount_cents || 0,
+      'Начислено (KZT)': row.total_amount_kzt,
+      'Заморожено (KZT)': row.frozen_amount_kzt,
+      'Доступно (KZT)': row.available_amount_kzt || 0,
       'Pass-up': row.pass_up_count
     }));
 
@@ -240,13 +240,13 @@ export default function AdminReports() {
                 <div>
                   <p className="text-muted-foreground">Начислено</p>
                   <p className="text-xl font-bold text-success">
-                    {formatCents((structure1Stats || []).reduce((sum, r) => sum + r.total_amount_cents, 0))}
+                    {formatKZT((structure1Stats || []).reduce((sum, r) => sum + r.total_amount_kzt, 0))}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Заморожено</p>
                   <p className="text-xl font-bold text-warning">
-                    {formatCents((structure1Stats || []).reduce((sum, r) => sum + r.frozen_amount_cents, 0))}
+                    {formatKZT((structure1Stats || []).reduce((sum, r) => sum + r.frozen_amount_kzt, 0))}
                   </p>
                 </div>
               </div>
@@ -278,13 +278,13 @@ export default function AdminReports() {
                 <div>
                   <p className="text-muted-foreground">Начислено</p>
                   <p className="text-xl font-bold text-success">
-                    {formatCents((structure2Stats || []).reduce((sum, r) => sum + r.total_amount_cents, 0))}
+                    {formatKZT((structure2Stats || []).reduce((sum, r) => sum + r.total_amount_kzt, 0))}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Заморожено</p>
                   <p className="text-xl font-bold text-warning">
-                    {formatCents((structure2Stats || []).reduce((sum, r) => sum + r.frozen_amount_cents, 0))}
+                    {formatKZT((structure2Stats || []).reduce((sum, r) => sum + r.frozen_amount_kzt, 0))}
                   </p>
                 </div>
               </div>
@@ -350,13 +350,13 @@ export default function AdminReports() {
                               <TableCell className="text-xs sm:text-sm font-medium">{row.percent}%</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm">{row.transactions_count}</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm font-medium">
-                                {formatCents(row.total_amount_cents)}
+                                {formatKZT(row.total_amount_kzt)}
                               </TableCell>
                               <TableCell className="text-right text-xs sm:text-sm text-warning">
-                                {formatCents(row.frozen_amount_cents)}
+                                {formatKZT(row.frozen_amount_kzt)}
                               </TableCell>
                               <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
-                                {formatCents(row.available_amount_cents || 0)}
+                                {formatKZT(row.available_amount_kzt || 0)}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -413,13 +413,13 @@ export default function AdminReports() {
                               <TableCell className="text-xs sm:text-sm font-medium">{row.percent}%</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm">{row.transactions_count}</TableCell>
                               <TableCell className="text-right text-xs sm:text-sm font-medium">
-                                {formatCents(row.total_amount_cents)}
+                                {formatKZT(row.total_amount_kzt)}
                               </TableCell>
                               <TableCell className="text-right text-xs sm:text-sm text-warning">
-                                {formatCents(row.frozen_amount_cents)}
+                                {formatKZT(row.frozen_amount_kzt)}
                               </TableCell>
                               <TableCell className="text-right text-xs sm:text-sm text-success font-medium">
-                                {formatCents(row.available_amount_cents || 0)}
+                                {formatKZT(row.available_amount_kzt || 0)}
                               </TableCell>
                             </TableRow>
                           ))}

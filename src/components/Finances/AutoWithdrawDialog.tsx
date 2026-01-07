@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useAutoWithdraw } from "@/hooks/useAutoWithdraw";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { formatCents, parseCentsInput } from "@/utils/formatMoney";
+import { formatKZT, parseKZTInput } from "@/utils/formatMoney";
 
 interface AutoWithdrawDialogProps {
   open: boolean;
@@ -39,8 +39,8 @@ export function AutoWithdrawDialog({ open, onOpenChange }: AutoWithdrawDialogPro
 
     await updateRule.mutateAsync({
       enabled,
-      threshold_kzt: parseCentsInput(threshold),
-      min_amount_kzt: parseCentsInput(minAmount),
+      threshold_kzt: parseKZTInput(threshold),
+      min_amount_kzt: parseKZTInput(minAmount),
       schedule,
       method_id: methodId || null
     });

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { DollarSign, History, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 import { WithdrawalsHistory } from "@/components/Finances/WithdrawalsHistory";
 import { PartnersTable, Partner, BalanceFilter } from "@/components/Admin/PartnersTable";
 
@@ -34,7 +34,7 @@ export default function AdminPayouts() {
     partner: null,
   });
   const [payoutForm, setPayoutForm] = useState({
-    amount_cents: "",
+    amount_kzt: "",
     comment: "",
   });
   const [processing, setProcessing] = useState(false);
@@ -172,12 +172,12 @@ export default function AdminPayouts() {
 
   const openPayoutDialog = (partner: Partner) => {
     setPayoutDialog({ open: true, partner });
-    setPayoutForm({ amount_cents: "", comment: "" });
+    setPayoutForm({ amount_kzt: "", comment: "" });
   };
 
   const closePayoutDialog = () => {
     setPayoutDialog({ open: false, partner: null });
-    setPayoutForm({ amount_cents: "", comment: "" });
+    setPayoutForm({ amount_kzt: "", comment: "" });
   };
 
   const openAdjustmentDialog = (partner: Partner) => {
@@ -197,9 +197,9 @@ export default function AdminPayouts() {
   const handlePayout = async () => {
     if (!payoutDialog.partner || !user) return;
 
-    const amountCents = parseInt(payoutForm.amount_cents);
+    const amountKzt = parseInt(payoutForm.amount_kzt);
     
-    if (isNaN(amountCents) || amountCents <= 0) {
+    if (isNaN(amountKzt) || amountKzt <= 0) {
       toast({
         title: "Ошибка",
         description: "Введите корректную сумму",
@@ -208,10 +208,10 @@ export default function AdminPayouts() {
       return;
     }
 
-    if (amountCents > payoutDialog.partner.available_kzt) {
+    if (amountKzt > payoutDialog.partner.available_kzt) {
       toast({
         title: "Ошибка",
-        description: `Недостаточно средств. Доступно: ${formatCents(payoutDialog.partner.available_kzt, 'KZT')}`,
+        description: `Недостаточно средств. Доступно: ${formatKZT(payoutDialog.partner.available_kzt, 'KZT')}`,
         variant: "destructive",
       });
       return;
@@ -231,7 +231,7 @@ export default function AdminPayouts() {
     try {
       const { data, error } = await supabase.rpc('process_manual_payout', {
         p_user_id: payoutDialog.partner.id,
-        p_amount_cents: amountCents, // Уже в тенге, БЕЗ конвертации
+        p_amount_cents: amountKzt, // В тенге (KZT), параметр RPC ещё называется _cents
         p_comment: payoutForm.comment.trim()
       });
 
@@ -245,7 +245,7 @@ export default function AdminPayouts() {
 
       toast({
         title: "Успешно",
-        description: `Выплата ${formatCents(amountCents, 'KZT')} произведена`,
+        description: `Выплата ${formatKZT(amountKzt, 'KZT')} произведена`,
       });
 
       closePayoutDialog();
@@ -422,7 +422,7 @@ export default function AdminPayouts() {
               <div>
                 <p className="text-sm text-muted-foreground">Доступно для выплаты</p>
                 <p className="text-lg font-bold text-primary">
-                  {formatCents(payoutDialog.partner.available_kzt, 'KZT')}
+                  {formatKZT(payoutDialog.partner.available_kzt, 'KZT')}
                 </p>
               </div>
 
@@ -434,12 +434,12 @@ export default function AdminPayouts() {
                   min="1"
                   max={payoutDialog.partner.available_kzt}
                   placeholder="Например: 55000"
-                  value={payoutForm.amount_cents}
-                  onChange={(e) => setPayoutForm(prev => ({ ...prev, amount_cents: e.target.value }))}
+                  value={payoutForm.amount_kzt}
+                  onChange={(e) => setPayoutForm(prev => ({ ...prev, amount_kzt: e.target.value }))}
                 />
-                {payoutForm.amount_cents && !isNaN(parseInt(payoutForm.amount_cents)) && (
+                {payoutForm.amount_kzt && !isNaN(parseInt(payoutForm.amount_kzt)) && (
                   <p className="text-sm text-muted-foreground">
-                    = {formatCents(parseInt(payoutForm.amount_cents), 'KZT')}
+                    = {formatKZT(parseInt(payoutForm.amount_kzt), 'KZT')}
                   </p>
                 )}
               </div>
@@ -484,7 +484,7 @@ export default function AdminPayouts() {
               <div>
                 <p className="text-sm text-muted-foreground">Текущий баланс</p>
                 <p className={`text-lg font-bold ${adjustmentDialog.partner.available_kzt < 0 ? 'text-destructive' : 'text-primary'}`}>
-                  {formatCents(adjustmentDialog.partner.available_kzt, 'KZT')}
+                  {formatKZT(adjustmentDialog.partner.available_kzt, 'KZT')}
                 </p>
               </div>
 
@@ -526,7 +526,7 @@ export default function AdminPayouts() {
                 />
                 {adjustmentForm.amount && !isNaN(parseInt(adjustmentForm.amount)) && (
                   <p className="text-sm text-muted-foreground">
-                    Новый баланс: {formatCents(
+                    Новый баланс: {formatKZT(
                       adjustmentDialog.partner.available_kzt + 
                       (adjustmentForm.direction === "credit" ? 1 : -1) * parseInt(adjustmentForm.amount), 
                       'KZT'

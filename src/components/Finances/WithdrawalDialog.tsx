@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBalance } from "@/hooks/useBalance";
-import { formatCents, parseCentsInput } from "@/utils/formatMoney";
+import { formatKZT, parseKZTInput } from "@/utils/formatMoney";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 
@@ -38,17 +38,17 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
     
     if (!selectedMethod || !amount) return;
     
-    const amountKzt = parseCentsInput(amount);
+    const amountKzt = parseKZTInput(amount);
     
     // Проверка минимальной суммы
     if (amountKzt < MIN_WITHDRAWAL_KZT) {
-      toast.error(`Минимальная сумма вывода: ${formatCents(MIN_WITHDRAWAL_KZT)}`);
+      toast.error(`Минимальная сумма вывода: ${formatKZT(MIN_WITHDRAWAL_KZT)}`);
       return;
     }
     
     // Проверка доступного баланса
     if (amountKzt > availableBalance) {
-      toast.error(`Недостаточно средств. Доступно: ${formatCents(availableBalance)}`);
+      toast.error(`Недостаточно средств. Доступно: ${formatKZT(availableBalance)}`);
       return;
     }
 
@@ -75,7 +75,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
         <DialogHeader>
           <DialogTitle>Вывести средства</DialogTitle>
           <DialogDescription>
-            Доступно для вывода: {formatCents(availableBalance)}
+            Доступно для вывода: {formatKZT(availableBalance)}
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +96,7 @@ export function WithdrawalDialog({ open, onOpenChange }: WithdrawalDialogProps) 
         {!canWithdraw && !hasNegativeBalance && !hasProcessingWithdrawal && (
           <div className="flex items-center gap-2 p-3 bg-muted text-muted-foreground rounded-md text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>Минимальная сумма для вывода: {formatCents(MIN_WITHDRAWAL_KZT)}</span>
+            <span>Минимальная сумма для вывода: {formatKZT(MIN_WITHDRAWAL_KZT)}</span>
           </div>
         )}
 

@@ -4,7 +4,7 @@ import { Wallet, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatCents } from "@/utils/formatMoney";
+import { formatKZT } from "@/utils/formatMoney";
 
 interface PayFromBalanceButtonProps {
   requiredAmountKzt: number;
@@ -48,7 +48,7 @@ export function PayFromBalanceButton({
       
       if (result?.success) {
         toast.success("Активация оплачена с баланса!", {
-          description: `Списано ${formatCents(requiredAmountKzt, "KZT")}`
+          description: `Списано ${formatKZT(requiredAmountKzt, "KZT")}`
         });
         
         // Invalidate relevant queries
@@ -87,8 +87,8 @@ export function PayFromBalanceButton({
         <>
           <Wallet className="h-4 w-4 mr-2" />
           {canPay 
-            ? `Оплатить с баланса (${formatCents(requiredAmountKzt, "KZT")})`
-            : `Недостаточно средств (нужно ${formatCents(requiredAmountKzt, "KZT")})`
+            ? `Оплатить с баланса (${formatKZT(requiredAmountKzt, "KZT")})`
+            : `Недостаточно средств (нужно ${formatKZT(requiredAmountKzt, "KZT")})`
           }
         </>
       )}
