@@ -210,7 +210,7 @@ export default function Finances() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Вывести средства</h3>
                   <p className="text-sm text-muted-foreground">
-                    Доступно: {balance ? formatCents(balance.available_cents) : "0 ₸"}
+                    Доступно: {balance ? formatCents(balance.available_kzt) : "0 ₸"}
                   </p>
                 </div>
               </div>

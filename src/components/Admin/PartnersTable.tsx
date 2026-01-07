@@ -12,8 +12,8 @@ export interface Partner {
   full_name: string | null;
   email: string | null;
   phone: string | null;
-  available_cents: number;
-  frozen_cents: number;
+  available_kzt: number;
+  frozen_kzt: number;
 }
 
 export type BalanceFilter = "all" | "has_payout" | "no_payout" | "negative";
@@ -156,11 +156,11 @@ export function PartnersTable({
                 </TableRow>
               ) : (
                 filteredPartners.map((partner) => (
-                  <TableRow key={partner.id} className={partner.available_cents < 0 ? "bg-destructive/5" : ""}>
+                  <TableRow key={partner.id} className={partner.available_kzt < 0 ? "bg-destructive/5" : ""}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {partner.full_name || 'Без имени'}
-                        {partner.available_cents < 0 && (
+                        {partner.available_kzt < 0 && (
                           <Badge variant="destructive" className="text-xs">Долг</Badge>
                         )}
                       </div>
@@ -169,22 +169,22 @@ export function PartnersTable({
                     <TableCell>{partner.phone || '—'}</TableCell>
                     <TableCell>
                       <Badge 
-                        variant={partner.available_cents < 0 ? "destructive" : "default"} 
+                        variant={partner.available_kzt < 0 ? "destructive" : "default"} 
                         className="font-mono"
                       >
-                        {formatCents(partner.available_cents, 'KZT')}
+                        {formatCents(partner.available_kzt, 'KZT')}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-mono">
-                        {formatCents(partner.frozen_cents, 'KZT')}
+                        {formatCents(partner.frozen_kzt, 'KZT')}
                       </Badge>
                     </TableCell>
                     {showActions && (
                       <TableCell className="text-right">
                         {isSuperAdmin ? (
                           <div className="flex justify-end gap-2">
-                            {partner.available_cents > 0 && (
+                            {partner.available_kzt > 0 && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -195,11 +195,11 @@ export function PartnersTable({
                               </Button>
                             )}
                             <Button
-                              variant={partner.available_cents < 0 ? "destructive" : "ghost"}
+                              variant={partner.available_kzt < 0 ? "destructive" : "ghost"}
                               size="sm"
                               onClick={() => onOpenAdjustmentDialog(partner)}
                             >
-                              {partner.available_cents < 0 ? (
+                              {partner.available_kzt < 0 ? (
                                 <>
                                   <AlertTriangle className="h-4 w-4 mr-1" />
                                   Исправить
