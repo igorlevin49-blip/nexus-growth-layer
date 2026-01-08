@@ -22,7 +22,7 @@ export function formatCents(amount: number, currency: string = 'KZT'): string {
   return formatKZT(amount, currency);
 }
 
-export function formatMoney(amount: number, currency: string = 'USD'): string {
+export function formatMoney(amount: number, currency: string = 'KZT'): string {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: currency,
