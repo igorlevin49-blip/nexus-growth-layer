@@ -484,7 +484,9 @@ export default function Network() {
               /* При "Все уровни" - показываем дерево с полными данными */
               <NetworkTree 
                 members={filteredMembers} 
-                filterCommission={structureType === 1 ? filterCommission : 'all'} 
+                filterCommission={structureType === 1 ? filterCommission : 'all'}
+                isError={!!membersError}
+                onRetry={() => refetchMembers()}
               />
             )}
           </SimpleTabsContent>
