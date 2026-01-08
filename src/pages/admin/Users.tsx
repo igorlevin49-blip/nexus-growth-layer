@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search, Archive, AlertTriangle, ShieldOff } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Trash2, RotateCcw, UserPlus, Network, Search, Archive, AlertTriangle, ShieldOff, Copy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSoftDeleteUser, useRestoreUser, useHardDeleteUser } from "@/hooks/useCleanupTestData";
 import { useBanUser, useReassignReferrals } from "@/hooks/useBanUser";
@@ -14,6 +14,7 @@ import { UserNetworkDialog } from "@/components/Admin/UserNetworkDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { getReferralLink } from "@/config/constants";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ interface Profile {
   id: string;
   full_name: string | null;
   email: string | null;
+  referral_code: string;
   phone: string | null;
   subscription_status: string;
   balance: number;
@@ -142,7 +144,10 @@ export default function AdminUsers() {
       const { data: balancesData } = await supabase.rpc('get_all_user_balances');
       const balancesMap = new Map<string, number>();
       (balancesData || []).forEach((b: any) => {
-        balancesMap.set(b.user_id, b.available_kzt || 0);
+        const available = Number(b?.available_kzt ?? b?.available_cents ?? 0);
+        const frozen = Number(b?.frozen_kzt ?? b?.frozen_cents ?? 0);
+        const pending = Number(b?.pending_kzt ?? b?.pending_cents ?? 0);
+        balancesMap.set(b.user_id, available + frozen + pending);
       });
       
       const profilesWithBalances = (data || []).map(profile => ({
@@ -160,6 +165,24 @@ export default function AdminUsers() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyUserReferralLink = async (refCode?: string | null) => {
+    if (!refCode) return;
+    try {
+      await navigator.clipboard.writeText(getReferralLink(refCode));
+      toast({
+        title: "Скопировано",
+        description: "Реферальная ссылка скопирована",
+      });
+    } catch (e) {
+      console.error('Copy referral link error:', e);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось скопировать ссылку",
+        variant: "destructive",
+      });
     }
   };
 
@@ -377,6 +400,7 @@ export default function AdminUsers() {
               <TableRow>
                 <TableHead>Имя</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Реф. ссылка</TableHead>
                 <TableHead>Телефон</TableHead>
                 <TableHead>Пригласивший</TableHead>
                 <TableHead>Статус аккаунта</TableHead>
@@ -392,6 +416,22 @@ export default function AdminUsers() {
                 <TableRow key={profile.id} className={profile.deleted_at ? 'opacity-50' : ''}>
                   <TableCell>{profile.full_name || 'Не указано'}</TableCell>
                   <TableCell>{profile.email}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-muted px-2 py-1 rounded">
+                        {profile.referral_code || '—'}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyUserReferralLink(profile.referral_code)}
+                        disabled={!profile.referral_code}
+                        title="Скопировать реферальную ссылку"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                   <TableCell>{profile.phone || '—'}</TableCell>
                   <TableCell>
                     {(() => {
