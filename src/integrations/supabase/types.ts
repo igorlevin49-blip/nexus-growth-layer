@@ -1675,6 +1675,28 @@ export type Database = {
         Args: { p_admin_id: string }
         Returns: Json
       }
+      admin_find_early_unlock_commissions: {
+        Args: { p_admin_id: string; p_days_back?: number }
+        Returns: {
+          actual_referrals_at_time: number
+          amount_cents: number
+          created_at: string
+          level: number
+          required_referrals: number
+          source_id: string
+          status: string
+          structure_type: string
+          subscriber_name: string
+          subscription_paid_at: string
+          transaction_id: string
+          user_id: string
+          user_name: string
+        }[]
+      }
+      admin_fix_early_unlock_commissions: {
+        Args: { p_admin_id: string; p_days_back?: number; p_dry_run?: boolean }
+        Returns: Json
+      }
       admin_fix_fractional_commissions: {
         Args: { p_admin_id: string }
         Returns: Json
@@ -1859,6 +1881,10 @@ export type Database = {
           p_superadmin_email: string
         }
         Returns: Json
+      }
+      count_direct_referrals_at_time: {
+        Args: { p_at_time: string; p_user_id: string }
+        Returns: number
       }
       count_user_referrals: { Args: { p_user_id: string }; Returns: number }
       create_commission_transactions:
