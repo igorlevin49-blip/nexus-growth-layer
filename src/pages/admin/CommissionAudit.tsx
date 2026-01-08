@@ -75,6 +75,8 @@ export default function CommissionAudit() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDryRun, setShowDryRun] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<FixResult | null>(null);
+  const [showMarketingDryRun, setShowMarketingDryRun] = useState(false);
+  const [marketingDryRunResult, setMarketingDryRunResult] = useState<any | null>(null);
 
   // Balance integrity audit
   const { data: balanceIssues, isLoading: loadingBalance, refetch: refetchBalance } = useQuery({
@@ -132,6 +134,37 @@ export default function CommissionAudit() {
         setShowDryRun(false);
         setDryRunResult(null);
         queryClient.invalidateQueries({ queryKey: ['audit-unlock-violations'] });
+        queryClient.invalidateQueries({ queryKey: ['audit-commission-stats'] });
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Ошибка: ${error.message}`);
+    }
+  });
+
+  // Fix marketing free violations mutation
+  const fixMarketingViolationsMutation = useMutation({
+    mutationFn: async (dryRun: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      const { data, error } = await supabase.rpc('admin_fix_marketing_free_violations', {
+        p_admin_id: user.id,
+        p_dry_run: dryRun
+      });
+      
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: (data, dryRun) => {
+      if (dryRun) {
+        setMarketingDryRunResult(data);
+        setShowMarketingDryRun(true);
+      } else {
+        toast.success(`Исправлено ${data.fixed_count} маркетинговых нарушений на сумму ${formatMoney(data.total_amount * 100)}`);
+        setShowMarketingDryRun(false);
+        setMarketingDryRunResult(null);
+        queryClient.invalidateQueries({ queryKey: ['audit-marketing-free'] });
         queryClient.invalidateQueries({ queryKey: ['audit-commission-stats'] });
       }
     },
@@ -516,12 +549,71 @@ export default function CommissionAudit() {
         <TabsContent value="marketing">
           <Card>
             <CardHeader>
-              <CardTitle>Маркетинговые бесплатные комиссии</CardTitle>
-              <CardDescription>
-                Комиссии начисленные за подписки с бесплатным маркетинговым доступом
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Маркетинговые бесплатные комиссии</CardTitle>
+                  <CardDescription>
+                    Комиссии начисленные за подписки с бесплатным маркетинговым доступом
+                  </CardDescription>
+                </div>
+                {userRole === 'superadmin' && (marketingFreeIssues?.length || 0) > 0 && (
+                  <div className="flex gap-2">
+                    {!showMarketingDryRun ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fixMarketingViolationsMutation.mutate(true)}
+                        disabled={fixMarketingViolationsMutation.isPending}
+                      >
+                        {fixMarketingViolationsMutation.isPending ? (
+                          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <ShieldAlert className="h-4 w-4 mr-2" />
+                        )}
+                        Проверить исправление
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowMarketingDryRun(false);
+                            setMarketingDryRunResult(null);
+                          }}
+                        >
+                          Отмена
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => fixMarketingViolationsMutation.mutate(false)}
+                          disabled={fixMarketingViolationsMutation.isPending}
+                        >
+                          {fixMarketingViolationsMutation.isPending ? (
+                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Wrench className="h-4 w-4 mr-2" />
+                          )}
+                          Исправить {marketingDryRunResult?.fixed_count} нарушений
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
+              {showMarketingDryRun && marketingDryRunResult && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Предварительный просмотр исправлений</AlertTitle>
+                  <AlertDescription>
+                    Будет исправлено {marketingDryRunResult.fixed_count} нарушений на сумму {formatMoney(marketingDryRunResult.total_amount * 100)}. 
+                    Транзакции будут помечены как "failed" и удалены из балансов.
+                  </AlertDescription>
+                </Alert>
+              )}
               {loadingMarketing ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />
