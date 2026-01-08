@@ -1981,32 +1981,51 @@ export type Database = {
         }
         Returns: Json
       }
-      get_monthly_activation_report: {
-        Args: {
-          p_limit?: number
-          p_month: number
-          p_offset?: number
-          p_search?: string
-          p_status?: string
-          p_year: number
-        }
-        Returns: {
-          activation_due_from: string
-          admin_comment: string
-          email: string
-          full_name: string
-          is_activated: boolean
-          last_order_date: string
-          orders_count: number
-          period_end: string
-          period_number: number
-          period_start: string
-          referral_code: string
-          threshold_kzt: number
-          total_amount_kzt: number
-          user_id: string
-        }[]
-      }
+      get_monthly_activation_report:
+        | {
+            Args: { p_month: number; p_year: number }
+            Returns: {
+              activation_due_from: string
+              email: string
+              full_name: string
+              is_activated: boolean
+              is_grace_period: boolean
+              partner_id: string
+              period_end: string
+              period_number: number
+              period_start: string
+              subscription_status: string
+              threshold_kzt: number
+              total_orders: number
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_limit?: number
+              p_month: number
+              p_offset?: number
+              p_search?: string
+              p_status?: string
+              p_year: number
+            }
+            Returns: {
+              activation_due_from: string
+              admin_comment: string
+              email: string
+              full_name: string
+              is_activated: boolean
+              last_order_date: string
+              orders_count: number
+              period_end: string
+              period_number: number
+              period_start: string
+              referral_code: string
+              threshold_kzt: number
+              total_amount_kzt: number
+              user_id: string
+            }[]
+          }
       get_my_sponsor_info: { Args: never; Returns: Json }
       get_network_debug_report: { Args: { p_user_id: string }; Returns: Json }
       get_network_profiles: {
