@@ -128,7 +128,6 @@ const App = () => (
         <LoaderProvider>
           <AuthProvider>
             <GlobalLoader />
-            <MaintenanceModal />
             <AppContent />
           </AuthProvider>
         </LoaderProvider>
