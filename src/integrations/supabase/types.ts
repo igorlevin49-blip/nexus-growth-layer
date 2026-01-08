@@ -440,6 +440,9 @@ export type Database = {
           last_order_date: string | null
           last_order_id: string | null
           month: number
+          period_end: string | null
+          period_number: number | null
+          period_start: string | null
           threshold_kzt: number
           total_amount_kzt: number
           updated_at: string
@@ -454,6 +457,9 @@ export type Database = {
           last_order_date?: string | null
           last_order_id?: string | null
           month: number
+          period_end?: string | null
+          period_number?: number | null
+          period_start?: string | null
           threshold_kzt?: number
           total_amount_kzt?: number
           updated_at?: string
@@ -468,6 +474,9 @@ export type Database = {
           last_order_date?: string | null
           last_order_id?: string | null
           month?: number
+          period_end?: string | null
+          period_number?: number | null
+          period_start?: string | null
           threshold_kzt?: number
           total_amount_kzt?: number
           updated_at?: string
@@ -1989,6 +1998,9 @@ export type Database = {
           is_activated: boolean
           last_order_date: string
           orders_count: number
+          period_end: string
+          period_number: number
+          period_start: string
           referral_code: string
           threshold_kzt: number
           total_amount_kzt: number
@@ -2068,6 +2080,20 @@ export type Database = {
           total_usd: number
         }[]
       }
+      get_personal_activation_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          current_amount_kzt: number
+          days_remaining: number
+          is_activated: boolean
+          is_grace_period: boolean
+          orders_count: number
+          period_end: string
+          period_number: number
+          period_start: string
+          required_amount_kzt: number
+        }[]
+      }
       get_referral_network: {
         Args: {
           max_levels?: number
@@ -2144,6 +2170,16 @@ export type Database = {
               user_id: string
             }[]
           }
+      get_user_activation_period: {
+        Args: { p_check_date?: string; p_user_id: string }
+        Returns: {
+          days_remaining: number
+          is_grace_period: boolean
+          period_end: string
+          period_number: number
+          period_start: string
+        }[]
+      }
       get_user_balance: {
         Args: { p_user_id: string }
         Returns: {
@@ -2238,6 +2274,15 @@ export type Database = {
       }
       release_expired_frozen_transactions: { Args: never; Returns: Json }
       reset_monthly_activation_status: { Args: never; Returns: undefined }
+      reset_personal_activations: {
+        Args: never
+        Returns: {
+          full_name: string
+          new_period: number
+          old_period: number
+          user_id: string
+        }[]
+      }
       restore_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json

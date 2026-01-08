@@ -14,6 +14,10 @@ export interface ActivationReportItem {
   orders_count: number;
   activation_due_from: string | null;
   admin_comment: string | null;
+  // New personal period fields
+  period_number: number | null;
+  period_start: string | null;
+  period_end: string | null;
 }
 
 export interface ActivationCounts {
