@@ -1679,6 +1679,10 @@ export type Database = {
         Args: { p_admin_id: string }
         Returns: Json
       }
+      admin_fix_marketing_free_violations: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       admin_fix_missing_referrals: { Args: never; Returns: Json }
       admin_fix_unlock_violations: {
         Args: { p_admin_id: string; p_dry_run?: boolean }
