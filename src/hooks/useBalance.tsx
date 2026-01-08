@@ -21,14 +21,17 @@ export function useBalance() {
 
       if (error) throw error;
       
-      const balance = data?.[0] || {
-        available_kzt: 0,
-        frozen_kzt: 0,
-        pending_kzt: 0,
-        withdrawn_kzt: 0
+      const row = (data?.[0] as any) || null;
+
+      const balance: Balance = {
+        // DB function returns *_cents naming but values are in whole KZT
+        available_kzt: Number(row?.available_kzt ?? row?.available_cents ?? 0),
+        frozen_kzt: Number(row?.frozen_kzt ?? row?.frozen_cents ?? 0),
+        pending_kzt: Number(row?.pending_kzt ?? row?.pending_cents ?? 0),
+        withdrawn_kzt: Number(row?.withdrawn_kzt ?? row?.withdrawn_cents ?? 0),
       };
 
-      return balance as Balance;
+      return balance;
     },
     staleTime: 30000,
     refetchOnMount: 'always'
