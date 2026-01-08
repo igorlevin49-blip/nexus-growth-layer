@@ -1935,10 +1935,14 @@ export type Database = {
         Args: never
         Returns: {
           available_cents: number
+          available_kzt: number
           frozen_cents: number
+          frozen_kzt: number
           pending_cents: number
+          pending_kzt: number
           user_id: string
           withdrawn_cents: number
+          withdrawn_kzt: number
         }[]
       }
       get_commission_structure_stats: {
@@ -2144,11 +2148,13 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: {
           available_cents: number
+          available_kzt: number
           frozen_cents: number
+          frozen_kzt: number
           pending_cents: number
-          updated_at: string
-          user_id: string
+          pending_kzt: number
           withdrawn_cents: number
+          withdrawn_kzt: number
         }[]
       }
       hard_delete_records: {
