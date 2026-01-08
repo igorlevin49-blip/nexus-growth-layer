@@ -29,12 +29,14 @@ import { toast } from "sonner";
 
 interface BalanceIntegrityIssue {
   user_id: string;
-  user_email: string;
+  email: string;
   issue_type: string;
   details: {
-    calculated_balance?: number;
+    calculated_available?: number;
     profile_balance?: number;
     difference?: number;
+    frozen_cents?: number;
+    withdrawn_cents?: number;
     [key: string]: any;
   };
 }
@@ -504,7 +506,7 @@ export default function CommissionAudit() {
                   <TableBody>
                     {balanceIssues?.map((issue) => (
                       <TableRow key={issue.user_id}>
-                        <TableCell className="font-medium">{issue.user_email}</TableCell>
+                        <TableCell className="font-medium">{issue.email}</TableCell>
                         <TableCell>
                           <Badge variant={issue.issue_type === 'negative_balance' ? 'destructive' : 'outline'}>
                             {issue.issue_type === 'negative_balance' ? 'Отрицательный баланс' : issue.issue_type}

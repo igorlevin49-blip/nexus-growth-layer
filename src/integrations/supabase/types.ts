@@ -1761,8 +1761,8 @@ export type Database = {
         Args: never
         Returns: {
           details: Json
+          email: string
           issue_type: string
-          user_email: string
           user_id: string
         }[]
       }
