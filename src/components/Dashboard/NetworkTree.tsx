@@ -368,7 +368,8 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
           <span>Уровень {node.level}</span>
           <span>•</span>
           <span>ID: {node.partner_id.substring(0, 8)}</span>
-          {node.has_commission_received === true && (
+          {/* Показываем статус комиссии только если нет причины отсутствия */}
+          {node.has_commission_received === true && !node.no_commission_reason && (
             <>
               <span>•</span>
               {node.commission_status === 'frozen' && node.commission_frozen_until ? (
