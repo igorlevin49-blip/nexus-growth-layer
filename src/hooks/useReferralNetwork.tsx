@@ -31,6 +31,7 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
         max_level: maxLevels,
+        p_structure_type: structureType,
       });
 
       if (error) {
@@ -38,10 +39,7 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
         throw error;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        structure_type: structureType
-      })) as ReferralMember[];
+      return (data || []) as ReferralMember[];
     },
     enabled: !!user?.id,
   });
