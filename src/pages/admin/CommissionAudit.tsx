@@ -60,11 +60,29 @@ interface MarketingFreeIssue {
   issue: string;
 }
 
+interface EarlyUnlockIssue {
+  transaction_id: string;
+  user_id: string;
+  user_name: string;
+  level: number;
+  amount_cents: number;
+  structure_type: string;
+  source_id: string;
+  subscriber_name: string;
+  subscription_paid_at: string;
+  required_referrals: number;
+  actual_referrals_at_time: number;
+  status: string;
+  created_at: string;
+}
+
 interface FixResult {
   success?: boolean;
   dry_run?: boolean;
   fixed_count?: number;
   violations_count?: number;
+  violations_found?: number;
+  violations_fixed?: number;
   total_amount_cents?: number;
   error?: string;
 }
@@ -76,6 +94,8 @@ export default function CommissionAudit() {
   const [showDryRun, setShowDryRun] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<FixResult | null>(null);
   const [showMarketingDryRun, setShowMarketingDryRun] = useState(false);
+  const [showEarlyDryRun, setShowEarlyDryRun] = useState(false);
+  const [earlyDryRunResult, setEarlyDryRunResult] = useState<FixResult | null>(null);
   const [marketingDryRunResult, setMarketingDryRunResult] = useState<any | null>(null);
 
   // Balance integrity audit
@@ -107,6 +127,23 @@ export default function CommissionAudit() {
       const { data, error } = await supabase.rpc('audit_marketing_free_commissions');
       if (error) throw error;
       return (data || []) as MarketingFreeIssue[];
+    },
+    staleTime: 60000
+  });
+
+  // Early unlock commissions audit (commissions paid before level was unlocked)
+  const { data: earlyUnlockIssues, isLoading: loadingEarly, refetch: refetchEarly } = useQuery({
+    queryKey: ['audit-early-unlock'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      const { data, error } = await supabase.rpc('admin_find_early_unlock_commissions', {
+        p_admin_id: user.id,
+        p_days_back: 90
+      });
+      if (error) throw error;
+      return (data || []) as EarlyUnlockIssue[];
     },
     staleTime: 60000
   });
@@ -173,6 +210,38 @@ export default function CommissionAudit() {
     }
   });
 
+  // Fix early unlock violations mutation
+  const fixEarlyViolationsMutation = useMutation({
+    mutationFn: async (dryRun: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      const { data, error } = await supabase.rpc('admin_fix_early_unlock_commissions', {
+        p_admin_id: user.id,
+        p_dry_run: dryRun,
+        p_days_back: 90
+      });
+      
+      if (error) throw error;
+      return data as FixResult;
+    },
+    onSuccess: (data, dryRun) => {
+      if (dryRun) {
+        setEarlyDryRunResult(data);
+        setShowEarlyDryRun(true);
+      } else {
+        toast.success(`Исправлено ${data.violations_fixed} ранних комиссий на сумму ${formatMoney(data.total_amount_cents || 0)}`);
+        setShowEarlyDryRun(false);
+        setEarlyDryRunResult(null);
+        queryClient.invalidateQueries({ queryKey: ['audit-early-unlock'] });
+        queryClient.invalidateQueries({ queryKey: ['audit-commission-stats'] });
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Ошибка: ${error.message}`);
+    }
+  });
+
   // Commission summary statistics
   const { data: commissionStats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
     queryKey: ['audit-commission-stats'],
@@ -229,6 +298,7 @@ export default function CommissionAudit() {
         refetchBalance(),
         refetchUnlock(),
         refetchMarketing(),
+        refetchEarly(),
         refetchStats()
       ]);
       toast.success('Данные обновлены');
@@ -253,7 +323,7 @@ export default function CommissionAudit() {
     );
   }
 
-  const totalIssues = (balanceIssues?.length || 0) + (unlockViolations?.length || 0) + (marketingFreeIssues?.length || 0);
+  const totalIssues = (balanceIssues?.length || 0) + (unlockViolations?.length || 0) + (marketingFreeIssues?.length || 0) + (earlyUnlockIssues?.length || 0);
   const hasIssues = totalIssues > 0;
 
   return (
@@ -384,6 +454,14 @@ export default function CommissionAudit() {
             {(marketingFreeIssues?.length || 0) > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 px-1.5">
                 {marketingFreeIssues?.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="early" className="relative">
+            Ранние комиссии
+            {(earlyUnlockIssues?.length || 0) > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 px-1.5">
+                {earlyUnlockIssues?.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -647,6 +725,113 @@ export default function CommissionAudit() {
                         </TableCell>
                         <TableCell className="text-right text-destructive">
                           {formatMoney(issue.amount_cents)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="early">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle>Ранние комиссии (до разблокировки уровня)</CardTitle>
+                <CardDescription>
+                  Комиссии начисленные на уровни, которые ещё не были разблокированы на момент активации подписки
+                </CardDescription>
+              </div>
+              {(earlyUnlockIssues?.length || 0) > 0 && userRole === 'superadmin' && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fixEarlyViolationsMutation.mutate(true)}
+                    disabled={fixEarlyViolationsMutation.isPending}
+                  >
+                    {fixEarlyViolationsMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Wrench className="h-4 w-4 mr-2" />
+                    )}
+                    Проверить исправление
+                  </Button>
+                  {showEarlyDryRun && earlyDryRunResult && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => fixEarlyViolationsMutation.mutate(false)}
+                      disabled={fixEarlyViolationsMutation.isPending}
+                    >
+                      Исправить {earlyDryRunResult.violations_found} нарушений
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              {showEarlyDryRun && earlyDryRunResult && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Предварительный просмотр исправлений</AlertTitle>
+                  <AlertDescription>
+                    Найдено {earlyDryRunResult.violations_found} комиссий на сумму {formatMoney(earlyDryRunResult.total_amount_cents || 0)}, 
+                    начисленных до того, как спонсор разблокировал соответствующий уровень.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {loadingEarly ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (earlyUnlockIssues?.length || 0) === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <p className="text-lg font-medium">Ранних комиссий не обнаружено</p>
+                  <p className="text-muted-foreground">Все комиссии начислены после разблокировки уровней</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Получатель</TableHead>
+                      <TableHead>Уровень</TableHead>
+                      <TableHead>Подписчик</TableHead>
+                      <TableHead>Дата подписки</TableHead>
+                      <TableHead className="text-right">Было / Нужно</TableHead>
+                      <TableHead className="text-right">Сумма</TableHead>
+                      <TableHead>Статус</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {earlyUnlockIssues?.map((issue) => (
+                      <TableRow key={issue.transaction_id}>
+                        <TableCell className="font-medium">{issue.user_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {issue.structure_type === 'primary' ? 'S1' : 'S2'} Ур. {issue.level}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{issue.subscriber_name}</TableCell>
+                        <TableCell>
+                          {format(new Date(issue.subscription_paid_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-destructive">{issue.actual_referrals_at_time}</span>
+                          {' / '}
+                          <span className="text-muted-foreground">{issue.required_referrals}</span>
+                        </TableCell>
+                        <TableCell className="text-right text-destructive">
+                          {formatMoney(issue.amount_cents)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={issue.status === 'frozen' ? 'secondary' : 'default'}>
+                            {issue.status === 'frozen' ? 'Заморожена' : 'Выплачена'}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
