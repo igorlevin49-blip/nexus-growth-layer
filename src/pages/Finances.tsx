@@ -158,25 +158,25 @@ export default function Finances() {
         {[
           {
             title: "Доступный баланс",
-            amount: balance ? formatCents(balance.available_kzt) : "0 ₸",
+            amount: balance ? formatKZT(balance.available_kzt) : "0 ₸",
             description: "Доступно для вывода",
             loading: balanceLoading
           },
           {
             title: "Заморожено",
-            amount: balance ? formatCents(balance.frozen_kzt) : "0 ₸",
+            amount: balance ? formatKZT(balance.frozen_kzt) : "0 ₸",
             description: "Разморозка через 7 дней",
             loading: balanceLoading
           },
           {
             title: "В ожидании",
-            amount: balance ? formatCents(balance.pending_kzt) : "0 ₸",
+            amount: balance ? formatKZT(balance.pending_kzt) : "0 ₸",
             description: "Обработка платежей",
             loading: balanceLoading
           },
           {
             title: "Выведено",
-            amount: balance ? formatCents(balance.withdrawn_kzt) : "0 ₸",
+            amount: balance ? formatKZT(balance.withdrawn_kzt) : "0 ₸",
             description: "Всего выведено",
             loading: balanceLoading
           }
@@ -210,7 +210,7 @@ export default function Finances() {
                 <div className="flex-1">
                   <h3 className="font-semibold">Вывести средства</h3>
                   <p className="text-sm text-muted-foreground">
-                    Доступно: {balance ? formatCents(balance.available_kzt) : "0 ₸"}
+                    Доступно: {balance ? formatKZT(balance.available_kzt) : "0 ₸"}
                   </p>
                 </div>
               </div>
@@ -331,7 +331,7 @@ export default function Finances() {
                             {getStatusBadge(transaction.status)}
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">
-                            {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatCents(transaction.amount_kzt)}`}
+                            {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatKZT(transaction.amount_kzt)}`}
                           </p>
                           <div className="flex items-center flex-wrap gap-2 text-xs text-muted-foreground">
                             {transaction.source_user_name && (
@@ -344,7 +344,7 @@ export default function Finances() {
                           ['commission', 'bonus'].includes(transaction.type) ? "text-success" : "text-muted-foreground"
                         }`}>
                           {['commission', 'bonus'].includes(transaction.type) ? '+' : '-'}
-                          {formatCents(transaction.amount_kzt)}
+                          {formatKZT(transaction.amount_kzt)}
                         </div>
                       </div>
                     );
@@ -392,7 +392,7 @@ export default function Finances() {
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm">{data.month}</span>
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{formatCents(data.amountCents)}</span>
+                          <span className="font-medium">{formatKZT(data.amountCents)}</span>
                           <Badge className="profit-indicator text-xs">
                             {data.change >= 0 ? `+${data.change}%` : `${data.change}%`}
                           </Badge>
@@ -423,7 +423,7 @@ export default function Finances() {
                         <div key={index} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-sm">{data.source}</span>
-                            <span className="font-medium">{formatCents(data.amountCents)}</span>
+                            <span className="font-medium">{formatKZT(data.amountCents)}</span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-2">
                             <div 

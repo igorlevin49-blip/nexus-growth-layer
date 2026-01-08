@@ -341,7 +341,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
              <div>
                <span className="text-sm text-muted-foreground">Общая сумма:</span>
                <span className="ml-2 font-bold text-primary">
-                 {formatCents(stats.totalAmount, "KZT")}
+                 {formatKZT(stats.totalAmount)}
                </span>
              </div>
            </div>
@@ -399,7 +399,7 @@ export function WithdrawalsHistory({ showExport = false, showStats = false, ownO
 
                  <div className="text-right">
                     <div className="text-xl font-bold">
-                      {formatCents(withdrawal.amount_kzt, withdrawal.currency)}
+                      {formatKZT(withdrawal.amount_kzt)}
                     </div>
                   </div>
                </div>
