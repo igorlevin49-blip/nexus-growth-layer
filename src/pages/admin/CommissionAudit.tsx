@@ -161,7 +161,7 @@ export default function CommissionAudit() {
         setMarketingDryRunResult(data);
         setShowMarketingDryRun(true);
       } else {
-        toast.success(`Исправлено ${data.fixed_count} маркетинговых нарушений на сумму ${formatMoney(data.total_amount * 100)}`);
+        toast.success(`Исправлено ${data.fixed_count} маркетинговых нарушений на сумму ${formatMoney(data.total_amount_cents || 0)}`);
         setShowMarketingDryRun(false);
         setMarketingDryRunResult(null);
         queryClient.invalidateQueries({ queryKey: ['audit-marketing-free'] });
@@ -418,9 +418,9 @@ export default function CommissionAudit() {
                     <TableRow>
                       <TableHead>Email</TableHead>
                       <TableHead>Тип проблемы</TableHead>
-                      <TableHead className="text-right">Расчётный</TableHead>
-                      <TableHead className="text-right">В профиле</TableHead>
-                      <TableHead className="text-right">Разница</TableHead>
+                      <TableHead className="text-right">Доступно</TableHead>
+                      <TableHead className="text-right">Заморожено</TableHead>
+                      <TableHead className="text-right">Выведено</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -428,18 +428,20 @@ export default function CommissionAudit() {
                       <TableRow key={issue.user_id}>
                         <TableCell className="font-medium">{issue.user_email}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{issue.issue_type}</Badge>
+                          <Badge variant={issue.issue_type === 'negative_balance' ? 'destructive' : 'outline'}>
+                            {issue.issue_type === 'negative_balance' ? 'Отрицательный баланс' : issue.issue_type}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatMoney(issue.details.calculated_balance || 0)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatMoney(issue.details.profile_balance || 0)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className={issue.details.difference && issue.details.difference > 0 ? 'text-green-500' : 'text-destructive'}>
-                            {formatMoney(issue.details.difference || 0)}
+                          <span className={(issue.details.available_cents || 0) < 0 ? 'text-destructive' : ''}>
+                            {formatMoney(issue.details.available_cents || 0)}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatMoney(issue.details.frozen_cents || 0)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatMoney(issue.details.withdrawn_cents || 0)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -609,7 +611,7 @@ export default function CommissionAudit() {
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>Предварительный просмотр исправлений</AlertTitle>
                   <AlertDescription>
-                    Будет исправлено {marketingDryRunResult.fixed_count} нарушений на сумму {formatMoney(marketingDryRunResult.total_amount * 100)}. 
+                    Будет исправлено {marketingDryRunResult.fixed_count} нарушений на сумму {formatMoney(marketingDryRunResult.total_amount_cents || 0)}. 
                     Транзакции будут помечены как "failed" и удалены из балансов.
                   </AlertDescription>
                 </Alert>
