@@ -158,16 +158,16 @@ export function UserCommissionAuditDialog({
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg mb-4">
           <div>
             <span className="text-sm text-muted-foreground">Ожидаемая сумма:</span>
-            <span className="ml-2 font-medium">{(stats.totalExpected / 100).toLocaleString('ru-RU')} ₸</span>
+            <span className="ml-2 font-medium">{stats.totalExpected.toLocaleString('ru-RU')} ₸</span>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Фактическая сумма:</span>
-            <span className="ml-2 font-medium">{(stats.totalActual / 100).toLocaleString('ru-RU')} ₸</span>
+            <span className="ml-2 font-medium">{stats.totalActual.toLocaleString('ru-RU')} ₸</span>
           </div>
           <div>
             <span className="text-sm text-muted-foreground">Разница:</span>
             <span className={`ml-2 font-medium ${stats.totalActual - stats.totalExpected < 0 ? 'text-destructive' : 'text-success'}`}>
-              {((stats.totalActual - stats.totalExpected) / 100).toLocaleString('ru-RU')} ₸
+              {(stats.totalActual - stats.totalExpected).toLocaleString('ru-RU')} ₸
             </span>
           </div>
           <Button 
@@ -223,11 +223,11 @@ export function UserCommissionAuditDialog({
                       {row.expected_percent || 0}%
                     </TableCell>
                     <TableCell className="text-right">
-                      {((row.expected_commission_cents || 0) / 100).toLocaleString('ru-RU')} ₸
+                      {(row.expected_commission_cents || 0).toLocaleString('ru-RU')} ₸
                     </TableCell>
                     <TableCell className="text-right">
                       {row.commission_received 
-                        ? `${((row.commission_amount_cents || 0) / 100).toLocaleString('ru-RU')} ₸`
+                        ? `${(row.commission_amount_cents || 0).toLocaleString('ru-RU')} ₸`
                         : '-'
                       }
                     </TableCell>

@@ -115,8 +115,8 @@ export default function AdminPayouts() {
       const balancesMap = new Map<string, { available: number; frozen: number }>();
       (balancesData || []).forEach((b: any) => {
         balancesMap.set(b.user_id, {
-          available: b.available_kzt || 0,
-          frozen: b.frozen_kzt || 0,
+          available: Number(b?.available_kzt ?? b?.available_cents ?? 0),
+          frozen: Number(b?.frozen_kzt ?? b?.frozen_cents ?? 0),
         });
       });
 
