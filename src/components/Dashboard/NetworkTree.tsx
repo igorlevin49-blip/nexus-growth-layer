@@ -48,12 +48,13 @@ function buildTree(members: NetworkMember[]): NetworkNode[] {
   return rootNodes;
 }
 
-// Get unlock requirements for each level (matches DB logic)
-const UNLOCK_REQUIREMENTS: Record<number, number> = {
-  2: 2,
-  3: 3,
-  4: 4,
-  5: 5
+// Get unlock requirements for each level (matches DB logic from mlm_settings.unlock_levels)
+// These apply ONLY to S1 (subscription structure), S2 has no direct referral requirements
+const UNLOCK_REQUIREMENTS_S1: Record<number, number> = {
+  2: 3,
+  3: 5,
+  4: 8,
+  5: 10
 };
 
 type NoCommissionReason = 
@@ -235,19 +236,20 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
   };
 
   // Get additional info for level_not_unlocked or level_X_locked with dynamic message
+  // Note: This only applies to S1 (subscription structure)
   const getLevelUnlockInfo = (node: NetworkNode) => {
-    const levelLockedReasons = ['level_2_locked', 'level_3_locked', 'level_4_locked', 'level_5_locked', 'level_not_unlocked'];
+    const levelLockedReasons = ['level_2_locked', 'level_3_locked', 'level_4_locked', 'level_5_locked', 'level_not_unlocked', 'level_locked'];
     if (!node.no_commission_reason || !levelLockedReasons.includes(node.no_commission_reason)) return null;
     
     // Parse level from reason like "level_3_locked"
     const levelMatch = node.no_commission_reason.match(/level_(\d)_locked/);
     if (levelMatch) {
       const level = parseInt(levelMatch[1]);
-      return { level, required: level };
+      return { level, required: UNLOCK_REQUIREMENTS_S1[level] || level };
     }
     
-    // Fallback for level_not_unlocked
-    return { level: node.level, required: UNLOCK_REQUIREMENTS[node.level] || node.level };
+    // Fallback for level_not_unlocked or level_locked
+    return { level: node.level, required: UNLOCK_REQUIREMENTS_S1[node.level] || 0 };
   };
 
   const levelUnlockInfo = getLevelUnlockInfo(node);
