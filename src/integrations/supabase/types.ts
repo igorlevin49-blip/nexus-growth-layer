@@ -1918,6 +1918,16 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              p_amount_kzt: number
+              p_source_id: string
+              p_source_ref: string
+              p_source_user_id: string
+              p_structure_type?: number
+            }
+            Returns: Json
+          }
       create_user_withdrawal: {
         Args: { p_amount_kzt: number; p_method_id: string; p_user_id: string }
         Returns: Json
