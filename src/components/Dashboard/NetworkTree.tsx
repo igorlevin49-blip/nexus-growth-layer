@@ -87,8 +87,8 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     icon: UserX
   },
   no_payment_this_month: {
-    title: 'Нет активации в этом месяце',
-    description: 'Партнёр не сделал ежемесячную активацию (закуп на 20 000 ₸). В этом месяце комиссия за него не начисляется.',
+    title: 'Нет активации в этом месяце (S2)',
+    description: 'Партнёр не сделал ежемесячную активацию (закуп на 20 000 ₸). Это влияет только на комиссии за товары (S2).',
     color: 'gray',
     icon: Clock
   },
@@ -288,6 +288,21 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
               <span className="font-medium">{node.full_name || 'Без имени'}</span>
               {getStatusBadge(status)}
               
+              {/* Frozen commission badge - show prominently when commission exists but is frozen */}
+              {node.has_commission_received === true && node.commission_status === 'frozen' && node.commission_frozen_until && (
+                <Badge className="gap-1 bg-warning text-warning-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Заморожена до {new Date(node.commission_frozen_until).toLocaleDateString('ru-RU')}</span>
+                </Badge>
+              )}
+              
+              {/* Commission received badge - show when commission is not frozen */}
+              {node.has_commission_received === true && node.commission_status !== 'frozen' && (
+                <Badge className="gap-1 bg-success text-success-foreground">
+                  ✓ Начислено
+                </Badge>
+              )}
+              
               {/* No commission indicator with click-to-open explanation */}
               {hasNoCommission && reasonInfo && (
                 <Popover>
@@ -368,19 +383,6 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
           <span>Уровень {node.level}</span>
           <span>•</span>
           <span>ID: {node.partner_id.substring(0, 8)}</span>
-          {/* Показываем статус комиссии только если нет причины отсутствия */}
-          {node.has_commission_received === true && !node.no_commission_reason && (
-            <>
-              <span>•</span>
-              {node.commission_status === 'frozen' && node.commission_frozen_until ? (
-                <span className="text-warning">
-                  ⏳ Комиссия заморожена до {new Date(node.commission_frozen_until).toLocaleDateString('ru-RU')}
-                </span>
-              ) : (
-                <span className="text-success">✓ Комиссия начислена</span>
-              )}
-            </>
-          )}
         </div>
       </div>
 
