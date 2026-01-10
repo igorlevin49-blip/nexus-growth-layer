@@ -2,6 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+// Type matching the get_referral_network_from_table function return
+interface ReferralMemberRaw {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  level: number;
+  parent_id: string | null;
+  subscription_status: string | null;
+  subscription_expires_at: string | null;
+  personal_activation_volume: number;
+  has_commission_received: boolean;
+  no_commission_reason: string | null;
+  commission_frozen_until: string | null;
+  is_activated: boolean;
+}
+
 export type ReferralMember = {
   user_id: string;
   partner_id: string;
@@ -17,7 +33,34 @@ export type ReferralMember = {
   direct_referrals?: number;
   total_team?: number;
   monthly_volume?: number;
+  has_commission_received?: boolean;
+  no_commission_reason?: string | null;
+  commission_frozen_until?: string | null;
+  is_activated?: boolean;
 };
+
+// Map raw DB response to ReferralMember interface
+function mapToReferralMember(raw: ReferralMemberRaw): ReferralMember {
+  return {
+    user_id: raw.id,
+    partner_id: raw.id,
+    level: raw.level,
+    full_name: raw.full_name || '',
+    email: null,
+    referral_code: '',
+    subscription_status: raw.subscription_status || 'inactive',
+    monthly_activation_met: raw.is_activated,
+    created_at: '',
+    avatar_url: raw.avatar_url,
+    direct_referrals: 0,
+    total_team: 0,
+    monthly_volume: raw.personal_activation_volume,
+    has_commission_received: raw.has_commission_received,
+    no_commission_reason: raw.no_commission_reason,
+    commission_frozen_until: raw.commission_frozen_until,
+    is_activated: raw.is_activated,
+  };
+}
 
 export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number = 10) => {
   const { user } = useAuth();
@@ -27,10 +70,9 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Use the new function that reads from referrals table
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
-        max_level: maxLevels,
+        p_max_levels: maxLevels,
         p_structure_type: structureType,
       });
 
@@ -39,7 +81,8 @@ export const useReferralNetwork = (structureType: 1 | 2 = 1, maxLevels: number =
         throw error;
       }
 
-      return (data || []) as ReferralMember[];
+      const rawMembers = (data || []) as ReferralMemberRaw[];
+      return rawMembers.map(mapToReferralMember);
     },
     enabled: !!user?.id,
   });

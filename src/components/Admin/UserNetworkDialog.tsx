@@ -39,12 +39,53 @@ export function UserNetworkDialog({
   // Dynamic max levels based on structure type
   const maxLevelForStructure = structureType === 1 ? 5 : 10;
 
+  // Type matching the get_referral_network_from_table function return
+  interface NetworkMemberRaw {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    level: number;
+    parent_id: string | null;
+    subscription_status: string | null;
+    subscription_expires_at: string | null;
+    personal_activation_volume: number;
+    has_commission_received: boolean;
+    no_commission_reason: string | null;
+    commission_frozen_until: string | null;
+    is_activated: boolean;
+  }
+
+  // Map raw DB response to NetworkMember interface
+  const mapToNetworkMember = (raw: NetworkMemberRaw): NetworkMember => ({
+    user_id: raw.id,
+    partner_id: raw.id,
+    level: raw.level,
+    full_name: raw.full_name,
+    email: null,
+    phone: null,
+    avatar_url: raw.avatar_url,
+    subscription_status: raw.subscription_status,
+    subscription_expires_at: raw.subscription_expires_at,
+    monthly_activation_met: raw.is_activated,
+    referral_code: '',
+    created_at: '',
+    direct_referrals: 0,
+    total_team: 0,
+    monthly_volume: raw.personal_activation_volume,
+    parent_partner_id: raw.parent_id,
+    parent_user_id: raw.parent_id,
+    has_commission_received: raw.has_commission_received,
+    no_commission_reason: raw.no_commission_reason,
+    commission_status: raw.has_commission_received ? 'received' : null,
+    commission_frozen_until: raw.commission_frozen_until,
+  });
+
   const { data: members, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['admin-network-tree', userId, structureType],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: userId,
-        max_level: maxLevelForStructure,
+        p_max_levels: maxLevelForStructure,
         p_structure_type: structureType,
       });
 
@@ -58,7 +99,8 @@ export function UserNetworkDialog({
         throw error;
       }
 
-      const result = (data || []) as NetworkMember[];
+      const rawMembers = (data || []) as NetworkMemberRaw[];
+      const result = rawMembers.map(mapToNetworkMember);
       console.log('[UserNetworkDialog] Loaded members', {
         userId,
         structureType,

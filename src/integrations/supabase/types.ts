@@ -1900,6 +1900,18 @@ export type Database = {
           }
         | {
             Args: {
+              p_amount: number
+              p_freeze_days?: number
+              p_level: number
+              p_order_id: string
+              p_recipient_id: string
+              p_source_user_id: string
+              p_structure_type?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               p_amount_kzt: number
               p_source_id: string
               p_source_ref: string
@@ -2174,32 +2186,23 @@ export type Database = {
       }
       get_referral_network_from_table: {
         Args: {
-          max_level?: number
+          p_max_levels?: number
           p_structure_type?: number
           root_user_id: string
         }
         Returns: {
           avatar_url: string
           commission_frozen_until: string
-          commission_status: string
-          created_at: string
-          direct_referrals: number
-          email: string
           full_name: string
           has_commission_received: boolean
+          id: string
+          is_activated: boolean
           level: number
-          monthly_activation_met: boolean
-          monthly_volume: number
           no_commission_reason: string
-          parent_partner_id: string
-          parent_user_id: string
-          partner_id: string
-          phone: string
-          referral_code: string
+          parent_id: string
+          personal_activation_volume: number
           subscription_expires_at: string
           subscription_status: string
-          total_team: number
-          user_id: string
         }[]
       }
       get_user_activation_period: {
