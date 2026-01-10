@@ -29,12 +29,15 @@ export function useNetworkActivity(options: UseNetworkActivityOptions = {}) {
       if (!user) throw new Error('Not authenticated');
 
       // First get user's network member IDs
-      const { data: networkData } = await supabase.rpc('get_referral_network_from_table', {
+      const { data: networkData, error: networkError } = await supabase.rpc('get_referral_network_from_table', {
         root_user_id: user.id,
-        max_level: 10
+        p_max_levels: 10,
+        // p_structure_type omitted -> default (1)
       });
+
+      if (networkError) throw networkError;
       
-      const networkUserIds = (networkData || []).map((m: any) => m.user_id);
+      const networkUserIds = (networkData || []).map((m: any) => m.id as string);
       
       // If user has no network, return empty array
       if (networkUserIds.length === 0) {
