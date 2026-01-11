@@ -15,6 +15,7 @@ interface NetworkMemberRaw {
   no_commission_reason: string | null;
   commission_frozen_until: string | null;
   is_activated: boolean;
+  created_at: string | null;
 }
 
 export interface NetworkMember {
@@ -56,7 +57,7 @@ function mapToNetworkMember(raw: NetworkMemberRaw): NetworkMember {
     subscription_expires_at: raw.subscription_expires_at,
     monthly_activation_met: raw.is_activated,
     referral_code: '',
-    created_at: '',
+    created_at: raw.created_at || '',
     direct_referrals: 0,
     total_team: 0,
     monthly_volume: raw.personal_activation_volume,

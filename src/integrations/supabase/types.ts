@@ -2193,6 +2193,7 @@ export type Database = {
         Returns: {
           avatar_url: string
           commission_frozen_until: string
+          created_at: string
           full_name: string
           has_commission_received: boolean
           id: string
