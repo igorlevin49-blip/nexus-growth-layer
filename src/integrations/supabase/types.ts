@@ -1974,6 +1974,21 @@ export type Database = {
         Args: { p_admin_id: string; p_dry_run?: boolean }
         Returns: Json
       }
+      fix_unlock_violations: {
+        Args: { dry_run?: boolean }
+        Returns: {
+          action_taken: string
+          amount_cents: number
+          level: number
+          source_user_id: string
+          source_user_name: string
+          structure_type: string
+          transaction_id: string
+          user_id: string
+          user_name: string
+          violation_reason: string
+        }[]
+      }
       flag_test_data: {
         Args: {
           p_dry_run?: boolean
