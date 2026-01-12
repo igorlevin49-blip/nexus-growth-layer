@@ -1909,6 +1909,14 @@ export type Database = {
           }
         | {
             Args: {
+              p_buyer_id: string
+              p_order_amount_kzt: number
+              p_order_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               p_amount: number
               p_freeze_days?: number
               p_level: number
