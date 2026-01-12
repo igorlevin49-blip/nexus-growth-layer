@@ -1835,18 +1835,18 @@ export type Database = {
       award_s1_subscription_commission:
         | {
             Args: {
+              p_amount: number
+              p_payment_id: string
+              p_subscriber_id: string
+            }
+            Returns: number
+          }
+        | {
+            Args: {
               p_subscriber_id: string
               p_subscription_amount: number
               p_subscription_id: string
               p_subscription_paid_at?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount_kzt: number
-              p_subscriber_id: string
-              p_subscription_id: string
             }
             Returns: Json
           }
@@ -1907,6 +1907,7 @@ export type Database = {
             }
             Returns: Json
           }
+        | { Args: { p_order_id: string }; Returns: number }
         | {
             Args: {
               p_buyer_id: string
