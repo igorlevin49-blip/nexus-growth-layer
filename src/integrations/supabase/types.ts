@@ -1832,33 +1832,6 @@ export type Database = {
           violation_count: number
         }[]
       }
-      award_s1_subscription_commission:
-        | {
-            Args: {
-              p_subscriber_id: string
-              p_subscription_amount: number
-              p_subscription_id: string
-              p_subscription_paid_at?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount_kzt: number
-              p_subscriber_id: string
-              p_subscription_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_subscriber_id: string
-              p_subscription_amount: number
-              p_subscription_id: string
-              p_subscription_paid_at?: string
-            }
-            Returns: Json
-          }
       backfill_missing_s1_commissions: {
         Args: { p_admin_id: string; p_days_back?: number }
         Returns: Json
