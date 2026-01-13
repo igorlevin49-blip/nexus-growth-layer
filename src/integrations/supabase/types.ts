@@ -1832,10 +1832,23 @@ export type Database = {
           violation_count: number
         }[]
       }
-      backfill_missing_s1_commissions: {
-        Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id?: string }
-        Returns: Json
-      }
+      backfill_missing_s1_commissions:
+        | {
+            Args: {
+              p_admin_id: string
+              p_dry_run?: boolean
+              p_sponsor_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_admin_id: string
+              p_dry_run?: boolean
+              p_sponsor_id?: string
+            }
+            Returns: Json
+          }
       backfill_sponsor_commissions: {
         Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id: string }
         Returns: Json
