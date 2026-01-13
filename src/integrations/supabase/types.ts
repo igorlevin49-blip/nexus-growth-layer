@@ -1649,9 +1649,9 @@ export type Database = {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: {
           actual_vs_expected: string
-          commission_amount_cents: number
+          commission_amount_kzt: number
           commission_received: boolean
-          expected_commission_cents: number
+          expected_commission_kzt: number
           expected_percent: number
           level: number
           no_commission_reason: string
@@ -1952,6 +1952,15 @@ export type Database = {
         Args: { p_amount_kzt: number; p_method_id: string; p_user_id: string }
         Returns: Json
       }
+      daily_data_integrity_check: {
+        Args: never
+        Returns: {
+          check_name: string
+          description: string
+          issue_count: number
+          sample_ids: string[]
+        }[]
+      }
       fix_unlock_level_violations: {
         Args: never
         Returns: {
@@ -2232,7 +2241,7 @@ export type Database = {
       get_sponsors_with_missing_commissions: {
         Args: { p_admin_id: string }
         Returns: {
-          missing_amount_cents: number
+          missing_amount_kzt: number
           missing_count: number
           partners_count: number
           sponsor_email: string

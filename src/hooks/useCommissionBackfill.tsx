@@ -8,7 +8,7 @@ interface SponsorWithMissing {
   sponsor_name: string;
   sponsor_email: string;
   missing_count: number;
-  missing_amount_cents: number;
+  missing_amount_kzt: number;  // Суммы уже в целых тенге, не в центах
   partners_count: number;
 }
 
@@ -17,13 +17,13 @@ interface BackfillResult {
   subscriptions_processed: number;
   commissions_created: number;
   commissions_skipped: number;
-  total_amount_cents: number;
+  total_kzt: number;  // Сумма в целых тенге
   dry_run: boolean;
   details?: Array<{
     subscription_id: string;
     subscriber_name: string;
     amount_kzt: number;
-    commission_cents: number;
+    commission_kzt: number;  // Комиссия в целых тенге
   }>;
 }
 
@@ -77,7 +77,7 @@ export function useBackfillSponsorCommissions() {
         queryClient.invalidateQueries({ queryKey: ['balance'] });
         
         toast.success('Комиссии доначислены', {
-          description: `Создано комиссий: ${data.commissions_created}, сумма: ${(data.total_amount_cents / 100).toLocaleString()} ₸`
+          description: `Создано комиссий: ${data.commissions_created}, сумма: ${(data.total_kzt || 0).toLocaleString()} ₸`
         });
       }
     },

@@ -24,9 +24,9 @@ interface CommissionAuditRow {
   subscription_id: string | null;
   subscription_amount_kzt: number | null;
   commission_received: boolean;
-  commission_amount_cents: number | null;
+  commission_amount_kzt: number | null;  // Сумма в целых тенге
   expected_percent: number | null;
-  expected_commission_cents: number | null;
+  expected_commission_kzt: number | null;  // Ожидаемая комиссия в целых тенге
   actual_vs_expected: string;
   no_commission_reason: string | null;
 }
@@ -81,7 +81,12 @@ export function UserCommissionAuditDialog({
       });
 
       if (error) throw error;
-      return data as CommissionAuditRow[];
+      // Маппим результат API к нашему интерфейсу
+      return (data || []).map((row: any) => ({
+        ...row,
+        commission_amount_kzt: row.commission_amount_kzt ?? row.commission_amount_cents ?? 0,
+        expected_commission_kzt: row.expected_commission_kzt ?? row.expected_commission_cents ?? 0,
+      })) as CommissionAuditRow[];
     },
     enabled: open && !!userId,
   });
@@ -93,8 +98,8 @@ export function UserCommissionAuditDialog({
     missing: auditData?.filter(r => r.actual_vs_expected === 'MISSING').length || 0,
     underpaid: auditData?.filter(r => r.actual_vs_expected === 'UNDERPAID').length || 0,
     overpaid: auditData?.filter(r => r.actual_vs_expected === 'OVERPAID').length || 0,
-    totalExpected: auditData?.reduce((sum, r) => sum + (r.expected_commission_cents || 0), 0) || 0,
-    totalActual: auditData?.reduce((sum, r) => sum + (r.commission_amount_cents || 0), 0) || 0,
+    totalExpected: auditData?.reduce((sum, r) => sum + (r.expected_commission_kzt || 0), 0) || 0,
+    totalActual: auditData?.reduce((sum, r) => sum + (r.commission_amount_kzt || 0), 0) || 0,
   };
 
   const handleRecalculateS1 = async () => {
@@ -223,11 +228,11 @@ export function UserCommissionAuditDialog({
                       {row.expected_percent || 0}%
                     </TableCell>
                     <TableCell className="text-right">
-                      {(row.expected_commission_cents || 0).toLocaleString('ru-RU')} ₸
+                      {(row.expected_commission_kzt || 0).toLocaleString('ru-RU')} ₸
                     </TableCell>
                     <TableCell className="text-right">
                       {row.commission_received 
-                        ? `${(row.commission_amount_cents || 0).toLocaleString('ru-RU')} ₸`
+                        ? `${(row.commission_amount_kzt || 0).toLocaleString('ru-RU')} ₸`
                         : '-'
                       }
                     </TableCell>

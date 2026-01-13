@@ -65,7 +65,7 @@ export default function CommissionBackfill() {
   }
 
   const totalMissing = sponsors?.reduce((sum, s) => sum + s.missing_count, 0) || 0;
-  const totalAmount = sponsors?.reduce((sum, s) => sum + s.missing_amount_cents, 0) || 0;
+  const totalAmount = sponsors?.reduce((sum, s) => sum + s.missing_amount_kzt, 0) || 0;
 
   const handleDryRun = async (sponsorId: string, name: string, missing: number, amount: number) => {
     setSelectedSponsor({ id: sponsorId, name, missing, amount });
@@ -157,7 +157,7 @@ export default function CommissionBackfill() {
           <CardHeader className="pb-2">
             <CardDescription>Сумма к доначислению</CardDescription>
             <CardTitle className="text-3xl text-primary">
-              {formatMoney(totalAmount / 100)}
+              {formatMoney(totalAmount)}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -215,7 +215,7 @@ export default function CommissionBackfill() {
                       {sponsor.partners_count}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatMoney(sponsor.missing_amount_cents / 100)}
+                      {formatMoney(sponsor.missing_amount_kzt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -225,7 +225,7 @@ export default function CommissionBackfill() {
                           sponsor.sponsor_id, 
                           sponsor.sponsor_name || sponsor.sponsor_email,
                           sponsor.missing_count,
-                          sponsor.missing_amount_cents
+                          sponsor.missing_amount_kzt
                         )}
                         disabled={backfillSponsor.isPending}
                       >
@@ -270,7 +270,7 @@ export default function CommissionBackfill() {
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Сумма к начислению</p>
                 <p className="text-2xl font-bold text-primary">
-                  {formatMoney((dryRunResult.total_amount_cents || 0) / 100)}
+                  {formatMoney(dryRunResult.total_kzt || 0)}
                 </p>
               </div>
 
@@ -335,7 +335,7 @@ export default function CommissionBackfill() {
               <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Общая сумма к начислению</p>
                 <p className="text-2xl font-bold text-destructive">
-                  {formatMoney((allDryRunResult.total_amount_cents || 0) / 100)}
+                  {formatMoney(allDryRunResult.total_kzt || 0)}
                 </p>
               </div>
 
