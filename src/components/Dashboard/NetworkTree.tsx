@@ -71,6 +71,8 @@ type NoCommissionReason =
   | 'sponsor_no_activation'
   | 'already_received_before'
   | 'no_active_subscription'
+  | 'partner_no_subscription'  // Alias from DB
+  | 'partner_no_activation'    // Alias from DB for S2
   | 'new_partner';
 
 interface ReasonInfo {
@@ -98,6 +100,18 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     description: 'У партнёра нет активной подписки. Комиссия начисляется только за активных партнёров.',
     color: 'gray',
     icon: UserX
+  },
+  partner_no_subscription: {
+    title: 'Партнёр без подписки',
+    description: 'У партнёра нет активной подписки. Комиссия начисляется только за партнёров с оплаченной подпиской.',
+    color: 'gray',
+    icon: UserX
+  },
+  partner_no_activation: {
+    title: 'Нет ежемесячной активации',
+    description: 'Партнёр не выполнил ежемесячную активацию (закуп на 20 000 ₸). Комиссия за товары (S2) не начисляется.',
+    color: 'orange',
+    icon: Clock
   },
   too_deep: {
     title: 'Глубже 5 уровня',
