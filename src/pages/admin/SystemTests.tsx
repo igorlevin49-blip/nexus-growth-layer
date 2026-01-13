@@ -31,7 +31,7 @@ const getCategoryName = (category: string) => {
 };
 
 function TestResultCard({ test }: { test: TestResult }) {
-  const Icon = getCategoryIcon(test.test_category);
+  const Icon = getCategoryIcon(test.category);
   
   return (
     <div className={cn(
@@ -56,13 +56,18 @@ function TestResultCard({ test }: { test: TestResult }) {
               <span className="font-medium">{test.test_name}</span>
               <Badge variant="outline" className="gap-1 text-xs">
                 <Icon className="h-3 w-3" />
-                {getCategoryName(test.test_category)}
+                {getCategoryName(test.category)}
               </Badge>
+              {test.is_critical && (
+                <Badge variant="destructive" className="text-xs">
+                  Critical
+                </Badge>
+              )}
             </div>
             {test.error_message && (
               <p className="text-sm text-destructive">{test.error_message}</p>
             )}
-            {test.details && !test.details.skipped && (
+            {test.details && !(test.details as Record<string, unknown>).skipped && (
               <p className="text-xs text-muted-foreground mt-1">
                 {JSON.stringify(test.details)}
               </p>
@@ -83,14 +88,15 @@ export default function SystemTests() {
   
   const passedCount = tests?.filter(t => t.passed).length || 0;
   const failedCount = tests?.filter(t => !t.passed).length || 0;
+  const criticalFailedCount = tests?.filter(t => t.is_critical && !t.passed).length || 0;
   const totalCount = tests?.length || 0;
   
   // Group by category
   const categories = tests?.reduce((acc, test) => {
-    if (!acc[test.test_category]) {
-      acc[test.test_category] = [];
+    if (!acc[test.category]) {
+      acc[test.category] = [];
     }
-    acc[test.test_category].push(test);
+    acc[test.category].push(test);
     return acc;
   }, {} as Record<string, TestResult[]>) || {};
 
