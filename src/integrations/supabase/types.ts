@@ -2341,6 +2341,16 @@ export type Database = {
         Args: { p_admin_id: string; p_dry_run?: boolean }
         Returns: Json
       }
+      run_post_migration_tests: {
+        Args: never
+        Returns: {
+          details: Json
+          error_message: string
+          passed: boolean
+          test_category: string
+          test_name: string
+        }[]
+      }
       soft_delete_user: {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: Json
