@@ -1832,6 +1832,14 @@ export type Database = {
           violation_count: number
         }[]
       }
+      backfill_missing_multilevel_commissions: {
+        Args: {
+          p_admin_id: string
+          p_dry_run?: boolean
+          p_target_user_id?: string
+        }
+        Returns: Json
+      }
       backfill_missing_s1_commissions:
         | {
             Args: {
