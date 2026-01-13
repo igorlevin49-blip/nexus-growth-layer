@@ -1833,7 +1833,7 @@ export type Database = {
         }[]
       }
       backfill_missing_s1_commissions: {
-        Args: { p_admin_id: string; p_days_back?: number }
+        Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id?: string }
         Returns: Json
       }
       bind_referral: { Args: { p_ref_code: string }; Returns: Json }
@@ -2317,11 +2317,10 @@ export type Database = {
           actual_status: string
           actual_transaction_id: string
           amount_kzt: number
-          details: Json
           expected_commission_kzt: number
           is_marketing_free_access: boolean
-          level: number
           missing_reason: string
+          network_level: number
           paid_at: string
           subscriber_email: string
           subscriber_id: string
