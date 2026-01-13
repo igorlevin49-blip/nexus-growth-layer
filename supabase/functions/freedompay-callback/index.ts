@@ -123,13 +123,13 @@ serve(async (req) => {
       });
 
       // Create transaction record for tracking
-      const amountCents = Math.round((amount / 450) * 100);
+      // ВАЖНО: amount уже в целых тенге (KZT), НЕ умножать на 100
       await supabase
         .from('transactions')
         .insert({
           user_id: order.user_id,
           type: 'purchase',
-          amount_cents: -amountCents,
+          amount_cents: -amount,  // Сумма в целых тенге (отрицательная для покупки)
           status: 'completed',
           source_id: order_id,
           source_ref: `freedompay_${transaction_id}`,

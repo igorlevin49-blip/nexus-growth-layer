@@ -86,15 +86,17 @@ serve(async (req) => {
       const balance = balanceData?.[0];
       if (!balance) continue;
 
-      // Check if balance meets threshold
+      // ВАЖНО: available_cents и threshold_cents хранят целые тенге (KZT), не центы
+      // Сравниваем напрямую без деления
       if (balance.available_cents >= rule.threshold_cents && balance.available_cents >= rule.min_amount_cents) {
-        console.log(`Processing auto-withdrawal for user ${rule.user_id}, amount: ${balance.available_cents}`);
+        console.log(`Processing auto-withdrawal for user ${rule.user_id}, amount: ${balance.available_cents} KZT`);
 
         // Use atomic function to create withdrawal + transaction in single transaction
+        // p_amount_cents на самом деле принимает сумму в целых тенге (KZT)
         const { data: result, error: withdrawalError } = await supabase
           .rpc('create_user_withdrawal', {
             p_user_id: rule.user_id,
-            p_amount_cents: balance.available_cents,
+            p_amount_cents: balance.available_cents,  // Сумма в целых тенге
             p_method_id: rule.method_id
           });
 
