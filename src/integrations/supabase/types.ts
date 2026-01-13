@@ -2305,6 +2305,50 @@ export type Database = {
         Args: { p_month: number; p_user_id: string; p_year: number }
         Returns: undefined
       }
+      reconcile_s1_commissions: {
+        Args: {
+          p_depth?: number
+          p_from_date?: string
+          p_sponsor_id: string
+          p_to_date?: string
+        }
+        Returns: {
+          actual_amount_kzt: number
+          actual_status: string
+          actual_transaction_id: string
+          amount_kzt: number
+          details: Json
+          expected_commission_kzt: number
+          is_marketing_free_access: boolean
+          level: number
+          missing_reason: string
+          paid_at: string
+          subscriber_email: string
+          subscriber_id: string
+          subscriber_name: string
+          subscription_id: string
+          subscription_status: string
+        }[]
+      }
+      reconcile_s1_commissions_summary: {
+        Args: {
+          p_depth?: number
+          p_from_date?: string
+          p_sponsor_id: string
+          p_to_date?: string
+        }
+        Returns: {
+          actual_total_kzt: number
+          difference_kzt: number
+          expected_total_kzt: number
+          marketing_free_count: number
+          missing_commission: number
+          missing_reasons: Json
+          paid_subscriptions: number
+          total_subscriptions: number
+          with_commission: number
+        }[]
+      }
       reject_payment: {
         Args: {
           p_admin_id: string
@@ -2341,13 +2385,15 @@ export type Database = {
         Args: { p_admin_id: string; p_dry_run?: boolean }
         Returns: Json
       }
+      run_critical_tests_or_fail: { Args: never; Returns: undefined }
       run_post_migration_tests: {
         Args: never
         Returns: {
+          category: string
           details: Json
           error_message: string
+          is_critical: boolean
           passed: boolean
-          test_category: string
           test_name: string
         }[]
       }
