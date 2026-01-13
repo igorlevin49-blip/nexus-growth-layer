@@ -1836,6 +1836,10 @@ export type Database = {
         Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id?: string }
         Returns: Json
       }
+      backfill_sponsor_commissions: {
+        Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id: string }
+        Returns: Json
+      }
       bind_referral: { Args: { p_ref_code: string }; Returns: Json }
       cleanup_all_test_users:
         | {
@@ -2210,6 +2214,17 @@ export type Database = {
           personal_activation_volume: number
           subscription_expires_at: string
           subscription_status: string
+        }[]
+      }
+      get_sponsors_with_missing_commissions: {
+        Args: { p_admin_id: string }
+        Returns: {
+          missing_amount_cents: number
+          missing_count: number
+          partners_count: number
+          sponsor_email: string
+          sponsor_id: string
+          sponsor_name: string
         }[]
       }
       get_user_activation_period: {

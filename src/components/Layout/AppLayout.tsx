@@ -20,7 +20,8 @@ import {
   Activity,
   AlertCircle,
   Bell,
-  RefreshCw
+  RefreshCw,
+  ArrowUpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ export function AppLayout() {
     { name: "Настройки магазина", href: "/admin/shop-settings", icon: Settings },
     { name: "MLM-настройки", href: "/admin/mlm-settings", icon: Settings },
     { name: "Пересчёт комиссий", href: "/admin/recalculate-commissions", icon: RefreshCw },
+    { name: "Доначисление S1", href: "/admin/commission-backfill", icon: ArrowUpCircle },
     { name: "Очистка тестовых данных", href: "/admin/test-data-cleanup", icon: Trash2 },
   ];
 
