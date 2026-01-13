@@ -47,6 +47,7 @@ import AdminNotifications from "./pages/admin/Notifications";
 import MonthlyActivations from "./pages/admin/MonthlyActivations";
 import PaymentDiagnostics from "./pages/admin/PaymentDiagnostics";
 import SystemTests from "./pages/admin/SystemTests";
+import CommissionBackfill from "./pages/admin/CommissionBackfill";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -104,6 +105,7 @@ function AppContent() {
           <Route path="admin/monthly-activations" element={<ProtectedRoute requireAdmin><MonthlyActivations /></ProtectedRoute>} />
           <Route path="admin/payment-diagnostics" element={<ProtectedRoute requireAdmin><PaymentDiagnostics /></ProtectedRoute>} />
           <Route path="admin/commission-audit" element={<ProtectedRoute requireAdmin><CommissionAudit /></ProtectedRoute>} />
+          <Route path="admin/commission-backfill" element={<ProtectedRoute requireSuperAdmin><CommissionBackfill /></ProtectedRoute>} />
           <Route path="admin/system-tests" element={<ProtectedRoute requireSuperAdmin><SystemTests /></ProtectedRoute>} />
         </Route>
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
