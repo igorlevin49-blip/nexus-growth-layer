@@ -53,6 +53,7 @@ export function UserNetworkDialog({
     created_at: string | null;
     has_commission_received: boolean;
     no_commission_reason: string | null;
+    parent_partner_id: string | null;
   }
 
   // Map raw DB response to NetworkMember interface
@@ -72,7 +73,7 @@ export function UserNetworkDialog({
     direct_referrals: 0,
     total_team: 0,
     monthly_volume: 0,
-    parent_partner_id: null,
+    parent_partner_id: raw.parent_partner_id,
     parent_user_id: null,
     has_commission_received: raw.has_commission_received,
     no_commission_reason: raw.no_commission_reason,
