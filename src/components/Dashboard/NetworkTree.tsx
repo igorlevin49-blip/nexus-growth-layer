@@ -424,8 +424,8 @@ export function NetworkTree({ members, filterCommission = 'all', isError, onRetr
       }
       
       if (filterCommission === 'without_commission') {
-        // Show partners without commission (with any reason)
-        return member.has_commission_received === false && member.no_commission_reason !== null;
+        // Show partners without commission - don't require reason to be set
+        return member.has_commission_received === false;
       }
       
       return true;
