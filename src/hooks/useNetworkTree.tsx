@@ -61,7 +61,7 @@ function mapToNetworkMember(raw: NetworkMemberRaw): NetworkMember {
     direct_referrals: 0,
     total_team: 0,
     monthly_volume: 0,
-    parent_partner_id: null,
+    parent_partner_id: raw.parent_partner_id,
     parent_user_id: null,
     has_commission_received: raw.has_commission_received,
     no_commission_reason: raw.no_commission_reason,

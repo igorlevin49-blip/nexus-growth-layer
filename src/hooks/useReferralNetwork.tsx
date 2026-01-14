@@ -38,6 +38,7 @@ export type ReferralMember = {
   no_commission_reason?: string | null;
   commission_frozen_until?: string | null;
   is_activated?: boolean;
+  parent_partner_id?: string | null;
 };
 
 // Map raw DB response to ReferralMember interface
@@ -61,6 +62,7 @@ function mapToReferralMember(raw: ReferralMemberRaw): ReferralMember {
     commission_frozen_until: null,
     is_activated: raw.monthly_activation_met,
     structure_type: raw.structure_type,
+    parent_partner_id: raw.parent_partner_id,
   };
 }
 
