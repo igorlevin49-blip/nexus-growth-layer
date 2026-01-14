@@ -41,44 +41,42 @@ export function UserNetworkDialog({
 
   // Type matching the get_referral_network_from_table function return
   interface NetworkMemberRaw {
-    id: string;
+    user_id: string;
+    partner_id: string;
+    email: string | null;
     full_name: string | null;
-    avatar_url: string | null;
-    level: number;
-    parent_id: string | null;
+    referral_code: string;
     subscription_status: string | null;
-    subscription_expires_at: string | null;
-    personal_activation_volume: number;
-    has_commission_received: boolean;
-    no_commission_reason: string | null;
-    commission_frozen_until: string | null;
-    is_activated: boolean;
+    monthly_activation_met: boolean;
+    level: number;
+    structure_type: number;
     created_at: string | null;
+    has_commission_received: boolean;
   }
 
   // Map raw DB response to NetworkMember interface
   const mapToNetworkMember = (raw: NetworkMemberRaw): NetworkMember => ({
-    user_id: raw.id,
-    partner_id: raw.id,
+    user_id: raw.user_id,
+    partner_id: raw.partner_id || raw.user_id,
     level: raw.level,
     full_name: raw.full_name,
-    email: null,
+    email: raw.email,
     phone: null,
-    avatar_url: raw.avatar_url,
+    avatar_url: null,
     subscription_status: raw.subscription_status,
-    subscription_expires_at: raw.subscription_expires_at,
-    monthly_activation_met: raw.is_activated,
-    referral_code: '',
+    subscription_expires_at: null,
+    monthly_activation_met: raw.monthly_activation_met,
+    referral_code: raw.referral_code || '',
     created_at: raw.created_at || '',
     direct_referrals: 0,
     total_team: 0,
-    monthly_volume: raw.personal_activation_volume,
-    parent_partner_id: raw.parent_id,
-    parent_user_id: raw.parent_id,
+    monthly_volume: 0,
+    parent_partner_id: null,
+    parent_user_id: null,
     has_commission_received: raw.has_commission_received,
-    no_commission_reason: raw.no_commission_reason,
+    no_commission_reason: null,
     commission_status: raw.has_commission_received ? 'received' : null,
-    commission_frozen_until: raw.commission_frozen_until,
+    commission_frozen_until: null,
   });
 
   const { data: members, isLoading, error, refetch, isFetching } = useQuery({
