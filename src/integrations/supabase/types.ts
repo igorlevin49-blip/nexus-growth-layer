@@ -2231,19 +2231,17 @@ export type Database = {
           root_user_id: string
         }
         Returns: {
-          avatar_url: string
-          commission_frozen_until: string
           created_at: string
+          email: string
           full_name: string
           has_commission_received: boolean
-          id: string
-          is_activated: boolean
           level: number
-          no_commission_reason: string
-          parent_id: string
-          personal_activation_volume: number
-          subscription_expires_at: string
+          monthly_activation_met: boolean
+          partner_id: string
+          referral_code: string
+          structure_type: number
           subscription_status: string
+          user_id: string
         }[]
       }
       get_sponsors_with_missing_commissions: {

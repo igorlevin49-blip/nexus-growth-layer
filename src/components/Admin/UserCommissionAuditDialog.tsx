@@ -108,15 +108,19 @@ export function UserCommissionAuditDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Call the recalculate function for this specific user
-      const { data, error } = await supabase.rpc('backfill_missing_s1_commissions', {
+      // Call the backfill_missing_multilevel_commissions function for this specific user
+      const { data, error } = await supabase.rpc('backfill_missing_multilevel_commissions', {
         p_admin_id: user.id,
-        p_days_back: 365 // Check last year
+        p_dry_run: false,
+        p_target_user_id: userId
       });
 
       if (error) throw error;
 
-      toast.success('Комиссии S1 пересчитаны');
+      const result = data as any;
+      toast.success('Комиссии S1 пересчитаны', {
+        description: `Создано: ${result?.created_count || 0}, Пропущено: ${result?.skipped_count || 0}`
+      });
       refetch();
     } catch (error: any) {
       toast.error('Ошибка пересчёта: ' + error.message);
