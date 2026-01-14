@@ -73,7 +73,8 @@ type NoCommissionReason =
   | 'no_active_subscription'
   | 'partner_no_subscription'  // Alias from DB
   | 'partner_no_activation'    // Alias from DB for S2
-  | 'new_partner';
+  | 'new_partner'
+  | 'no_commission';           // Fallback for legacy commissions
 
 interface ReasonInfo {
   title: string;
