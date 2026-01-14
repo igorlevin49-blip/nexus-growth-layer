@@ -13,7 +13,8 @@ export default function RecalculateCommissions() {
   const recalculateMutation = useRecalculateS1Commissions();
 
   const handleRecalculate = () => {
-    recalculateMutation.mutate(30); // Backfill last 30 days
+    // Вызываем без dry run - реальный backfill всех комиссий
+    recalculateMutation.mutate({ dryRun: false });
     setShowConfirmation(false);
   };
 
