@@ -38,6 +38,7 @@ export type ReferralMember = {
   no_commission_reason?: string | null;
   commission_frozen_until?: string | null;
   is_activated?: boolean;
+  parent_partner_id?: string | null;
 };
 
 // Map raw DB response to ReferralMember interface
