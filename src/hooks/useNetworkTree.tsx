@@ -14,6 +14,7 @@ interface NetworkMemberRaw {
   structure_type: number;
   created_at: string | null;
   has_commission_received: boolean;
+  no_commission_reason: string | null;
 }
 
 export interface NetworkMember {
@@ -62,7 +63,7 @@ function mapToNetworkMember(raw: NetworkMemberRaw): NetworkMember {
     parent_partner_id: null,
     parent_user_id: null,
     has_commission_received: raw.has_commission_received,
-    no_commission_reason: null,
+    no_commission_reason: raw.no_commission_reason,
     commission_status: raw.has_commission_received ? 'received' : null,
     commission_frozen_until: null,
     is_activated: raw.monthly_activation_met,
