@@ -2240,6 +2240,7 @@ export type Database = {
           level: number
           monthly_activation_met: boolean
           no_commission_reason: string
+          parent_partner_id: string
           partner_id: string
           referral_code: string
           structure_type: number
