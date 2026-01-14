@@ -61,6 +61,7 @@ function mapToReferralMember(raw: ReferralMemberRaw): ReferralMember {
     commission_frozen_until: null,
     is_activated: raw.monthly_activation_met,
     structure_type: raw.structure_type,
+    parent_partner_id: raw.parent_partner_id,
   };
 }
 
