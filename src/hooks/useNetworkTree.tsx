@@ -15,6 +15,7 @@ interface NetworkMemberRaw {
   created_at: string | null;
   has_commission_received: boolean;
   no_commission_reason: string | null;
+  parent_partner_id: string | null;
 }
 
 export interface NetworkMember {
