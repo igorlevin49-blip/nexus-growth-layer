@@ -108,7 +108,45 @@ export function UserCommissionAuditDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Call the backfill_missing_multilevel_commissions function for this specific user
+      // Сначала делаем dry run чтобы показать что будет изменено
+      const { data: dryRunData, error: dryRunError } = await supabase.rpc('backfill_missing_multilevel_commissions', {
+        p_admin_id: user.id,
+        p_dry_run: true,
+        p_target_user_id: userId
+      });
+
+      if (dryRunError) throw dryRunError;
+      
+      const dryResult = dryRunData as any;
+      
+      // Если нечего создавать - сообщаем
+      if (!dryResult?.commissions_created && dryResult?.commissions_created !== 0) {
+        // Попробуем альтернативную функцию backfill_missing_s1_commissions
+        const { data: altData, error: altError } = await supabase.rpc('backfill_missing_s1_commissions', {
+          p_admin_id: user.id,
+          p_dry_run: false,
+          p_sponsor_id: userId
+        });
+
+        if (altError) throw altError;
+
+        const altResult = altData as any;
+        toast.success('Комиссии S1 пересчитаны', {
+          description: `Создано: ${altResult?.commissions_created || 0}, Пропущено: ${altResult?.commissions_skipped || 0}`
+        });
+        refetch();
+        return;
+      }
+
+      if (dryResult.commissions_created === 0) {
+        toast.info('Нет комиссий для доначисления', {
+          description: 'Все комиссии уже начислены корректно'
+        });
+        refetch();
+        return;
+      }
+
+      // Если есть что создавать - выполняем реальный backfill
       const { data, error } = await supabase.rpc('backfill_missing_multilevel_commissions', {
         p_admin_id: user.id,
         p_dry_run: false,
@@ -119,11 +157,14 @@ export function UserCommissionAuditDialog({
 
       const result = data as any;
       toast.success('Комиссии S1 пересчитаны', {
-        description: `Создано: ${result?.created_count || 0}, Пропущено: ${result?.skipped_count || 0}`
+        description: `Создано: ${result?.commissions_created || 0}, Пропущено: ${result?.commissions_skipped || 0}, Сумма: ${(result?.total_kzt || 0).toLocaleString()} ₸`
       });
       refetch();
     } catch (error: any) {
-      toast.error('Ошибка пересчёта: ' + error.message);
+      console.error('Error recalculating commissions:', error);
+      toast.error('Ошибка пересчёта', { 
+        description: error.message || 'Неизвестная ошибка'
+      });
     } finally {
       setIsRecalculating(false);
     }
