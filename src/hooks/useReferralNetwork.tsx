@@ -15,6 +15,7 @@ interface ReferralMemberRaw {
   structure_type: number;
   created_at: string | null;
   has_commission_received: boolean;
+  no_commission_reason: string | null;
 }
 
 export type ReferralMember = {
@@ -55,7 +56,7 @@ function mapToReferralMember(raw: ReferralMemberRaw): ReferralMember {
     total_team: 0,
     monthly_volume: 0,
     has_commission_received: raw.has_commission_received,
-    no_commission_reason: null,
+    no_commission_reason: raw.no_commission_reason,
     commission_frozen_until: null,
     is_activated: raw.monthly_activation_met,
     structure_type: raw.structure_type,

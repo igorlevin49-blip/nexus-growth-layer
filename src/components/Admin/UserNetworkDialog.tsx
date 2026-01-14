@@ -52,6 +52,7 @@ export function UserNetworkDialog({
     structure_type: number;
     created_at: string | null;
     has_commission_received: boolean;
+    no_commission_reason: string | null;
   }
 
   // Map raw DB response to NetworkMember interface
@@ -74,7 +75,7 @@ export function UserNetworkDialog({
     parent_partner_id: null,
     parent_user_id: null,
     has_commission_received: raw.has_commission_received,
-    no_commission_reason: null,
+    no_commission_reason: raw.no_commission_reason,
     commission_status: raw.has_commission_received ? 'received' : null,
     commission_frozen_until: null,
   });
@@ -132,7 +133,7 @@ export function UserNetworkDialog({
 
       const matchesCommission = structureType !== 1 || filterCommission === 'all' ||
         (filterCommission === 'with_commission' && member.has_commission_received === true) ||
-        (filterCommission === 'without_commission' && member.has_commission_received === false && member.no_commission_reason !== null);
+        (filterCommission === 'without_commission' && member.has_commission_received === false);
       
       return matchesSearch && matchesLevel && matchesStatus && matchesCommission;
     });

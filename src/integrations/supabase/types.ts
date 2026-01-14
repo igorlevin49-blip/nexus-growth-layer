@@ -2237,6 +2237,7 @@ export type Database = {
           has_commission_received: boolean
           level: number
           monthly_activation_met: boolean
+          no_commission_reason: string
           partner_id: string
           referral_code: string
           structure_type: number
