@@ -73,7 +73,8 @@ type NoCommissionReason =
   | 'no_active_subscription'
   | 'partner_no_subscription'  // Alias from DB
   | 'partner_no_activation'    // Alias from DB for S2
-  | 'new_partner';
+  | 'new_partner'
+  | 'no_commission';           // Fallback for legacy commissions
 
 interface ReasonInfo {
   title: string;
@@ -178,6 +179,12 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     description: 'Партнёр зарегистрирован в текущем месяце. Ежемесячная активация начнёт требоваться со следующего месяца.',
     color: 'blue',
     icon: Gift
+  },
+  no_commission: {
+    title: 'Комиссия уже получена',
+    description: 'Комиссия за этого партнёра была начислена ранее (до внедрения автоматической системы комиссий). Повторная комиссия не начисляется.',
+    color: 'blue',
+    icon: Clock
   }
 };
 
