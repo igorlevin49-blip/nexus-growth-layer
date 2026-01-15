@@ -181,10 +181,10 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     icon: Gift
   },
   no_commission: {
-    title: 'Комиссия уже получена',
-    description: 'Комиссия за этого партнёра была начислена ранее (до внедрения автоматической системы комиссий). Повторная комиссия не начисляется.',
-    color: 'blue',
-    icon: Clock
+    title: 'Уровень не разблокирован',
+    description: 'Для получения комиссии с этого уровня необходимо больше активных личников на первой линии.',
+    color: 'orange',
+    icon: Lock
   }
 };
 
