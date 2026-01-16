@@ -74,6 +74,8 @@ type NoCommissionReason =
   | 'partner_no_subscription'  // Alias from DB
   | 'partner_no_activation'    // Alias from DB for S2
   | 'new_partner'
+  | 'inactive_subscription'    // Partner has inactive subscription
+  | 'awaiting_commission'      // Level unlocked, waiting for commission
   | 'no_commission';           // Fallback for legacy commissions
 
 interface ReasonInfo {
@@ -114,6 +116,18 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     color: 'orange',
     icon: Clock
   },
+  inactive_subscription: {
+    title: 'Подписка неактивна',
+    description: 'У партнёра неактивная подписка. Комиссия начисляется только за партнёров с активной подпиской.',
+    color: 'gray',
+    icon: UserX
+  },
+  awaiting_commission: {
+    title: 'Ожидание начисления',
+    description: 'Уровень разблокирован. Комиссия будет начислена после оплаты подписки партнёром.',
+    color: 'blue',
+    icon: Clock
+  },
   too_deep: {
     title: 'Глубже 5 уровня',
     description: 'Партнёр находится на уровне глубже 5-го. В структуре S1 комиссия начисляется только до 5-го уровня включительно.',
@@ -128,25 +142,25 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
   },
   level_2_locked: {
     title: 'Уровень 2 закрыт',
-    description: 'Для доступа к уровню 2 нужно минимум 2 активных личника на первой линии.',
+    description: 'Для доступа к уровню 2 нужно минимум 3 активных личника на первой линии.',
     color: 'orange',
     icon: Lock
   },
   level_3_locked: {
     title: 'Уровень 3 закрыт',
-    description: 'Для доступа к уровню 3 нужно минимум 3 активных личника на первой линии.',
+    description: 'Для доступа к уровню 3 нужно минимум 5 активных личников на первой линии.',
     color: 'orange',
     icon: Lock
   },
   level_4_locked: {
     title: 'Уровень 4 закрыт',
-    description: 'Для доступа к уровню 4 нужно минимум 4 активных личника на первой линии.',
+    description: 'Для доступа к уровню 4 нужно минимум 8 активных личников на первой линии.',
     color: 'orange',
     icon: Lock
   },
   level_5_locked: {
     title: 'Уровень 5 закрыт',
-    description: 'Для доступа к уровню 5 нужно минимум 5 активных личников на первой линии.',
+    description: 'Для доступа к уровню 5 нужно минимум 10 активных личников на первой линии.',
     color: 'orange',
     icon: Lock
   },
