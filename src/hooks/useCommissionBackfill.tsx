@@ -129,3 +129,45 @@ export function useBackfillAllCommissions() {
     }
   });
 }
+
+/**
+ * Hook to backfill missing multilevel (L1-L5) commissions
+ */
+export function useBackfillMultilevelCommissions() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ dryRun = true, targetUserId }: { dryRun?: boolean; targetUserId?: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('backfill_missing_multilevel_commissions', {
+        p_admin_id: user.id,
+        p_dry_run: dryRun,
+        p_target_user_id: targetUserId || null
+      });
+
+      if (error) throw error;
+      return data as unknown as BackfillResult;
+    },
+    onSuccess: (data, variables) => {
+      if (!variables.dryRun) {
+        queryClient.invalidateQueries({ queryKey: ['sponsors-with-missing-commissions'] });
+        queryClient.invalidateQueries({ queryKey: ['commission-structure'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['balance'] });
+        queryClient.invalidateQueries({ queryKey: ['network-tree'] });
+        
+        toast.success('Многоуровневые комиссии доначислены', {
+          description: `Создано комиссий: ${data.commissions_created}, сумма: ${(data.total_kzt || 0).toLocaleString()} ₸`
+        });
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Error backfilling multilevel commissions:', error);
+      toast.error('Ошибка доначисления многоуровневых комиссий', {
+        description: error.message
+      });
+    }
+  });
+}
