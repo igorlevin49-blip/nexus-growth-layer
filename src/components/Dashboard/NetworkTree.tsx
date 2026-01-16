@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Info, Lock, Clock, Gift, UserX, Calendar, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, AlertCircle, Info, Lock, Clock, Gift, UserX, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -123,10 +123,10 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
     icon: UserX
   },
   awaiting_commission: {
-    title: 'Ожидание начисления',
-    description: 'Уровень разблокирован. Комиссия будет начислена после оплаты подписки партнёром.',
-    color: 'blue',
-    icon: Clock
+    title: 'Комиссия не начислена',
+    description: 'Подписка оплачена, но комиссия не была начислена. Обратитесь в поддержку для исправления.',
+    color: 'orange',
+    icon: AlertCircle
   },
   too_deep: {
     title: 'Глубже 5 уровня',
