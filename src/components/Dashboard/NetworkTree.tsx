@@ -196,7 +196,7 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
   },
   no_commission: {
     title: 'Уровень не разблокирован',
-    description: 'Для получения комиссии с этого уровня необходимо больше активных личников на первой линии.',
+    description: 'Для получения комиссии с этого уровня необходимо больше активных личников на первой линии. L2: 3 личника, L3: 5 личников, L4: 8 личников, L5: 10 личников.',
     color: 'orange',
     icon: Lock
   }
@@ -204,9 +204,13 @@ const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
 
 const getReasonInfo = (reason: string | null): ReasonInfo | null => {
   if (!reason) return null;
-  return REASON_INFO[reason as NoCommissionReason] || {
+  const knownReason = REASON_INFO[reason as NoCommissionReason];
+  if (knownReason) return knownReason;
+  
+  // Fallback for unknown reasons - show the actual code for debugging
+  return {
     title: 'Нет начисления',
-    description: 'Причина неизвестна',
+    description: `Причина: ${reason}. Если это ошибка, обратитесь в поддержку.`,
     color: 'gray' as const,
     icon: Info
   };
