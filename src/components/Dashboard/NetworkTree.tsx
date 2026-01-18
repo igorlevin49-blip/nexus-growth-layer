@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, AlertCircle, Info, Lock, Clock, Gift, UserX, Calendar, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, User, Crown, Users2, AlertTriangle, Clock, Gift, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { NetworkMember } from "@/hooks/useNetworkTree";
 
@@ -48,186 +47,7 @@ function buildTree(members: NetworkMember[]): NetworkNode[] {
   return rootNodes;
 }
 
-// Get unlock requirements for each level (matches DB logic from mlm_settings.unlock_levels)
-// These apply ONLY to S1 (subscription structure), S2 has no direct referral requirements
-const UNLOCK_REQUIREMENTS_S1: Record<number, number> = {
-  2: 3,
-  3: 5,
-  4: 8,
-  5: 10
-};
-
-type NoCommissionReason = 
-  | 'not_activated' 
-  | 'no_payment_this_month'
-  | 'too_deep' 
-  | 'level_not_unlocked'
-  | 'level_2_locked'
-  | 'level_3_locked'
-  | 'level_4_locked'
-  | 'level_5_locked'
-  | 'marketing_free_access' 
-  | 'sponsor_inactive'
-  | 'sponsor_no_activation'
-  | 'already_received_before'
-  | 'no_active_subscription'
-  | 'partner_no_subscription'  // Alias from DB
-  | 'partner_no_activation'    // Alias from DB for S2
-  | 'new_partner'
-  | 'inactive_subscription'    // Partner has inactive subscription
-  | 'awaiting_commission'      // Level unlocked, waiting for commission
-  | 'no_commission';           // Fallback for legacy commissions
-
-interface ReasonInfo {
-  title: string;
-  description: string;
-  color: 'orange' | 'blue' | 'gray' | 'red';
-  icon: typeof AlertTriangle;
-}
-
-const REASON_INFO: Record<NoCommissionReason, ReasonInfo> = {
-  not_activated: {
-    title: 'Партнёр не активирован',
-    description: 'Партнёр ещё не оплатил годовую подписку. Он не учитывается как личник и комиссия за него не начисляется.',
-    color: 'gray',
-    icon: UserX
-  },
-  no_payment_this_month: {
-    title: 'Нет активации в этом месяце (S2)',
-    description: 'Партнёр не сделал ежемесячную активацию (закуп на 20 000 ₸). Это влияет только на комиссии за товары (S2).',
-    color: 'gray',
-    icon: Clock
-  },
-  no_active_subscription: {
-    title: 'Нет активной подписки',
-    description: 'У партнёра нет активной подписки. Комиссия начисляется только за активных партнёров.',
-    color: 'gray',
-    icon: UserX
-  },
-  partner_no_subscription: {
-    title: 'Партнёр без подписки',
-    description: 'У партнёра нет активной подписки. Комиссия начисляется только за партнёров с оплаченной подпиской.',
-    color: 'gray',
-    icon: UserX
-  },
-  partner_no_activation: {
-    title: 'Нет ежемесячной активации',
-    description: 'Партнёр не выполнил ежемесячную активацию (закуп на 20 000 ₸). Комиссия за товары (S2) не начисляется.',
-    color: 'orange',
-    icon: Clock
-  },
-  inactive_subscription: {
-    title: 'Подписка неактивна',
-    description: 'У партнёра неактивная подписка. Комиссия начисляется только за партнёров с активной подпиской.',
-    color: 'gray',
-    icon: UserX
-  },
-  awaiting_commission: {
-    title: 'Комиссия не начислена',
-    description: 'Подписка оплачена, но комиссия не была начислена. Обратитесь в поддержку для исправления.',
-    color: 'orange',
-    icon: AlertCircle
-  },
-  too_deep: {
-    title: 'Глубже 5 уровня',
-    description: 'Партнёр находится на уровне глубже 5-го. В структуре S1 комиссия начисляется только до 5-го уровня включительно.',
-    color: 'blue',
-    icon: Info
-  },
-  level_not_unlocked: {
-    title: 'Уровень не открыт',
-    description: 'Данный партнёр находится на уровне, который вам ещё не открыт. Нужно больше активных личников.',
-    color: 'orange',
-    icon: Lock
-  },
-  level_2_locked: {
-    title: 'Уровень 2 закрыт',
-    description: 'Для доступа к уровню 2 нужно минимум 3 активных личника на первой линии.',
-    color: 'orange',
-    icon: Lock
-  },
-  level_3_locked: {
-    title: 'Уровень 3 закрыт',
-    description: 'Для доступа к уровню 3 нужно минимум 5 активных личников на первой линии.',
-    color: 'orange',
-    icon: Lock
-  },
-  level_4_locked: {
-    title: 'Уровень 4 закрыт',
-    description: 'Для доступа к уровню 4 нужно минимум 8 активных личников на первой линии.',
-    color: 'orange',
-    icon: Lock
-  },
-  level_5_locked: {
-    title: 'Уровень 5 закрыт',
-    description: 'Для доступа к уровню 5 нужно минимум 10 активных личников на первой линии.',
-    color: 'orange',
-    icon: Lock
-  },
-  marketing_free_access: {
-    title: 'Бесплатный маркетинговый доступ',
-    description: 'Партнёр был зарегистрирован по бесплатному маркетинговому доступу, поэтому за него комиссия не начисляется.',
-    color: 'blue',
-    icon: Gift
-  },
-  sponsor_inactive: {
-    title: 'Нет активной подписки спонсора',
-    description: 'У спонсора нет активной подписки, поэтому комиссия за эту структуру не начисляется.',
-    color: 'red',
-    icon: AlertTriangle
-  },
-  sponsor_no_activation: {
-    title: 'Спонсор не активирован',
-    description: 'У спонсора не выполнена ежемесячная активация (закуп на 20 000 ₸). Комиссия за структуру в этом месяце закрыта.',
-    color: 'orange',
-    icon: Clock
-  },
-  already_received_before: {
-    title: 'Реанимация партнёра',
-    description: 'Комиссия за этого партнёра уже была получена ранее. При реанимации (повторной активации) комиссия не начисляется повторно.',
-    color: 'blue',
-    icon: Clock
-  },
-  new_partner: {
-    title: 'Новый партнёр',
-    description: 'Партнёр зарегистрирован в текущем месяце. Ежемесячная активация начнёт требоваться со следующего месяца.',
-    color: 'blue',
-    icon: Gift
-  },
-  no_commission: {
-    title: 'Уровень не разблокирован',
-    description: 'Для получения комиссии с этого уровня необходимо больше активных личников на первой линии. L2: 3 личника, L3: 5 личников, L4: 8 личников, L5: 10 личников.',
-    color: 'orange',
-    icon: Lock
-  }
-};
-
-const getReasonInfo = (reason: string | null): ReasonInfo | null => {
-  if (!reason) return null;
-  const knownReason = REASON_INFO[reason as NoCommissionReason];
-  if (knownReason) return knownReason;
-  
-  // Fallback for unknown reasons - show the actual code for debugging
-  return {
-    title: 'Нет начисления',
-    description: `Причина: ${reason}. Если это ошибка, обратитесь в поддержку.`,
-    color: 'gray' as const,
-    icon: Info
-  };
-};
-
-const getReasonBadgeClass = (color: 'orange' | 'blue' | 'gray' | 'red'): string => {
-  switch (color) {
-    case 'orange':
-      return 'bg-warning text-warning-foreground hover:bg-warning/90';
-    case 'blue':
-      return 'bg-primary text-primary-foreground hover:bg-primary/90';
-    case 'red':
-      return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
-    default:
-      return 'bg-muted text-muted-foreground hover:bg-muted/80';
-  }
-};
+// Simplified: Removed all REASON_INFO and popover logic - keeping only free access badge
 
 interface NetworkNodeProps {
   node: NetworkNode;
@@ -243,14 +63,8 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
     ? 'frozen' 
     : 'inactive';
 
-  // Show "no commission" indicator when:
-  // 1. Partner is active AND has a reason for no commission
-  // 2. OR partner would be eligible but has a specific reason
-  const hasNoCommission = node.has_commission_received === false && 
-    node.no_commission_reason !== null;
-  
-  const reasonInfo = getReasonInfo(node.no_commission_reason);
-  const ReasonIcon = reasonInfo?.icon || AlertTriangle;
+  // Show "free access" badge only for marketing_free_access
+  const isFreeAccess = node.no_commission_reason === 'marketing_free_access';
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -274,33 +88,13 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
     }
   };
 
-  // Get additional info for level_not_unlocked or level_X_locked with dynamic message
-  // Note: This only applies to S1 (subscription structure)
-  const getLevelUnlockInfo = (node: NetworkNode) => {
-    const levelLockedReasons = ['level_2_locked', 'level_3_locked', 'level_4_locked', 'level_5_locked', 'level_not_unlocked', 'level_locked'];
-    if (!node.no_commission_reason || !levelLockedReasons.includes(node.no_commission_reason)) return null;
-    
-    // Parse level from reason like "level_3_locked"
-    const levelMatch = node.no_commission_reason.match(/level_(\d)_locked/);
-    if (levelMatch) {
-      const level = parseInt(levelMatch[1]);
-      return { level, required: UNLOCK_REQUIREMENTS_S1[level] || level };
-    }
-    
-    // Fallback for level_not_unlocked or level_locked
-    return { level: node.level, required: UNLOCK_REQUIREMENTS_S1[node.level] || 0 };
-  };
-
-  const levelUnlockInfo = getLevelUnlockInfo(node);
 
   return (
     <div className="space-y-2">
       <div className={cn(
         "network-node",
         status === "active" ? "active" : 
-        status === "frozen" ? "frozen" : "",
-        hasNoCommission && reasonInfo?.color === 'orange' && "border-l-4 border-l-warning bg-warning/10",
-        hasNoCommission && reasonInfo?.color === 'blue' && "border-l-4 border-l-primary bg-primary/10"
+        status === "frozen" ? "frozen" : ""
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -344,57 +138,12 @@ function NetworkNodeComponent({ node, isRoot = false }: NetworkNodeProps) {
                 </Badge>
               )}
               
-              {/* No commission indicator with click-to-open explanation */}
-              {hasNoCommission && reasonInfo && (
-                <Popover>
-                  <PopoverTrigger>
-                    <Badge 
-                      className={cn(
-                        "gap-1 cursor-pointer select-none",
-                        getReasonBadgeClass(reasonInfo.color)
-                      )}
-                    >
-                      <ReasonIcon className="h-3 w-3" />
-                      <span>Нет начисления</span>
-                    </Badge>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    side="bottom" 
-                    align="start"
-                    className="w-80 z-[100]"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "p-2 rounded-lg",
-                          reasonInfo.color === 'orange' && "bg-warning/20",
-                          reasonInfo.color === 'blue' && "bg-primary/20",
-                          reasonInfo.color === 'red' && "bg-destructive/20",
-                          reasonInfo.color === 'gray' && "bg-muted"
-                        )}>
-                          <ReasonIcon className={cn(
-                            "h-5 w-5",
-                            reasonInfo.color === 'orange' && "text-warning",
-                            reasonInfo.color === 'blue' && "text-primary",
-                            reasonInfo.color === 'red' && "text-destructive",
-                            reasonInfo.color === 'gray' && "text-muted-foreground"
-                          )} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground">{reasonInfo.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{reasonInfo.description}</p>
-                        </div>
-                      </div>
-                      {levelUnlockInfo && (
-                        <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                          <p className="text-sm text-warning font-medium">
-                            💡 Для открытия уровня {levelUnlockInfo.level} нужно {levelUnlockInfo.required} активных личников на 1-й линии
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+              {/* Free access badge - only for marketing_free_access */}
+              {isFreeAccess && (
+                <Badge className="gap-1 bg-primary text-primary-foreground">
+                  <Gift className="h-3 w-3" />
+                  <span>Бесплатник</span>
+                </Badge>
               )}
             </div>
           </div>
@@ -520,16 +269,6 @@ export function NetworkTree({ members, filterCommission = 'all', isError, onRetr
 
   return (
     <div className="space-y-4">
-      {/* Missed commission warning - only for actionable reasons */}
-      {missedCommissionStats.total > 0 && filterCommission === 'all' && (
-        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
-          <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0" />
-          <span>
-            <strong>{missedCommissionStats.total}</strong> партнёр(ов) без начисления комиссии.
-            Нажмите на бейдж «Нет начисления» для подробностей.
-          </span>
-        </div>
-      )}
       
       <div className="border-t border-border pt-4 space-y-2">
         {treeData.map((node) => (
