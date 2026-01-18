@@ -1832,6 +1832,14 @@ export type Database = {
           violation_count: number
         }[]
       }
+      backfill_all_missing_l1_commissions: {
+        Args: {
+          p_admin_id: string
+          p_dry_run?: boolean
+          p_target_sponsor_id?: string
+        }
+        Returns: Json
+      }
       backfill_missing_multilevel_commissions:
         | { Args: { p_admin_id: string; p_dry_run?: boolean }; Returns: Json }
         | {
@@ -1859,6 +1867,10 @@ export type Database = {
             }
             Returns: Json
           }
+      backfill_skipped_sponsor_inactive_commissions: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       backfill_sponsor_commissions: {
         Args: { p_admin_id: string; p_dry_run?: boolean; p_sponsor_id: string }
         Returns: Json
