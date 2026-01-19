@@ -63,16 +63,25 @@ export default function Finances() {
     return { start, end: now };
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, frozenUntil?: string) => {
     switch (status) {
       case "completed":
         return <Badge className="profit-indicator">Завершено</Badge>;
       case "processing":
         return <Badge className="pending-indicator">Обработка</Badge>;
+      case "pending":
+        return <Badge className="pending-indicator">Ожидание</Badge>;
+      case "frozen":
+        const frozenDate = frozenUntil ? new Date(frozenUntil).toLocaleDateString('ru-RU') : null;
+        return (
+          <Badge className="frozen-indicator" title={frozenDate ? `До ${frozenDate}` : undefined}>
+            Заморожено{frozenDate ? ` до ${frozenDate}` : ''}
+          </Badge>
+        );
       case "failed":
         return <Badge className="loss-indicator">Ошибка</Badge>;
       default:
-        return <Badge className="frozen-indicator">Неизвестно</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -328,7 +337,7 @@ export default function Finances() {
                                 {transaction.level === 1 ? 'Прямой' : `${transaction.level}-й уровень`}
                               </Badge>
                             )}
-                            {getStatusBadge(transaction.status)}
+                            {getStatusBadge(transaction.status, transaction.frozen_until)}
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">
                             {transaction.payload?.description || `${typeLabels[transaction.type]} ${formatKZT(transaction.amount_kzt)}`}

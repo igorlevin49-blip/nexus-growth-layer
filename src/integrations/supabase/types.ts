@@ -2010,6 +2010,10 @@ export type Database = {
           violation_reason: string
         }[]
       }
+      fix_wrong_backfilled_l1_commissions: {
+        Args: { p_admin_id: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       flag_test_data: {
         Args: {
           p_dry_run?: boolean
