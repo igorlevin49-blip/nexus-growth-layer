@@ -1840,6 +1840,10 @@ export type Database = {
         }
         Returns: Json
       }
+      backfill_all_missing_multilevel_commissions: {
+        Args: { p_admin_id: string; p_days_back?: number; p_dry_run?: boolean }
+        Returns: Json
+      }
       backfill_missing_multilevel_commissions:
         | { Args: { p_admin_id: string; p_dry_run?: boolean }; Returns: Json }
         | {
