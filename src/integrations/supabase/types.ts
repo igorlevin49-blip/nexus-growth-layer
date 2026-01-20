@@ -1840,10 +1840,23 @@ export type Database = {
         }
         Returns: Json
       }
-      backfill_all_missing_multilevel_commissions: {
-        Args: { p_admin_id: string; p_days_back?: number; p_dry_run?: boolean }
-        Returns: Json
-      }
+      backfill_all_missing_multilevel_commissions:
+        | {
+            Args: {
+              p_admin_id: string
+              p_days_back?: number
+              p_dry_run?: boolean
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_admin_id: string
+              p_days_back?: number
+              p_dry_run?: boolean
+            }
+            Returns: Json
+          }
       backfill_missing_multilevel_commissions:
         | { Args: { p_admin_id: string; p_dry_run?: boolean }; Returns: Json }
         | {
@@ -2057,14 +2070,10 @@ export type Database = {
       get_all_user_balances: {
         Args: never
         Returns: {
-          available_cents: number
           available_kzt: number
-          frozen_cents: number
           frozen_kzt: number
-          pending_cents: number
           pending_kzt: number
           user_id: string
-          withdrawn_cents: number
           withdrawn_kzt: number
         }[]
       }
@@ -2292,13 +2301,9 @@ export type Database = {
       get_user_balance: {
         Args: { p_user_id: string }
         Returns: {
-          available_cents: number
           available_kzt: number
-          frozen_cents: number
           frozen_kzt: number
-          pending_cents: number
           pending_kzt: number
-          withdrawn_cents: number
           withdrawn_kzt: number
         }[]
       }
